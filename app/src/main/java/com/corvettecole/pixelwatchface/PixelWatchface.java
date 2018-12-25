@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -14,7 +13,6 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -27,7 +25,6 @@ import android.view.WindowInsets;
 
 
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Type;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
@@ -44,9 +41,6 @@ import java.util.concurrent.TimeUnit;
  * https://codelabs.developers.google.com/codelabs/watchface/index.html#0
  */
 public class PixelWatchface extends CanvasWatchFaceService {
-    private static final Typeface NORMAL_TYPEFACE =
-            Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
-
     /**
      * Update rate in milliseconds for interactive mode. Defaults to one second
      * because the watch face needs to update seconds in interactive mode.
@@ -95,10 +89,9 @@ public class PixelWatchface extends CanvasWatchFaceService {
             }
         };
         private boolean mRegisteredTimeZoneReceiver = false;
-        private float mXOffset;
-        private float mYOffset;
         private Paint mBackgroundPaint;
-        private Paint mTextPaint;
+        private Paint mTimePaint;
+        private Paint mDatePaint;
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
          * disable anti-aliasing in ambient mode.
@@ -106,6 +99,8 @@ public class PixelWatchface extends CanvasWatchFaceService {
         private boolean mLowBitAmbient;
         private boolean mBurnInProtection;
         private boolean mAmbient;
+
+        private float mIconTitleYOffset;
 
         private Typeface productSans;
 
@@ -119,7 +114,6 @@ public class PixelWatchface extends CanvasWatchFaceService {
             mCalendar = Calendar.getInstance();
 
             Resources resources = PixelWatchface.this.getResources();
-            mYOffset = resources.getDimension(R.dimen.digital_y_offset);
 
             // Initializes background.
             mBackgroundPaint = new Paint();
@@ -128,11 +122,15 @@ public class PixelWatchface extends CanvasWatchFaceService {
             productSans = ResourcesCompat.getFont(getApplicationContext(), R.font.product_sans_regular);
 
             // Initializes Watch Face.
-            mTextPaint = new Paint();
-            mTextPaint.setTypeface(productSans);
-            mTextPaint.setAntiAlias(true);
-            mTextPaint.setColor(
+            mTimePaint = new Paint();
+            mTimePaint.setTypeface(productSans);
+            mTimePaint.setAntiAlias(true);
+            mTimePaint.setColor(
                     ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
+            mDatePaint = new Paint();
+            mDatePaint.setTypeface(productSans);
+            mDatePaint.setAntiAlias(true);
+            mDatePaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
 
 
         }
@@ -186,10 +184,15 @@ public class PixelWatchface extends CanvasWatchFaceService {
             // Load resources that have alternate values for round watches.
             Resources resources = PixelWatchface.this.getResources();
             boolean isRound = insets.isRound();
-            float textSize = resources.getDimension(isRound
-                    ? R.dimen.digital_text_size_round : R.dimen.digital_text_size);
+            float timeTextSize = resources.getDimension(isRound
+                    ? R.dimen.digital_time_text_size_round : R.dimen.digital_time_text_size);
+            float dateTextSize = resources.getDimension(isRound
+                    ? R.dimen.digital_date_text_size_round : R.dimen.digital_date_text_size);
 
-            mTextPaint.setTextSize(textSize);
+            mTimePaint.setTextSize(timeTextSize);
+            mDatePaint.setTextSize(dateTextSize);
+
+
         }
 
         @Override
@@ -211,7 +214,8 @@ public class PixelWatchface extends CanvasWatchFaceService {
 
             mAmbient = inAmbientMode;
             if (mLowBitAmbient) {
-                mTextPaint.setAntiAlias(!inAmbientMode);
+                mTimePaint.setAntiAlias(!inAmbientMode);
+                mDatePaint.setAntiAlias(!inAmbientMode);
             }
 
             // Whether the timer should be running depends on whether we're visible (as well as
@@ -232,24 +236,21 @@ public class PixelWatchface extends CanvasWatchFaceService {
             long now = System.currentTimeMillis();
             mCalendar.setTimeInMillis(now);
 
-            String text = String.format("%d:%02d", mCalendar.get(Calendar.HOUR), mCalendar.get(Calendar.MINUTE));
-            mXOffset = computeXOffset(text, mTextPaint, bounds);
-            mYOffset = computeTimeYOffset(text, mTextPaint, bounds);
-            canvas.drawText(text, mXOffset, mYOffset, mTextPaint);
+            String mTimeText = String.format("%d:%02d", mCalendar.get(Calendar.HOUR), mCalendar.get(Calendar.MINUTE));
+            float mTimeXOffset = computeXOffset(mTimeText, mTimePaint, bounds);
+            float mTimeYOffset = computeTimeYOffset(mTimeText, mTimePaint, bounds);
+            canvas.drawText(mTimeText, mTimeXOffset, mTimeYOffset, mTimePaint);
+
+            String dateText = String.format("%s %s %d", android.text.format.DateFormat.format("EEEE", mCalendar), android.text.format.DateFormat.format("MMMM", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH));
+            float dateXOffset = computeXOffset(dateText, mDatePaint, bounds);
+            float dateYOffset = computeDateYOffset(dateText, mDatePaint);
+            canvas.drawText(dateText, dateXOffset, mTimeYOffset + dateYOffset, mDatePaint);
 
             //draw wearOS icon
-            Bitmap bitmap = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo));
-            /*float aspectRatio = bitmap.getWidth() /
-                    (float) bitmap.getHeight();
-            int width = 40;
-            int height = Math.round(width / aspectRatio);
-
-            bitmap = Bitmap.createScaledBitmap(
-                    bitmap, width, height, false);
-                    */
-                canvas.drawBitmap(bitmap, 175, 60, null);
-
-
+            Bitmap wearOSBitmap = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo));
+            float mIconXOffset = bounds.exactCenterX() - (wearOSBitmap.getWidth() / 2);
+            float mIconYOffset = mTimeYOffset - mTimeYOffset / 2  - wearOSBitmap.getHeight() - 16.0f;
+            canvas.drawBitmap(wearOSBitmap, mIconXOffset, mIconYOffset, null);
         }
 
 
@@ -305,6 +306,7 @@ public class PixelWatchface extends CanvasWatchFaceService {
         datePaint.getTextBounds(dateText, 0, dateText.length(), textBounds);
         return textBounds.height() + 10.0f;
     }
+
 
     public static Bitmap drawableToBitmap (Drawable drawable) {
         Bitmap bitmap = null;

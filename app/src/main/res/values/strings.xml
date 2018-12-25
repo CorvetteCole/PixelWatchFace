@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Pixel Watchface</string>
+    <string name="message">Watch face tapped</string>
+    <string name="my_digital_name">My Digital</string>
+</resources>

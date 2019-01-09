@@ -241,7 +241,7 @@ public class PixelWatchface extends CanvasWatchFaceService {
             float mTimeYOffset = computeTimeYOffset(mTimeText, mTimePaint, bounds);
             canvas.drawText(mTimeText, mTimeXOffset, mTimeYOffset, mTimePaint);
 
-            String dateText = String.format("%3s %3s %d", android.text.format.DateFormat.format("EEEE", mCalendar), android.text.format.DateFormat.format("MMMM", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH));
+            String dateText = String.format("%.3s %.3s %d", android.text.format.DateFormat.format("EEEE", mCalendar), android.text.format.DateFormat.format("MMMM", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH));
             float dateXOffset = computeXOffset(dateText, mDatePaint, bounds);
             float dateYOffset = computeDateYOffset(dateText, mDatePaint);
             canvas.drawText(dateText, dateXOffset, mTimeYOffset + dateYOffset, mDatePaint);

@@ -319,7 +319,7 @@ public class PixelWatchface extends CanvasWatchFaceService {
     private float computeDateYOffset(String dateText, Paint datePaint) {
         Rect textBounds = new Rect();
         datePaint.getTextBounds(dateText, 0, dateText.length(), textBounds);
-        return textBounds.height() + 10.0f;
+        return textBounds.height() + 12.0f;
     }
 
 

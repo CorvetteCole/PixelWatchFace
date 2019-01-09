@@ -236,12 +236,12 @@ public class PixelWatchface extends CanvasWatchFaceService {
             long now = System.currentTimeMillis();
             mCalendar.setTimeInMillis(now);
 
-            String mTimeText = String.format("%d:%02d", mCalendar.get(Calendar.HOUR), mCalendar.get(Calendar.MINUTE));
+            String mTimeText = String.format("%d:%02d", getHour(mCalendar), mCalendar.get(Calendar.MINUTE));
             float mTimeXOffset = computeXOffset(mTimeText, mTimePaint, bounds);
             float mTimeYOffset = computeTimeYOffset(mTimeText, mTimePaint, bounds);
             canvas.drawText(mTimeText, mTimeXOffset, mTimeYOffset, mTimePaint);
 
-            String dateText = String.format("%s %s %d", android.text.format.DateFormat.format("EEEE", mCalendar), android.text.format.DateFormat.format("MMMM", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH));
+            String dateText = String.format("%3s %3s %d", android.text.format.DateFormat.format("EEEE", mCalendar), android.text.format.DateFormat.format("MMMM", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH));
             float dateXOffset = computeXOffset(dateText, mDatePaint, bounds);
             float dateYOffset = computeDateYOffset(dateText, mDatePaint);
             canvas.drawText(dateText, dateXOffset, mTimeYOffset + dateYOffset, mDatePaint);
@@ -253,6 +253,21 @@ public class PixelWatchface extends CanvasWatchFaceService {
             canvas.drawBitmap(wearOSBitmap, mIconXOffset, mIconYOffset, null);
         }
 
+        private int getHour(Calendar mCalendar){
+            //#TODO add 24 hour time code here if that option is enabled
+            int hour = mCalendar.get(Calendar.HOUR_OF_DAY);
+            //if (timeFormatUS){
+                if (hour == 0){
+                    return 12;
+                } else if (hour > 12){
+                    return hour - 12;
+                } else {
+                    return hour;
+                }
+            //} else {
+            //  return hour;
+            //}
+        }
 
         /**
          * Starts the {@link #mUpdateTimeHandler} timer if it should be running and isn't currently

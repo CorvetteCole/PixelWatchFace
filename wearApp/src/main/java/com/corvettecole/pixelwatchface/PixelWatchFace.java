@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -16,15 +17,27 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
+import android.widget.Toast;
 
+
+import com.google.android.gms.wearable.DataClient;
+import com.google.android.gms.wearable.DataEvent;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataItem;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.DataMapItem;
+import com.google.android.gms.wearable.Wearable;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +53,7 @@ import java.util.concurrent.TimeUnit;
  * in the Google Watch Face Code Lab:
  * https://codelabs.developers.google.com/codelabs/watchface/index.html#0
  */
-public class PixelWatchface extends CanvasWatchFaceService {
+public class PixelWatchFace extends CanvasWatchFaceService  {
     /**
      * Update rate in milliseconds for interactive mode. Defaults to one second
      * because the watch face needs to update seconds in interactive mode.
@@ -58,15 +71,15 @@ public class PixelWatchface extends CanvasWatchFaceService {
     }
 
     private static class EngineHandler extends Handler {
-        private final WeakReference<PixelWatchface.Engine> mWeakReference;
+        private final WeakReference<PixelWatchFace.Engine> mWeakReference;
 
-        public EngineHandler(PixelWatchface.Engine reference) {
+        public EngineHandler(PixelWatchFace.Engine reference) {
             mWeakReference = new WeakReference<>(reference);
         }
 
         @Override
         public void handleMessage(Message msg) {
-            PixelWatchface.Engine engine = mWeakReference.get();
+            PixelWatchFace.Engine engine = mWeakReference.get();
             if (engine != null) {
                 switch (msg.what) {
                     case MSG_UPDATE_TIME:
@@ -77,7 +90,7 @@ public class PixelWatchface extends CanvasWatchFaceService {
         }
     }
 
-    private class Engine extends CanvasWatchFaceService.Engine {
+    private class Engine extends CanvasWatchFaceService.Engine implements DataClient.OnDataChangedListener {
 
         private final Handler mUpdateTimeHandler = new EngineHandler(this);
         private Calendar mCalendar;
@@ -105,16 +118,27 @@ public class PixelWatchface extends CanvasWatchFaceService {
 
         private Typeface productSans;
 
+        //settings
+        private boolean use24HourTime;
+        private boolean weatherEnabled;
+        private boolean useCelsius;
+        private boolean showWeatherIcon;
+
+        SharedPreferences sharedPreferences;
+
         @Override
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
 
-            setWatchFaceStyle(new WatchFaceStyle.Builder(PixelWatchface.this)
+            setWatchFaceStyle(new WatchFaceStyle.Builder(PixelWatchFace.this)
                     .build());
 
+            sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
             mCalendar = Calendar.getInstance();
+            //Resources resources = PixelWatchFace.this.getResources();
 
-            Resources resources = PixelWatchface.this.getResources();
+            // Initializes syncing with companion app
+            Wearable.getDataClient(getApplicationContext()).addListener(this);
 
             // Initializes background.
             mBackgroundPaint = new Paint();
@@ -133,12 +157,14 @@ public class PixelWatchface extends CanvasWatchFaceService {
             mDatePaint.setAntiAlias(true);
             mDatePaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
 
-
+            // Loads locally saved settings values
+            loadPreferences(sharedPreferences);
         }
 
         @Override
         public void onDestroy() {
             mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
+            Wearable.getDataClient(getApplicationContext()).removeListener(this);
             super.onDestroy();
         }
 
@@ -167,7 +193,7 @@ public class PixelWatchface extends CanvasWatchFaceService {
             }
             mRegisteredTimeZoneReceiver = true;
             IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
-            PixelWatchface.this.registerReceiver(mTimeZoneReceiver, filter);
+            PixelWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
         }
 
         private void unregisterReceiver() {
@@ -175,7 +201,7 @@ public class PixelWatchface extends CanvasWatchFaceService {
                 return;
             }
             mRegisteredTimeZoneReceiver = false;
-            PixelWatchface.this.unregisterReceiver(mTimeZoneReceiver);
+            PixelWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
         }
 
         @Override
@@ -183,7 +209,7 @@ public class PixelWatchface extends CanvasWatchFaceService {
             super.onApplyWindowInsets(insets);
 
             // Load resources that have alternate values for round watches.
-            Resources resources = PixelWatchface.this.getResources();
+            Resources resources = PixelWatchFace.this.getResources();
             boolean isRound = insets.isRound();
             float timeTextSize = resources.getDimension(isRound
                     ? R.dimen.digital_time_text_size_round : R.dimen.digital_time_text_size);
@@ -251,6 +277,62 @@ public class PixelWatchface extends CanvasWatchFaceService {
             float mIconXOffset = bounds.exactCenterX() - (wearOSBitmap.getWidth() / 2);
             float mIconYOffset = mTimeYOffset - mTimeYOffset / 2  - wearOSBitmap.getHeight() - 16.0f;
             canvas.drawBitmap(wearOSBitmap, mIconXOffset, mIconYOffset, null);
+        }
+
+        @Override
+        public void onDataChanged(DataEventBuffer dataEvents) {
+            String TAG = "onDataChanged";
+            Log.d(TAG, "Data changed");
+            DataMap dataMap = new DataMap();
+            for (DataEvent event : dataEvents) {
+                if (event.getType() == DataEvent.TYPE_CHANGED) {
+                    // DataItem changed
+                    DataItem item = event.getDataItem();
+                    Log.d(TAG, "DataItem uri: " + item.getUri());
+                    if (item.getUri().getPath().compareTo("/settings") == 0) {
+                        Toast.makeText(getApplicationContext(), "companion app changed a setting!", Toast.LENGTH_LONG).show();
+                        dataMap = DataMapItem.fromDataItem(item).getDataMap();
+                        Log.d(TAG, dataMap.toString());
+                        dataMap = dataMap.getDataMap("com.corvettecole.pixelwatchface");
+                        Log.d(TAG, dataMap.toString());
+                    }
+                } else if (event.getType() == DataEvent.TYPE_DELETED) {
+                    // DataItem deleted
+                }
+            }
+            updateSettings(dataMap);
+        }
+
+        private void updateSettings(DataMap dataMap) {
+            String TAG = "updateSettings";
+            try {
+                Log.d(TAG, "timestamp: " + dataMap.getLong("timestamp"));
+                use24HourTime = dataMap.getBoolean("use_24_hour_time");
+                weatherEnabled = dataMap.getBoolean("weather_enabled");
+                useCelsius = dataMap.getBoolean("use_celsius");
+                showWeatherIcon = dataMap.getBoolean("show_weather_icon");
+                savePreferences(sharedPreferences);
+                invalidate(); //should invalidate the view and force a redraw
+            } catch (Exception e){
+                Log.e(TAG, "error processing DataMap");
+                Log.e(TAG, e.toString());
+            }
+        }
+
+        private void savePreferences(SharedPreferences sharedPreferences){
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putBoolean("use_24_hour_time", use24HourTime);
+            editor.putBoolean("weather_enabled", weatherEnabled);
+            editor.putBoolean("use_celsius", useCelsius);
+            editor.putBoolean("show_weather_icon", showWeatherIcon);
+            editor.apply();
+        }
+
+        private void loadPreferences(SharedPreferences sharedPreferences){
+            use24HourTime = sharedPreferences.getBoolean("use_24_hour_time", false);
+            weatherEnabled = sharedPreferences.getBoolean("weather_enabled", false);
+            useCelsius = sharedPreferences.getBoolean("use_celsius", false);
+            showWeatherIcon = sharedPreferences.getBoolean("show_weather_icon", false);
         }
 
         private int getHour(Calendar mCalendar){

@@ -88,6 +88,7 @@ public class PixelWatchface extends CanvasWatchFaceService {
                 invalidate();
             }
         };
+        private final Bitmap wearOSBitmap = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo));
         private boolean mRegisteredTimeZoneReceiver = false;
         private Paint mBackgroundPaint;
         private Paint mTimePaint;
@@ -247,7 +248,6 @@ public class PixelWatchface extends CanvasWatchFaceService {
             canvas.drawText(dateText, dateXOffset, mTimeYOffset + dateYOffset, mDatePaint);
 
             //draw wearOS icon
-            Bitmap wearOSBitmap = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo));
             float mIconXOffset = bounds.exactCenterX() - (wearOSBitmap.getWidth() / 2);
             float mIconYOffset = mTimeYOffset - mTimeYOffset / 2  - wearOSBitmap.getHeight() - 16.0f;
             canvas.drawBitmap(wearOSBitmap, mIconXOffset, mIconYOffset, null);

@@ -17,20 +17,18 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
-import java.util.ArrayList;
-
 public class MainActivity extends AppCompatActivity {
 
     private SharedPreferences sharedPreferences;
     private Switch use24HourTimeSwitch;
-    private Switch weatherEnabledSwitch;
+    private Switch showTemperatureSwitch;
     private Switch useCelsiusSwitch;
-    private Switch showWeatherIconSwitch;
+    private Switch showWeatherSwitch;
 
     private boolean use24HourTime;
-    private boolean weatherEnabled;
+    private boolean showTemperature;
     private boolean useCelsius;
-    private boolean showWeatherIcon;
+    private boolean showWeather;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,9 +37,9 @@ public class MainActivity extends AppCompatActivity {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
         use24HourTimeSwitch = findViewById(R.id.timeFormatSwitch);
-        weatherEnabledSwitch = findViewById(R.id.weatherSwitch);
+        showTemperatureSwitch = findViewById(R.id.temperatureSwitch);
         useCelsiusSwitch = findViewById(R.id.celsiusSwitch);
-        showWeatherIconSwitch = findViewById(R.id.weatherIconSwitch);
+        showWeatherSwitch = findViewById(R.id.weatherSwitch);
 
         loadPreferences();
         loadToggleStates();
@@ -55,11 +53,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        weatherEnabledSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        showTemperatureSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 //use commit() instead of apply() to ensure data is written to sharedprefs before syncToWear runs
-                sharedPreferences.edit().putBoolean("weather_enabled", isChecked).apply();
+                sharedPreferences.edit().putBoolean("show_temperature", isChecked).apply();
                 syncToWear();
             }
         });
@@ -73,11 +71,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        showWeatherIconSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        showWeatherSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 //use commit() instead of apply() to ensure data is written to sharedprefs before syncToWear runs
-                sharedPreferences.edit().putBoolean("show_weather_icon", isChecked).apply();
+                sharedPreferences.edit().putBoolean("show_weather", isChecked).apply();
                 syncToWear();
             }
         });
@@ -86,9 +84,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadPreferences(){
         use24HourTime = sharedPreferences.getBoolean("use_24_hour_time", false);
-        weatherEnabled = sharedPreferences.getBoolean("weather_enabled", false);
+        showTemperature = sharedPreferences.getBoolean("show_temperature", false);
         useCelsius = sharedPreferences.getBoolean("use_celsius", false);
-        showWeatherIcon = sharedPreferences.getBoolean("show_weather_icon", false);
+        showWeather = sharedPreferences.getBoolean("show_weather", false);
     }
 
     private void syncToWear(){
@@ -99,19 +97,18 @@ public class MainActivity extends AppCompatActivity {
         PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/settings");
 
         /* Reference DataMap retrieval code on the WearOS app
-            Log.d(TAG, "timestamp: " + dataMap.getLong("timestamp"));
-            use24HourTime = dataMap.getBoolean("use_24_hour_time", false);
-            weatherEnabled = dataMap.getBoolean("weather_enabled", false);
-            useCelsius = dataMap.getBoolean("use_celsius", false);
-            showWeatherIcon = dataMap.getBoolean("show_weather_icon");
-         */
+                mUse24HourTime = dataMap.getBoolean("use_24_hour_time");
+                mShowTemperature = dataMap.getBoolean("show_temperature");
+                mUseCelsius = dataMap.getBoolean("use_celsius");
+                mShowWeather = dataMap.getBoolean("show_weather");
+                */
 
         DataMap dataMap = new DataMap();
         dataMap.putLong("timestamp", System.currentTimeMillis());
         dataMap.putBoolean("use_24_hour_time", use24HourTime);
-        dataMap.putBoolean("weather_enabled", weatherEnabled);
+        dataMap.putBoolean("show_temperature", showTemperature);
         dataMap.putBoolean("use_celsius", useCelsius);
-        dataMap.putBoolean("show_weather_icon", showWeatherIcon);
+        dataMap.putBoolean("show_weather", showWeather);
 
         putDataMapReq.getDataMap().putDataMap("com.corvettecole.pixelwatchface", dataMap);
         PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
@@ -124,9 +121,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadToggleStates(){
         use24HourTimeSwitch.setChecked(use24HourTime);
-        weatherEnabledSwitch.setChecked(weatherEnabled);
+        showTemperatureSwitch.setChecked(showTemperature);
         useCelsiusSwitch.setChecked(useCelsius);
-        showWeatherIconSwitch.setChecked(showWeatherIcon);
+        showWeatherSwitch.setChecked(showWeather);
     }
 
 }

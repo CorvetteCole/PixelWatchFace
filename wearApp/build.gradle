@@ -24,6 +24,8 @@ dependencies {
     implementation 'com.android.support:percent:28.0.0'
     implementation 'com.android.support:support-v4:28.0.0'
     implementation 'com.google.android.gms:play-services-wearable:16.0.1'
+    implementation 'com.google.android.gms:play-services-location:16.0.0'
+    implementation 'com.squareup.okhttp:okhttp:2.2.0'
     implementation 'com.android.support:recyclerview-v7:28.0.0'
     compileOnly 'com.google.android.wearable:wearable:2.4.0'
 }

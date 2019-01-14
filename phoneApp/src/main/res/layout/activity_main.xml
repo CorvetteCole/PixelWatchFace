@@ -30,13 +30,13 @@
         app:layout_constraintTop_toBottomOf="@+id/textView" />
 
     <Switch
-        android:id="@+id/weatherSwitch"
+        android:id="@+id/temperatureSwitch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="weather_enabled"
+        android:text="show_temperature"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/timeFormatSwitch" />
@@ -51,16 +51,16 @@
         android:text="use_celsius"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/weatherSwitch" />
+        app:layout_constraintTop_toBottomOf="@+id/temperatureSwitch" />
 
     <Switch
-        android:id="@+id/weatherIconSwitch"
+        android:id="@+id/weatherSwitch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="show_weather_icon"
+        android:text="show_weather"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/celsiusSwitch" />

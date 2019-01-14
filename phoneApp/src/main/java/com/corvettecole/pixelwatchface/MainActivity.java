@@ -27,6 +27,11 @@ public class MainActivity extends AppCompatActivity {
     private Switch useCelsiusSwitch;
     private Switch showWeatherIconSwitch;
 
+    private boolean use24HourTime;
+    private boolean weatherEnabled;
+    private boolean useCelsius;
+    private boolean showWeatherIcon;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,11 +43,14 @@ public class MainActivity extends AppCompatActivity {
         useCelsiusSwitch = findViewById(R.id.celsiusSwitch);
         showWeatherIconSwitch = findViewById(R.id.weatherIconSwitch);
 
+        loadPreferences();
+        loadToggleStates();
+
         use24HourTimeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 //use commit() instead of apply() to ensure data is written to sharedprefs before syncToWear runs
-                sharedPreferences.edit().putBoolean("use_24_hour_time", isChecked).commit();
+                sharedPreferences.edit().putBoolean("use_24_hour_time", isChecked).apply();
                 syncToWear();
             }
         });
@@ -51,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 //use commit() instead of apply() to ensure data is written to sharedprefs before syncToWear runs
-                sharedPreferences.edit().putBoolean("weather_enabled", isChecked).commit();
+                sharedPreferences.edit().putBoolean("weather_enabled", isChecked).apply();
                 syncToWear();
             }
         });
@@ -60,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 //use commit() instead of apply() to ensure data is written to sharedprefs before syncToWear runs
-                sharedPreferences.edit().putBoolean("use_celsius", isChecked).commit();
+                sharedPreferences.edit().putBoolean("use_celsius", isChecked).apply();
                 syncToWear();
             }
         });
@@ -69,20 +77,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 //use commit() instead of apply() to ensure data is written to sharedprefs before syncToWear runs
-                sharedPreferences.edit().putBoolean("show_weather_icon", isChecked).commit();
+                sharedPreferences.edit().putBoolean("show_weather_icon", isChecked).apply();
                 syncToWear();
             }
         });
 
     }
 
+    private void loadPreferences(){
+        use24HourTime = sharedPreferences.getBoolean("use_24_hour_time", false);
+        weatherEnabled = sharedPreferences.getBoolean("weather_enabled", false);
+        useCelsius = sharedPreferences.getBoolean("use_celsius", false);
+        showWeatherIcon = sharedPreferences.getBoolean("show_weather_icon", false);
+    }
+
     private void syncToWear(){
         Toast.makeText(this, "something changed, syncing to watch", Toast.LENGTH_SHORT).show();
-        boolean use24HourTime = sharedPreferences.getBoolean("use_24_hour_time", false);
-        boolean weatherEnabled = sharedPreferences.getBoolean("weather_enabled", false);
-        boolean useCelsius = sharedPreferences.getBoolean("use_celsius", false);
-        boolean showWeatherIcon = sharedPreferences.getBoolean("show_weather_icon", false);
-
+        loadPreferences();
         String TAG = "syncToWear";
         DataClient mDataClient = Wearable.getDataClient(this);
         PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/settings");
@@ -109,6 +120,13 @@ public class MainActivity extends AppCompatActivity {
         if (putDataTask.isSuccessful()){
             Log.d(TAG, "Settings synced to wearable");
         }
+    }
+
+    private void loadToggleStates(){
+        use24HourTimeSwitch.setChecked(use24HourTime);
+        weatherEnabledSwitch.setChecked(weatherEnabled);
+        useCelsiusSwitch.setChecked(useCelsius);
+        showWeatherIconSwitch.setChecked(showWeatherIcon);
     }
 
 }

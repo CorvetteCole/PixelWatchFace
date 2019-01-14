@@ -336,19 +336,18 @@ public class PixelWatchFace extends CanvasWatchFaceService  {
         }
 
         private int getHour(Calendar mCalendar){
-            //#TODO add 24 hour time code here if that option is enabled
-            int hour = mCalendar.get(Calendar.HOUR_OF_DAY);
-            //if (timeFormatUS){
-                if (hour == 0){
+            if (use24HourTime){
+                return mCalendar.get(Calendar.HOUR);
+            } else {
+                int hour = mCalendar.get(Calendar.HOUR_OF_DAY);
+                if (hour == 0) {
                     return 12;
-                } else if (hour > 12){
+                } else if (hour > 12) {
                     return hour - 12;
                 } else {
                     return hour;
                 }
-            //} else {
-            //  return hour;
-            //}
+            }
         }
 
         /**

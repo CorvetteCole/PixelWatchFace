@@ -461,6 +461,20 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             String temperatureText = "";
             String spacing = "     ";
 
+            //#TODO do this
+            /*
+            if temperatureText is enabled
+            - Get length of dateText and temperatureText
+            - Add length of dateText and temperatureText with the width of the bitmap + margin
+            between bitmap edges and texts
+            - Get totalXOffset of the total length / 2
+            - Offset dateText to that totalXOffset
+            - Offset bitmap to the totalXOffset minus (length of dateText plus the margin / 2)
+            - Offset temperatureText to the totalXOffset minus (length of dateText plus the margin
+            plus the width of the bitmap)
+            - ???
+            - Profit
+             */
             if (mShowTemperature && mLastWeather != null){
                     if (mUseCelsius) {
                         temperatureText = String.format("%.1f °C", convertToCelsius(mLastWeather.getTemperature()));
@@ -525,6 +539,31 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                                 }
                             });
             }
+        }
+
+        private float computeXOffset(String text, Paint paint, Rect watchBounds) {
+            float centerX = watchBounds.exactCenterX();
+            float timeLength = paint.measureText(text);
+            return centerX - (timeLength / 2.0f);
+        }
+
+        private float computeWeatherXOffset(float infoBarXOffset, String dateText, Paint paint, Rect bounds, Bitmap bitmap){
+            float dateTextLength = paint.measureText(dateText);
+            return Math.abs(infoBarXOffset - dateTextLength) + bounds.exactCenterX() - bitmap.getWidth() - 2.0f;
+        }
+
+        private float computeTimeYOffset(String timeText, Paint timePaint, Rect watchBounds) {
+            float centerY = watchBounds.exactCenterY();
+            Rect textBounds = new Rect();
+            timePaint.getTextBounds(timeText, 0, timeText.length(), textBounds);
+            int textHeight = textBounds.height();
+            return centerY + (textHeight / 2.0f) - 25.0f; //-XX.Xf is the offset up from the center
+        }
+
+        private float computeInfoBarYOffset(String dateText, Paint datePaint) {
+            Rect textBounds = new Rect();
+            datePaint.getTextBounds(dateText, 0, dateText.length(), textBounds);
+            return textBounds.height() + 14.0f;
         }
 
         @Override
@@ -735,31 +774,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
             }
         }
-    }
-
-    private float computeXOffset(String text, Paint paint, Rect watchBounds) {
-        float centerX = watchBounds.exactCenterX();
-        float timeLength = paint.measureText(text);
-        return centerX - (timeLength / 2.0f);
-    }
-
-    private float computeWeatherXOffset(float infoBarXOffset, String dateText, Paint paint, Rect bounds, Bitmap bitmap){
-        float dateTextLength = paint.measureText(dateText);
-        return Math.abs(infoBarXOffset - dateTextLength) + bounds.exactCenterX() - bitmap.getWidth() - 2.0f;
-    }
-
-    private float computeTimeYOffset(String timeText, Paint timePaint, Rect watchBounds) {
-        float centerY = watchBounds.exactCenterY();
-        Rect textBounds = new Rect();
-        timePaint.getTextBounds(timeText, 0, timeText.length(), textBounds);
-        int textHeight = textBounds.height();
-        return centerY + (textHeight / 2.0f) - 25.0f; //-XX.Xf is the offset up from the center
-    }
-
-    private float computeInfoBarYOffset(String dateText, Paint datePaint) {
-        Rect textBounds = new Rect();
-        datePaint.getTextBounds(dateText, 0, dateText.length(), textBounds);
-        return textBounds.height() + 14.0f;
     }
 
 

@@ -455,26 +455,14 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             float mTimeYOffset = computeTimeYOffset(mTimeText, mTimePaint, bounds);
             canvas.drawText(mTimeText, mTimeXOffset, mTimeYOffset, mTimePaint);
 
-            String infoBarText;
             String dateText = String.format("%.3s %.3s %d", android.text.format.DateFormat.format("EEEE", mCalendar),
                     android.text.format.DateFormat.format("MMMM", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH));
             String temperatureText = "";
-            String spacing = "     ";
+            float totalLength;
+            float centerX = bounds.exactCenterX();
+            float dateTextLength = mDatePaint.measureText(dateText);
 
-            //#TODO do this
-            /*
-            if temperatureText is enabled
-            - Get length of dateText and temperatureText
-            - Add length of dateText and temperatureText with the width of the bitmap + margin
-            between bitmap edges and texts
-            - Get totalXOffset of the total length / 2
-            - Offset dateText to that totalXOffset
-            - Offset bitmap to the totalXOffset minus (length of dateText plus the margin / 2)
-            - Offset temperatureText to the totalXOffset minus (length of dateText plus the margin
-            plus the width of the bitmap)
-            - ???
-            - Profit
-             */
+            float bitmapMargin = 20.0f;
             if (mShowTemperature && mLastWeather != null){
                     if (mUseCelsius) {
                         temperatureText = String.format("%.1f °C", convertToCelsius(mLastWeather.getTemperature()));
@@ -482,27 +470,28 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         temperatureText = String.format("%.1f °F", mLastWeather.getTemperature());
                     }
                     if (mShowWeather){
-                        spacing = "        ";
+                        totalLength = dateTextLength + bitmapMargin + mLastWeather.getIconBitmap().getWidth() + mDatePaint.measureText(temperatureText);
+                    } else {
+                        totalLength = dateTextLength + mDatePaint.measureText(temperatureText);
                     }
-                    infoBarText = dateText + spacing + temperatureText;
+            } else if (!mShowTemperature && mShowWeather && mLastWeather != null){
+                totalLength = dateTextLength + bitmapMargin/2 + mLastWeather.getIconBitmap().getWidth();
             } else {
-                infoBarText = dateText;
+                totalLength = dateTextLength;
             }
-            float infoBarXOffset = computeXOffset(infoBarText, mDatePaint, bounds);
-            float infoBarYOffset = computeInfoBarYOffset(infoBarText, mDatePaint);
+
+            float infoBarXOffset = centerX - (totalLength / 2.0f);
+            float infoBarYOffset = computeInfoBarYOffset(dateText, mDatePaint);
+
+            canvas.drawText(dateText, infoBarXOffset, mTimeYOffset + infoBarYOffset, mDatePaint);
             if (mShowWeather && mLastWeather != null){
-                //draw weather icon
-                //#TODO figure out how to make the weather icon work more consistently. I'd like to adhere it to the temperature text if enabled
-                if (mShowTemperature) {
-                    canvas.drawBitmap(mLastWeather.getIconBitmap(), computeWeatherXOffset(infoBarXOffset,
-                            dateText, mDatePaint, bounds, mLastWeather.getIconBitmap()),
-                            mTimeYOffset + infoBarYOffset - mLastWeather.getIconBitmap().getHeight() + 6.0f, null);
-                } else {
-                    canvas.drawBitmap(mLastWeather.getIconBitmap(), infoBarXOffset/2 + bounds.exactCenterX() + mLastWeather.getIconBitmap().getWidth()/2 - 8.0f,
-                            mTimeYOffset + infoBarYOffset - mLastWeather.getIconBitmap().getHeight() + 6.0f, null);
-                }
+                canvas.drawBitmap(mLastWeather.getIconBitmap(), infoBarXOffset + (dateTextLength + bitmapMargin/2),
+                        mTimeYOffset + infoBarYOffset - mLastWeather.getIconBitmap().getHeight() + 6.0f, null);
+                canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mLastWeather.getIconBitmap().getWidth()), mTimeYOffset + infoBarYOffset, mDatePaint);
+            } else if (!mShowWeather && mShowTemperature && mLastWeather != null){
+                canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin), mTimeYOffset + infoBarYOffset, mDatePaint);
             }
-            canvas.drawText(infoBarText, infoBarXOffset, mTimeYOffset + infoBarYOffset, mDatePaint);
+
 
             //draw wearOS icon
             float mIconXOffset = bounds.exactCenterX() - (wearOSBitmap.getWidth() / 2);
@@ -543,13 +532,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
         private float computeXOffset(String text, Paint paint, Rect watchBounds) {
             float centerX = watchBounds.exactCenterX();
-            float timeLength = paint.measureText(text);
-            return centerX - (timeLength / 2.0f);
-        }
-
-        private float computeWeatherXOffset(float infoBarXOffset, String dateText, Paint paint, Rect bounds, Bitmap bitmap){
-            float dateTextLength = paint.measureText(dateText);
-            return Math.abs(infoBarXOffset - dateTextLength) + bounds.exactCenterX() - bitmap.getWidth() - 2.0f;
+            float textLength = paint.measureText(text);
+            return centerX - (textLength / 2.0f);
         }
 
         private float computeTimeYOffset(String timeText, Paint timePaint, Rect watchBounds) {

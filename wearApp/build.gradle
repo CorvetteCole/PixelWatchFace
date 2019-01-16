@@ -6,8 +6,8 @@ android {
         applicationId "com.corvettecole.pixelwatchface"
         minSdkVersion 23
         targetSdkVersion 28
-        versionCode 1003
-        versionName "1.1.5"
+        versionCode 1004
+        versionName "1.1.6"
         multiDexEnabled true
     }
     buildTypes {
@@ -21,11 +21,11 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.google.android.support:wearable:2.4.0'
-    implementation 'com.android.support:percent:28.0.0'
-    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'androidx.percentlayout:percentlayout:1.0.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'com.google.android.gms:play-services-wearable:16.0.1'
     implementation 'com.google.android.gms:play-services-location:16.0.0'
     implementation 'com.squareup.okhttp:okhttp:2.2.0'
-    implementation 'com.android.support:recyclerview-v7:28.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0-alpha01'
     compileOnly 'com.google.android.wearable:wearable:2.4.0'
 }

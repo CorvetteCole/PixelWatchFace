@@ -2,11 +2,13 @@ package com.corvettecole.pixelwatchface;
 
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,6 +33,9 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
     private Switch showTemperatureSwitch;
     private Switch useCelsiusSwitch;
     private Switch showWeatherSwitch;
+    private Switch useDarkSkySwitch;
+
+    private Button setApiKey;
 
     private TextView timestampTextView;
     private TextView timeFormatTextView;
@@ -38,10 +43,14 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
     private TextView useCelsiusTextView;
     private TextView showWeatherTextView;
 
+    private EditText darkSkyKeyEditText;
+
     private boolean use24HourTime;
     private boolean showTemperature;
     private boolean useCelsius;
     private boolean showWeather;
+    private String darkSkyAPIKey;
+    private boolean useDarkSky;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
         showTemperatureSwitch = findViewById(R.id.temperatureSwitch);
         useCelsiusSwitch = findViewById(R.id.celsiusSwitch);
         showWeatherSwitch = findViewById(R.id.weatherSwitch);
+        useDarkSkySwitch = findViewById(R.id.useDarkSkySwitch);
 
         timestampTextView = findViewById(R.id.timestampTextView);
         timeFormatTextView = findViewById(R.id.timeFormatTextView);
@@ -61,14 +71,17 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
         useCelsiusTextView = findViewById(R.id.useCelsiusTextView);
         showWeatherTextView = findViewById(R.id.showWeatherTextView);
 
+        darkSkyKeyEditText = findViewById(R.id.darkSkyEditText);
+
+        setApiKey = findViewById(R.id.setApiKey);
+
 
         loadPreferences();
-        loadToggleStates();
+        loadSettingStates();
 
         use24HourTimeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                //use commit() instead of apply() to ensure data is written to sharedprefs before syncToWear runs
                 sharedPreferences.edit().putBoolean("use_24_hour_time", isChecked).apply();
                 syncToWear();
             }
@@ -77,7 +90,6 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
         showTemperatureSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                //use commit() instead of apply() to ensure data is written to sharedprefs before syncToWear runs
                 sharedPreferences.edit().putBoolean("show_temperature", isChecked).apply();
                 syncToWear();
             }
@@ -86,7 +98,6 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
         useCelsiusSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                //use commit() instead of apply() to ensure data is written to sharedprefs before syncToWear runs
                 sharedPreferences.edit().putBoolean("use_celsius", isChecked).apply();
                 syncToWear();
             }
@@ -95,11 +106,34 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
         showWeatherSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                //use commit() instead of apply() to ensure data is written to sharedprefs before syncToWear runs
                 sharedPreferences.edit().putBoolean("show_weather", isChecked).apply();
                 syncToWear();
             }
         });
+
+        useDarkSkySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                sharedPreferences.edit().putBoolean("use_dark_sky", isChecked).apply();
+                if (isChecked){
+                    darkSkyKeyEditText.setEnabled(true);
+                    setApiKey.setEnabled(true);
+                } else {
+                    darkSkyKeyEditText.setEnabled(false);
+                    setApiKey.setEnabled(false);
+                }
+                syncToWear();
+            }
+        });
+
+        setApiKey.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sharedPreferences.edit().putString("dark_sky_api_key", darkSkyKeyEditText.getText().toString()).apply();
+                syncToWear();
+            }
+        });
+
 
     }
 
@@ -108,6 +142,8 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
         showTemperature = sharedPreferences.getBoolean("show_temperature", false);
         useCelsius = sharedPreferences.getBoolean("use_celsius", false);
         showWeather = sharedPreferences.getBoolean("show_weather", false);
+        darkSkyAPIKey = sharedPreferences.getString("dark_sky_api_key", "");
+        useDarkSky = sharedPreferences.getBoolean("use_dark_sky", false);
     }
 
     private void syncToWear(){
@@ -130,6 +166,8 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
         dataMap.putBoolean("show_temperature", showTemperature);
         dataMap.putBoolean("use_celsius", useCelsius);
         dataMap.putBoolean("show_weather", showWeather);
+        dataMap.putString("dark_sky_api_key", darkSkyAPIKey);
+        dataMap.putBoolean("use_dark_sky", useDarkSky);
 
         putDataMapReq.getDataMap().putDataMap("com.corvettecole.pixelwatchface", dataMap);
         PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
@@ -152,11 +190,17 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
      */
 
 
-    private void loadToggleStates(){
+    private void loadSettingStates(){
         use24HourTimeSwitch.setChecked(use24HourTime);
         showTemperatureSwitch.setChecked(showTemperature);
         useCelsiusSwitch.setChecked(useCelsius);
         showWeatherSwitch.setChecked(showWeather);
+        useDarkSkySwitch.setChecked(useDarkSky);
+        if (!useDarkSky) {
+            darkSkyKeyEditText.setEnabled(false);
+            setApiKey.setEnabled(false);
+        }
+        darkSkyKeyEditText.setText(darkSkyAPIKey);
     }
 
     private void updateStatus(DataMap dataMap){
@@ -167,6 +211,7 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
             boolean mShowTemperature = dataMap.getBoolean("show_temperature");
             boolean mUseCelsius = dataMap.getBoolean("use_celsius");
             boolean mShowWeather = dataMap.getBoolean("show_weather");
+
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(timestamp);
 

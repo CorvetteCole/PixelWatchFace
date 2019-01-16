@@ -12,3 +12,5 @@
 .externalNativeBuild
 *.aab
 /.idea
+wearApp/src/main/res/values/keys.xml
+wearApp/src/main/res/values/keys.xml

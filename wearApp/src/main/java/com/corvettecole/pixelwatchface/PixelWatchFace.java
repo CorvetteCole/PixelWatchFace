@@ -25,9 +25,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.res.ResourcesCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.util.Log;
@@ -155,6 +155,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private String mSummary;
         private String mTimeZone;
         private Bitmap mIconBitmap;
+        private String mWeatherProvider;
 
         public String getTimeZone() {
             return mTimeZone;
@@ -182,39 +183,99 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         }
 
         public int getIconId() {
-            //#TODO use custom icons (not these)
-            // clear-day, clear-night, rain, snow, sleet, wind, fog, cloudy, partly-cloudy-day, or partly-cloudy-night.
+            //#TODO use custom icons so as to have fitting icons for every weather condition from any provider (see these: http://adamwhitcroft.com/climacons/)
             int iconId = R.drawable.clear_day;
-
-            if (mIcon.equals("clear-day")) {
-                iconId = R.drawable.clear_day;
-            }
-            else if (mIcon.equals("clear-night")) {
-                iconId = R.drawable.clear_night;
-            }
-            else if (mIcon.equals("rain")) {
-                iconId = R.drawable.rain;
-            }
-            else if (mIcon.equals("snow")) {
-                iconId = R.drawable.snow;
-            }
-            else if (mIcon.equals("sleet")) {
-                iconId = R.drawable.sleet;
-            }
-            else if (mIcon.equals("wind")) {
-                iconId = R.drawable.wind;
-            }
-            else if (mIcon.equals("fog")) {
-                iconId = R.drawable.fog;
-            }
-            else if (mIcon.equals("cloudy")) {
-                iconId = R.drawable.cloudy;
-            }
-            else if (mIcon.equals("partly-cloudy-day")) {
-                iconId = R.drawable.partly_cloudy;
-            }
-            else if (mIcon.equals("partly-cloudy-night")) {
-                iconId = R.drawable.cloudy_night;
+            if (getWeatherProvider().equalsIgnoreCase("DarkSky")) {
+                // clear-day, clear-night, rain, snow, sleet, wind, fog, cloudy, partly-cloudy-day, or partly-cloudy-night.
+                switch (mIcon) {
+                    case "clear-day":
+                        iconId = R.drawable.clear_day;
+                        break;
+                    case "clear-night":
+                        iconId = R.drawable.clear_night;
+                        break;
+                    case "rain":
+                        iconId = R.drawable.rain;
+                        break;
+                    case "snow":
+                        iconId = R.drawable.snow;
+                        break;
+                    case "sleet":
+                        iconId = R.drawable.sleet;
+                        break;
+                    case "wind":
+                        iconId = R.drawable.wind;
+                        break;
+                    case "fog":
+                        iconId = R.drawable.fog;
+                        break;
+                    case "cloudy":
+                        iconId = R.drawable.cloudy;
+                        break;
+                    case "partly-cloudy-day":
+                        iconId = R.drawable.partly_cloudy;
+                        break;
+                    case "partly-cloudy-night":
+                        iconId = R.drawable.cloudy_night;
+                        break;
+                }
+            } else if (getWeatherProvider().equalsIgnoreCase("OpenStreetMap")){
+                switch (mIcon) {
+                    case "01d":
+                        iconId = R.drawable.clear_day;
+                        break;
+                    case "01n":
+                        iconId = R.drawable.clear_night;
+                        break;
+                    case "02d":
+                        iconId = R.drawable.partly_cloudy;
+                        break;
+                    case "02n":
+                        iconId = R.drawable.cloudy_night;
+                        break;
+                    case "03d":
+                        iconId = R.drawable.partly_cloudy;
+                        break;
+                    case "03n":
+                        iconId = R.drawable.cloudy_night;
+                        break;
+                    case "04d":
+                        iconId = R.drawable.cloudy;
+                        break;
+                    case "04n":
+                        iconId = R.drawable.cloudy;
+                        break;
+                    case "09d":
+                        iconId = R.drawable.rain;
+                        break;
+                    case "09n":
+                        iconId = R.drawable.rain;
+                        break;
+                    case "10d":
+                        iconId = R.drawable.rain;
+                        break;
+                    case "10n":
+                        iconId = R.drawable.rain;
+                        break;
+                    case "11d":
+                        iconId = R.drawable.rain;
+                        break;
+                    case "11n":
+                        iconId = R.drawable.rain;
+                        break;
+                    case "13d":
+                        iconId = R.drawable.snow;
+                        break;
+                    case "13n":
+                        iconId = R.drawable.snow;
+                        break;
+                    case "50d":
+                        iconId = R.drawable.fog;
+                        break;
+                    case "50n":
+                        iconId = R.drawable.fog;
+                        break;
+                }
             }
             return iconId;
         }
@@ -268,6 +329,14 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         public void setSummary(String summary) {
             mSummary = summary;
         }
+
+        public String getWeatherProvider() {
+            return mWeatherProvider;
+        }
+
+        public void setWeatherProvider(String mWeatherProvider) {
+            this.mWeatherProvider = mWeatherProvider;
+        }
     }
 
     private class Engine extends CanvasWatchFaceService.Engine implements DataClient.OnDataChangedListener {
@@ -311,8 +380,14 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private final long ONE_MIN = 60000;
         private long mGetLastLocationCalled = 0;
 
+        private String mDarkSkyAPIKey;
+        private boolean mUseDarkSky;
+
+        private boolean mSubscriptionActive;
+
         SharedPreferences mSharedPreferences;
         private final int MY_PERMISSIONS_REQUEST_COARSE_LOCATION = 1;
+        private boolean forceWeatherUpdate = false;
 
         @Override
         public void onCreate(SurfaceHolder holder) {
@@ -502,7 +577,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             float mIconYOffset = mTimeYOffset - mTimeYOffset / 2 - wearOSBitmap.getHeight() - 16.0f;
             canvas.drawBitmap(wearOSBitmap, mIconXOffset, mIconYOffset, null);
 
-            if (shouldTimerBeRunning() && ((mShowTemperature || mShowWeather) && (mLastWeatherUpdateTime == 0 || (System.currentTimeMillis() - mLastWeatherUpdateTime >= 30 * ONE_MIN && System.currentTimeMillis() - mLastWeatherUpdateFailedTime > 5 * ONE_MIN)))) {
+            if (forceWeatherUpdate || (shouldTimerBeRunning() && ((mShowTemperature || mShowWeather) && (mLastWeatherUpdateTime == 0 || (System.currentTimeMillis() - mLastWeatherUpdateTime >= 30 * ONE_MIN && System.currentTimeMillis() - mLastWeatherUpdateFailedTime > 5 * ONE_MIN))))) {
+                forceWeatherUpdate = false;
 
                 mLastWeatherUpdateTime = 1;  //ensures that this code doesn't run every minute if mLastWeatherUpdateTime remains 0. Instead it will run every 30 min like usual.
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -527,7 +603,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                                     if (location != null) {
                                         // Logic to handle location object
                                         Log.d(TAG, "called getForecast(" + location.getLatitude() + "," + location.getLongitude() + ")");
-                                        getForecast(location.getLatitude(), location.getLongitude());
+                                        getForecast(location.getLatitude(), location.getLongitude(), mUseDarkSky);
                                     } else {
                                         mLastWeatherUpdateFailedTime = System.currentTimeMillis();
                                     }
@@ -581,11 +657,18 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
         }
 
-        private void getForecast(double latitude, double longitude) {
+        private void getForecast(double latitude, double longitude, boolean useDarkSky) {
             final String TAG = "getForecast";
-            String apiKey = getString(R.string.dark_sky_api_key);
-            String forecastUrl = "https://api.forecast.io/forecast/" +
-                    apiKey + "/" + latitude + "," + longitude;
+            String apiKey = getString(R.string.openstreetmap_api_key);
+            String forecastUrl = "https://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude + "&units=imperial&appid=" + apiKey;
+
+            if (useDarkSky) {
+                if (mDarkSkyAPIKey != null) {
+                    apiKey = mDarkSkyAPIKey;
+                }
+                forecastUrl = "https://api.forecast.io/forecast/" +
+                        apiKey + "/" + latitude + "," + longitude;
+            }
 
 
             if (isNetworkAvailable()){
@@ -610,18 +693,21 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                             Log.v(TAG, jsonData);
                             if (response.isSuccessful()) {
                                 try {
-                                    mLastWeather = getCurrentDetails(jsonData);
+                                    mLastWeather = getCurrentDetails(jsonData, mUseDarkSky);
                                     mLastWeatherUpdateTime = System.currentTimeMillis();
                                     invalidate();
                                 } catch (JSONException e) {
                                     Log.e(TAG, e.toString());
+                                    mLastWeatherUpdateFailedTime = System.currentTimeMillis();
                                 }
                             } else {
                                 Log.d(TAG, "Couldn't retrieve weather data: response not successful");
+                                mLastWeatherUpdateFailedTime = System.currentTimeMillis();
                             }
                         }
                         catch (IOException e) {
                             Log.e(TAG, e.toString());
+                            mLastWeatherUpdateFailedTime = System.currentTimeMillis();
                         }
                     }
                 });
@@ -632,24 +718,31 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
         }
 
-        private CurrentWeather getCurrentDetails(String jsonData) throws JSONException {
+        private CurrentWeather getCurrentDetails(String jsonData, Boolean useDarkSky) throws JSONException {
             final String TAG = "getCurrentDetails";
             JSONObject forecast = new JSONObject(jsonData);
-            String timezone = forecast.getString("timezone");
-            Log.i(TAG, "timezone: " + timezone);
-
-            JSONObject currently = forecast.getJSONObject("currently");
-
             CurrentWeather currentWeather = new CurrentWeather();
-            currentWeather.setHumidity(currently.getDouble("humidity"));
-            currentWeather.setTime(currently.getLong("time"));
-            currentWeather.setIcon(currently.getString("icon"));
-            currentWeather.setPrecipChance(currently.getDouble("precipProbability"));
-            currentWeather.setSummary(currently.getString("summary"));
-            currentWeather.setTemperature(currently.getDouble("temperature"));
-            currentWeather.setTimeZone(timezone);
-
-            Log.d(TAG, currentWeather.getFormattedTime());
+            if (useDarkSky) {
+                currentWeather.setWeatherProvider("DarkSky");
+                String timezone = forecast.getString("timezone");
+                JSONObject currently = forecast.getJSONObject("currently");
+                currentWeather.setHumidity(currently.getDouble("humidity"));
+                currentWeather.setTime(currently.getLong("time"));
+                currentWeather.setIcon(currently.getString("icon"));
+                currentWeather.setPrecipChance(currently.getDouble("precipProbability"));
+                currentWeather.setSummary(currently.getString("summary"));
+                currentWeather.setTemperature(currently.getDouble("temperature"));
+                currentWeather.setTimeZone(timezone);
+                Log.d(TAG, currentWeather.getFormattedTime());
+            } else {
+                currentWeather.setWeatherProvider("OpenStreetMap");
+                String tempIcon = forecast.getJSONArray("weather").toString();
+                JSONObject main = forecast.getJSONObject("main");
+                currentWeather.setHumidity(main.getDouble("humidity")/100); //adjust OpenStreetMap format to dark sky format with /100
+                currentWeather.setTemperature(main.getDouble("temp"));
+                Log.d(TAG, tempIcon.substring(tempIcon.indexOf("\"icon\":\"") + 8, tempIcon.indexOf("\"}]")));
+                currentWeather.setIcon(tempIcon.substring(tempIcon.indexOf("\"icon\":\"") + 8, tempIcon.indexOf("\"}]")));
+            }
 
             return currentWeather;
         }
@@ -678,6 +771,12 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 mShowTemperature = dataMap.getBoolean("show_temperature");
                 mUseCelsius = dataMap.getBoolean("use_celsius");
                 mShowWeather = dataMap.getBoolean("show_weather");
+                mDarkSkyAPIKey = dataMap.getString("dark_sky_api_key");
+                boolean useDarkSkyTemp = mUseDarkSky;
+                mUseDarkSky = dataMap.getBoolean("use_dark_sky", false);
+                if (useDarkSkyTemp != mUseDarkSky){  //detect if weather provider has changed
+                    forceWeatherUpdate = true;
+                }
 
                 requestPermissions();
 
@@ -710,6 +809,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             editor.putBoolean("show_temperature", mShowTemperature);
             editor.putBoolean("use_celsius", mUseCelsius);
             editor.putBoolean("show_weather", mShowWeather);
+
+            editor.putString("dark_sky_api_key", mDarkSkyAPIKey);
+            editor.putBoolean("use_dark_sky", mUseDarkSky);
             editor.apply();
         }
 
@@ -718,6 +820,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mShowTemperature = sharedPreferences.getBoolean("show_temperature", false);
             mUseCelsius = sharedPreferences.getBoolean("use_celsius", false);
             mShowWeather = sharedPreferences.getBoolean("show_weather", false);
+
+            mDarkSkyAPIKey = sharedPreferences.getString("dark_sky_api_key", "");
+            mUseDarkSky = sharedPreferences.getBoolean("use_dark_sky", false);
         }
 
         private int getHour(Calendar mCalendar){

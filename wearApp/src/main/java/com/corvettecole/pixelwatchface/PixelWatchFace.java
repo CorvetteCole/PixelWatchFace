@@ -38,12 +38,15 @@ import android.view.WindowInsets;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
@@ -303,6 +306,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private boolean mShowWeather;
 
         private long mLastWeatherUpdateTime = 0;
+        private long mLastWeatherUpdateFailedTime = 0;
         private CurrentWeather mLastWeather;
         private final long ONE_MIN = 60000;
         private long mGetLastLocationCalled = 0;
@@ -494,11 +498,11 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
 
             //draw wearOS icon
-            float mIconXOffset = bounds.exactCenterX() - (wearOSBitmap.getWidth() / 2);
+            float mIconXOffset = bounds.exactCenterX() - (wearOSBitmap.getWidth() / 2.0f);
             float mIconYOffset = mTimeYOffset - mTimeYOffset / 2 - wearOSBitmap.getHeight() - 16.0f;
             canvas.drawBitmap(wearOSBitmap, mIconXOffset, mIconYOffset, null);
 
-            if ((mShowTemperature || mShowWeather) && (mLastWeatherUpdateTime == 0 || System.currentTimeMillis() - mLastWeatherUpdateTime >= 30 * ONE_MIN)) {
+            if (shouldTimerBeRunning() && ((mShowTemperature || mShowWeather) && (mLastWeatherUpdateTime == 0 || (System.currentTimeMillis() - mLastWeatherUpdateTime >= 30 * ONE_MIN && System.currentTimeMillis() - mLastWeatherUpdateFailedTime > 5 * ONE_MIN)))) {
 
                 mLastWeatherUpdateTime = 1;  //ensures that this code doesn't run every minute if mLastWeatherUpdateTime remains 0. Instead it will run every 30 min like usual.
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -524,6 +528,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                                         // Logic to handle location object
                                         Log.d(TAG, "called getForecast(" + location.getLatitude() + "," + location.getLongitude() + ")");
                                         getForecast(location.getLatitude(), location.getLongitude());
+                                    } else {
+                                        mLastWeatherUpdateFailedTime = System.currentTimeMillis();
                                     }
                                 }
                             });
@@ -566,12 +572,13 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         Log.d(TAG, dataMap.toString());
                         dataMap = dataMap.getDataMap("com.corvettecole.pixelwatchface");
                         Log.d(TAG, dataMap.toString());
+                        updateSettings(dataMap);
+                        syncToPhone();
                     }
                 } else if (event.getType() == DataEvent.TYPE_DELETED) {
                     // DataItem deleted
                 }
             }
-            updateSettings(dataMap);
         }
 
         private void getForecast(double latitude, double longitude) {
@@ -593,6 +600,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                     @Override
                     public void onFailure(Request request, IOException e) {
                         Log.d(TAG, "Couldn't retrieve weather data");
+                        mLastWeatherUpdateFailedTime = System.currentTimeMillis();
                     }
 
                     @Override
@@ -756,6 +764,27 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 long delayMs = INTERACTIVE_UPDATE_RATE_MS
                         - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
                 mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
+            }
+        }
+
+        private void syncToPhone(){
+            String TAG = "syncToPhone";
+            DataClient mDataClient = Wearable.getDataClient(getApplicationContext());
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/watch_status");
+
+            DataMap dataMap = new DataMap();
+            dataMap.putLong("wear_timestamp", System.currentTimeMillis());
+            dataMap.putBoolean("use_24_hour_time", mUse24HourTime);
+            dataMap.putBoolean("show_temperature", mShowTemperature);
+            dataMap.putBoolean("use_celsius", mUseCelsius);
+            dataMap.putBoolean("show_weather", mShowWeather);
+
+            putDataMapReq.getDataMap().putDataMap("com.corvettecole.pixelwatchface", dataMap);
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            putDataReq.setUrgent();
+            Task<DataItem> putDataTask = mDataClient.putDataItem(putDataReq);
+            if (putDataTask.isSuccessful()){
+                Log.d(TAG, "Current stats synced to phone");
             }
         }
     }

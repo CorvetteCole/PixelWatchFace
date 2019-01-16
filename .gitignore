@@ -6,7 +6,8 @@
 /.idea/modules.xml
 /.idea/workspace.xml
 .DS_Store
-/build
+/phoneApp/build
+/wearApp/build
 /captures
 .externalNativeBuild
 *.aab

@@ -67,9 +67,6 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
 /**
- * Digital watch face with seconds. In ambient mode, the seconds aren't displayed. On devices with
- * low-bit ambient mode, the text is drawn without anti-aliasing in ambient mode.
- * <p>
  * Important Note: Because watch face apps do not have a default Activity in
  * their project, you will need to set your Configurations to
  * "Do not launch Activity" for both the Wear and/or Application modules. If you
@@ -79,10 +76,10 @@ import androidx.core.content.res.ResourcesCompat;
  */
 public class PixelWatchFace extends CanvasWatchFaceService {
     /**
-     * Update rate in milliseconds for interactive mode. Defaults to one second
-     * because the watch face needs to update seconds in interactive mode.
+     * Update rate in milliseconds for interactive mode. Defaults to one minute
+     * because the watch face needs to update minutes in interactive mode.
      */
-    private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.SECONDS.toMillis(1);
+    private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
 
     /**
      * Handler message id for updating the time periodically in interactive mode.
@@ -144,9 +141,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     }
 
 
-    /**
-     * Created by Ken W. Alger on 7 Jan 2015.
-     */
     public class CurrentWeather {
         private String mIcon;
         private long mTime;
@@ -515,6 +509,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             updateTimer();
         }
 
+
         @SuppressLint("DefaultLocale")
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
@@ -573,6 +568,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
 
 
+            //
+
+
             //draw wearOS icon
             float mIconXOffset = bounds.exactCenterX() - (wearOSBitmap.getWidth() / 2.0f);
             float mIconYOffset = mTimeYOffset - mTimeYOffset / 2 - wearOSBitmap.getHeight() - 16.0f;
@@ -612,6 +610,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                             });
             }
         }
+
+
+
 
         private float computeXOffset(String text, Paint paint, Rect watchBounds) {
             float centerX = watchBounds.exactCenterX();

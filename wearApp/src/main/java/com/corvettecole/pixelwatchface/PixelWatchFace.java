@@ -25,15 +25,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
-
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -62,8 +58,13 @@ import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 
 /**
  * Digital watch face with seconds. In ambient mode, the seconds aren't displayed. On devices with
@@ -667,7 +668,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                     apiKey = mDarkSkyAPIKey;
                 }
                 forecastUrl = "https://api.forecast.io/forecast/" +
-                        apiKey + "/" + latitude + "," + longitude;
+                        apiKey + "/" + latitude + "," + longitude + "?lang=" + Locale.getDefault().getLanguage();
+                Log.d(TAG, "forecastURL: " + "https://api.forecast.io/forecast/" +
+                        apiKey + "/" + latitude + "," + longitude + "?lang=" + Locale.getDefault().getLanguage());
             }
 
 

@@ -6,8 +6,10 @@ A minimalistic and open-source watchface for WearOS
 - Replace icons with the icons from here: 
 - Correspond all of those icons with Dark Sky weather codes
 - Try and match as many OpenStreetMap weather codes to icons as possible
-- Add summary for Dark Sky users that will show the "summary" from dark sky on the watch face (when retrieving it use the user's language code on their watch to get the right language)
+- Add summary for Dark Sky users that will show the "summary" from dark sky on the watch face
 - Add an "At a glance" style widget or complication that shows calendar data
+### Done
+- Retrieve the Dark Sky summary in the user's language
 ## Phone App
 - Add setting to let the user pick how often the watch checks for weather (30 min at the least, 6 hours at the most or similar)
 - Add setting to toggle the Dark Sky summary

@@ -15,9 +15,16 @@ A minimalistic and open-source watchface for WearOS
 - Add setting to toggle the Dark Sky summary
 - Add setting to toggle "At a glance" stuff
 - Create an actual UI for the companion app that looks nice for the settings (maybe show a rough preview of the watch screen at the top and then update that when you change settings)
+- Displaying preview of watch face:
+  - Have the watch send its watchbounds in the oncreate method
+  - Have the phone check for this info and use it in shaping the preview window
+  - Sync settings from the watch vs sharedpreferences on the phone
+  
+
 - Add subtle explanations that explain what extra features using the Dark Sky API gives you
 - Add yearly subscription that covers the cost of Dark Sky API calls for a year 
 If the watch checked the Dark Sky weather API every 30 minutes for 365 days it would cost $1.752 USD. Google takes a 30% cut so 1.752 = x - .3x.  x = $2.503 USD as the minimum yearly subscription cost. If I make that a simple $3/year Google would take $0.9 leaving $2.1 left over. The API costs would take $1.752 from that meaning I would make $0.348 per year per person. That is alright I guess.
 - Add donation options for supporting me and my projects
 ## Both
 - Add crowdin localization to the phone app, play store listing, and watch app where possible
+- Add weather.gov as a source for US users (https://api.weather.gov/points/38.0301,-84.4988/forecast for example)

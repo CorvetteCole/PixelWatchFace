@@ -1,9 +1,12 @@
 package com.corvettecole.pixelwatchface;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -35,8 +38,6 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
     private Switch showWeatherSwitch;
     private Switch useDarkSkySwitch;
 
-    private Button setApiKey;
-
     private TextView timestampTextView;
     private TextView timeFormatTextView;
     private TextView showTemperatureTextView;
@@ -44,6 +45,8 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
     private TextView showWeatherTextView;
 
     private EditText darkSkyKeyEditText;
+
+    private Button debugButton;
 
     private boolean use24HourTime;
     private boolean showTemperature;
@@ -73,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
 
         darkSkyKeyEditText = findViewById(R.id.darkSkyEditText);
 
-        setApiKey = findViewById(R.id.setApiKey);
+        debugButton = findViewById(R.id.launchDebug);
 
 
         loadPreferences();
@@ -115,22 +118,34 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 sharedPreferences.edit().putBoolean("use_dark_sky", isChecked).apply();
-                if (isChecked){
-                    darkSkyKeyEditText.setEnabled(true);
-                    setApiKey.setEnabled(true);
-                } else {
-                    darkSkyKeyEditText.setEnabled(false);
-                    setApiKey.setEnabled(false);
-                }
+                darkSkyKeyEditText.setEnabled(isChecked);
                 syncToWear();
             }
         });
 
-        setApiKey.setOnClickListener(new View.OnClickListener() {
+        darkSkyKeyEditText.addTextChangedListener(new TextWatcher() {
             @Override
-            public void onClick(View view) {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
                 sharedPreferences.edit().putString("dark_sky_api_key", darkSkyKeyEditText.getText().toString()).apply();
                 syncToWear();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        debugButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent debugIntent = new Intent(MainActivity.this, DebugActivity.class);
+                startActivity(debugIntent);
             }
         });
 
@@ -198,7 +213,6 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
         useDarkSkySwitch.setChecked(useDarkSky);
         if (!useDarkSky) {
             darkSkyKeyEditText.setEnabled(false);
-            setApiKey.setEnabled(false);
         }
         darkSkyKeyEditText.setText(darkSkyAPIKey);
     }

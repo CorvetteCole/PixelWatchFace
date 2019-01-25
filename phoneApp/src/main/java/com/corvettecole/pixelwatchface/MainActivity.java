@@ -29,7 +29,7 @@ import com.google.android.gms.wearable.Wearable;
 
 import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity implements DataClient.OnDataChangedListener {
+public class MainActivity extends AppCompatActivity /*implements DataClient.OnDataChangedListener*/ {
 
     private SharedPreferences sharedPreferences;
     private Switch use24HourTimeSwitch;
@@ -38,15 +38,7 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
     private Switch showWeatherSwitch;
     private Switch useDarkSkySwitch;
 
-    private TextView timestampTextView;
-    private TextView timeFormatTextView;
-    private TextView showTemperatureTextView;
-    private TextView useCelsiusTextView;
-    private TextView showWeatherTextView;
-
     private EditText darkSkyKeyEditText;
-
-    private Button debugButton;
 
     private boolean use24HourTime;
     private boolean showTemperature;
@@ -60,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        Wearable.getDataClient(getApplicationContext()).addListener(this);
+        //Wearable.getDataClient(getApplicationContext()).addListener(this);
 
         use24HourTimeSwitch = findViewById(R.id.timeFormatSwitch);
         showTemperatureSwitch = findViewById(R.id.temperatureSwitch);
@@ -68,16 +60,7 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
         showWeatherSwitch = findViewById(R.id.weatherSwitch);
         useDarkSkySwitch = findViewById(R.id.useDarkSkySwitch);
 
-        timestampTextView = findViewById(R.id.timestampTextView);
-        timeFormatTextView = findViewById(R.id.timeFormatTextView);
-        showTemperatureTextView = findViewById(R.id.showTemperatureTextView);
-        useCelsiusTextView = findViewById(R.id.useCelsiusTextView);
-        showWeatherTextView = findViewById(R.id.showWeatherTextView);
-
         darkSkyKeyEditText = findViewById(R.id.darkSkyEditText);
-
-        debugButton = findViewById(R.id.launchDebug);
-
 
         loadPreferences();
         loadSettingStates();
@@ -118,7 +101,6 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 sharedPreferences.edit().putBoolean("use_dark_sky", isChecked).apply();
-                darkSkyKeyEditText.setEnabled(isChecked);
                 syncToWear();
             }
         });
@@ -140,16 +122,6 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
 
             }
         });
-
-        debugButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent debugIntent = new Intent(MainActivity.this, DebugActivity.class);
-                startActivity(debugIntent);
-            }
-        });
-
-
     }
 
     private void loadPreferences(){
@@ -211,9 +183,6 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
         useCelsiusSwitch.setChecked(useCelsius);
         showWeatherSwitch.setChecked(showWeather);
         useDarkSkySwitch.setChecked(useDarkSky);
-        if (!useDarkSky) {
-            darkSkyKeyEditText.setEnabled(false);
-        }
         darkSkyKeyEditText.setText(darkSkyAPIKey);
     }
 
@@ -229,11 +198,7 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(timestamp);
 
-            timestampTextView.setText("last synced: " + timestamp + "ms or " + calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE));
-            timeFormatTextView.setText("use_24_hour_time: " + mUse24HourTime);
-            showTemperatureTextView.setText("show_temperature: " + mShowTemperature);
-            useCelsiusTextView.setText("use_celsius: " + mUseCelsius);
-            showWeatherTextView.setText("show_weather: " + mShowWeather);
+
 
         } catch (Exception e){
             Log.e(TAG, "error processing DataMap");
@@ -241,33 +206,33 @@ public class MainActivity extends AppCompatActivity implements DataClient.OnData
         }
     }
 
-    @Override
-    public void onDataChanged(DataEventBuffer dataEvents) {
-        String TAG = "onDataChanged";
-        Log.d(TAG, "Data changed");
-        DataMap dataMap = new DataMap();
-        for (DataEvent event : dataEvents) {
-            if (event.getType() == DataEvent.TYPE_CHANGED) {
-                // DataItem changed
-                DataItem item = event.getDataItem();
-                Log.d(TAG, "DataItem uri: " + item.getUri());
-                if (item.getUri().getPath().compareTo("/watch_status") == 0) {
-                    Log.d(TAG, "Companion app changed a setting!");
-                    dataMap = DataMapItem.fromDataItem(item).getDataMap();
-                    Log.d(TAG, dataMap.toString());
-                    dataMap = dataMap.getDataMap("com.corvettecole.pixelwatchface");
-                    Log.d(TAG, dataMap.toString());
-                }
-            } else if (event.getType() == DataEvent.TYPE_DELETED) {
-                // DataItem deleted
-            }
-        }
-        updateStatus(dataMap);
-    }
+//    @Override
+//    public void onDataChanged(DataEventBuffer dataEvents) {
+//        String TAG = "onDataChanged";
+//        Log.d(TAG, "Data changed");
+//        DataMap dataMap = new DataMap();
+//        for (DataEvent event : dataEvents) {
+//            if (event.getType() == DataEvent.TYPE_CHANGED) {
+//                // DataItem changed
+//                DataItem item = event.getDataItem();
+//                Log.d(TAG, "DataItem uri: " + item.getUri());
+//                if (item.getUri().getPath().compareTo("/watch_status") == 0) {
+//                    Log.d(TAG, "Companion app changed a setting!");
+//                    dataMap = DataMapItem.fromDataItem(item).getDataMap();
+//                    Log.d(TAG, dataMap.toString());
+//                    dataMap = dataMap.getDataMap("com.corvettecole.pixelwatchface");
+//                    Log.d(TAG, dataMap.toString());
+//                }
+//            } else if (event.getType() == DataEvent.TYPE_DELETED) {
+//                // DataItem deleted
+//            }
+//        }
+//        updateStatus(dataMap);
+//    }
 
     @Override
     public void onDestroy() {
-        Wearable.getDataClient(getApplicationContext()).removeListener(this);
+        //Wearable.getDataClient(getApplicationContext()).removeListener(this);
         super.onDestroy();
     }
 }

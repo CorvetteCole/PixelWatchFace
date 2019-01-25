@@ -651,7 +651,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         dataMap = dataMap.getDataMap("com.corvettecole.pixelwatchface");
                         Log.d(TAG, dataMap.toString());
                         updateSettings(dataMap);
-                        syncToPhone();
+                        //syncToPhone();
                     }
                 } else if (event.getType() == DataEvent.TYPE_DELETED) {
                     // DataItem deleted
@@ -876,6 +876,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
         }
 
+        // Class for debugging
+        /*
         private void syncToPhone(){
             String TAG = "syncToPhone";
             DataClient mDataClient = Wearable.getDataClient(getApplicationContext());
@@ -896,6 +898,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 Log.d(TAG, "Current stats synced to phone");
             }
         }
+        */
+
     }
 
 

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
-                                                   xmlns:tools="http://schemas.android.com/tools"
-                                                   android:layout_width="match_parent"
-                                                   android:layout_height="match_parent"
-                                                   tools:context=".MainActivity">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
 
 
     <Switch
@@ -14,7 +14,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="use_24_hour_time"
+        android:text="Use 24 hour time"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -26,7 +26,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="show_temperature"
+        android:text="Show the temperature"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/timeFormatSwitch" />
@@ -38,7 +38,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="use_celsius"
+        android:text="Use Celsius instead of Fahrenheit"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/temperatureSwitch" />
@@ -50,10 +50,22 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="show_weather"
+        android:text="Show the current weather as an icon"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/celsiusSwitch" />
+
+    <TextView
+        android:id="@+id/darkSkyExplanation"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="Dark Sky is a more accurate and feature rich weather provider. Dark Sky users get more icons, as well as more planned features for the future. To use Dark Sky, you can either purchase the subscription here for $2.70ish/year or you can sign up for a free Dark Sky developer account and paste your API key below."
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/weatherSwitch" />
 
     <Switch
         android:id="@+id/useDarkSkySwitch"
@@ -62,10 +74,10 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="use_dark_sky"
+        android:text="Use the Dark Sky to provide weather data instead of OpenWeatherMap"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/weatherSwitch" />
+        app:layout_constraintTop_toBottomOf="@+id/darkSkyExplanation" />
 
     <EditText
         android:id="@+id/darkSkyEditText"
@@ -75,25 +87,10 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:ems="10"
+        android:hint="@string/dark_sky_api_key_hint"
         android:inputType="textPersonName"
-        android:text="API key from your Dark Sky developer account"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/useDarkSkySwitch"/>
-
-
-    <Button
-        android:id="@+id/launchDebug"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:text="Debug"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/darkSkyEditText" />
+        app:layout_constraintTop_toBottomOf="@+id/useDarkSkySwitch" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

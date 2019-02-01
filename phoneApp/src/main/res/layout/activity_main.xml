@@ -62,7 +62,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="Dark Sky is a more accurate and feature rich weather provider. Dark Sky users get more icons, as well as more planned features for the future. To use Dark Sky, you can either purchase the subscription here for $2.70ish/year or you can sign up for a free Dark Sky developer account and paste your API key below."
+        android:text="Dark Sky is a more accurate and feature rich weather provider. Dark Sky users get more icons, as well as more planned features for the future. To use Dark Sky, sign up for a free Dark Sky developer account and paste your API key below."
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/weatherSwitch" />

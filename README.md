@@ -1,6 +1,7 @@
 # PixelWatchFace
 A minimalistic and open-source watchface for WearOS
 
+
 # TODO
 ## Watch App
 - Replace icons with the icons from here: 
@@ -28,3 +29,6 @@ If the watch checked the Dark Sky weather API every 30 minutes for 365 days it w
 ## Both
 - Add crowdin localization to the phone app, play store listing, and watch app where possible
 - Add weather.gov as a source for US users (https://api.weather.gov/points/38.0301,-84.4988/forecast for example)
+
+Play Store link: https://play.google.com/store/apps/details?id=com.corvettecole.pixelwatchface
+

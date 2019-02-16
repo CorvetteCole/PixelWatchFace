@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Pixel Watch Face</string>
+    <string name="title_activity_debug">DebugActivity</string>
+    <string name="dark_sky_api_key_hint">API key from your Dark Sky developer account</string>
+</resources>

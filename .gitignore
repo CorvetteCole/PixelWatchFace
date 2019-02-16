@@ -6,8 +6,13 @@
 /.idea/modules.xml
 /.idea/workspace.xml
 .DS_Store
-/build
+/phoneApp/build
+/wearApp/build
 /captures
 .externalNativeBuild
 *.aab
 /.idea
+wearApp/src/main/res/values/keys.xml
+wearApp/src/main/res/values/keys.xml
+wearApp/src/main/res/values/secrets.xml
+phoneApp/src/main/res/values/secrets.xml

@@ -368,6 +368,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private boolean mShowTemperature;
         private boolean mUseCelsius;
         private boolean mShowWeather;
+        private boolean mUseEuropeanDateFormat;
+        private boolean mShowTemperatureDecimalPoint;
 
         private long mLastWeatherUpdateTime = 0;
         private long mLastWeatherUpdateFailedTime = 0;
@@ -529,9 +531,15 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             float mTimeXOffset = computeXOffset(mTimeText, mTimePaint, bounds);
             float mTimeYOffset = computeTimeYOffset(mTimeText, mTimePaint, bounds);
             canvas.drawText(mTimeText, mTimeXOffset, mTimeYOffset, mTimePaint);
+            String dateText;
+            if (mUseEuropeanDateFormat){
+                dateText = String.format("%.3s, %d %.3s", android.text.format.DateFormat.format("EEEE", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH),
+                        android.text.format.DateFormat.format("MMMM", mCalendar));
+            } else {
+                dateText = String.format("%.3s, %.3s %d", android.text.format.DateFormat.format("EEEE", mCalendar),
+                        android.text.format.DateFormat.format("MMMM", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH));
+            }
 
-            String dateText = String.format("%.3s %.3s %d", android.text.format.DateFormat.format("EEEE", mCalendar),
-                    android.text.format.DateFormat.format("MMMM", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH));
             String temperatureText = "";
             float totalLength;
             float centerX = bounds.exactCenterX();
@@ -540,9 +548,17 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             float bitmapMargin = 20.0f;
             if (mShowTemperature && mLastWeather != null){
                     if (mUseCelsius) {
-                        temperatureText = String.format("%.1f °C", convertToCelsius(mLastWeather.getTemperature()));
+                        if (mShowTemperatureDecimalPoint){
+                            temperatureText = String.format("%2.1f °C", convertToCelsius(mLastWeather.getTemperature()));
+                        } else {
+                            temperatureText = String.format("%2f °C", convertToCelsius(mLastWeather.getTemperature()));
+                        }
                     } else {
-                        temperatureText = String.format("%.1f °F", mLastWeather.getTemperature());
+                        if (mShowTemperatureDecimalPoint){
+                            temperatureText = String.format("%3.1f °F", mLastWeather.getTemperature());
+                        } else {
+                            temperatureText = String.format("%3f °F", mLastWeather.getTemperature());
+                        }
                     }
                     if (mShowWeather){
                         totalLength = dateTextLength + bitmapMargin + mLastWeather.getIconBitmap().getWidth() + mDatePaint.measureText(temperatureText);
@@ -776,6 +792,11 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 mUseCelsius = dataMap.getBoolean("use_celsius");
                 mShowWeather = dataMap.getBoolean("show_weather");
                 mDarkSkyAPIKey = dataMap.getString("dark_sky_api_key");
+
+                mUseEuropeanDateFormat = dataMap.getBoolean("use_european_date");
+                mShowTemperatureDecimalPoint = dataMap.getBoolean("show_temperature_decimal");
+
+
                 boolean useDarkSkyTemp = mUseDarkSky;
                 mUseDarkSky = dataMap.getBoolean("use_dark_sky", false);
                 if (useDarkSkyTemp != mUseDarkSky){  //detect if weather provider has changed
@@ -813,6 +834,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             editor.putBoolean("show_temperature", mShowTemperature);
             editor.putBoolean("use_celsius", mUseCelsius);
             editor.putBoolean("show_weather", mShowWeather);
+            editor.putBoolean("use_european_date", mUseEuropeanDateFormat);
+            editor.putBoolean("show_temperature_decimal", mShowTemperatureDecimalPoint);
+
 
             editor.putString("dark_sky_api_key", mDarkSkyAPIKey);
             editor.putBoolean("use_dark_sky", mUseDarkSky);
@@ -824,6 +848,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mShowTemperature = sharedPreferences.getBoolean("show_temperature", false);
             mUseCelsius = sharedPreferences.getBoolean("use_celsius", false);
             mShowWeather = sharedPreferences.getBoolean("show_weather", false);
+
+            mUseEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
+            mShowTemperatureDecimalPoint = sharedPreferences.getBoolean("show_temperature_decimal", false);
 
             mDarkSkyAPIKey = sharedPreferences.getString("dark_sky_api_key", "");
             mUseDarkSky = sharedPreferences.getBoolean("use_dark_sky", false);

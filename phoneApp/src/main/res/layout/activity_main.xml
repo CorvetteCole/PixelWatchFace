@@ -55,6 +55,30 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/celsiusSwitch" />
 
+    <Switch
+        android:id="@+id/dateFormatSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="Use European date format (Thu 14 Feb)"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/weatherSwitch" />
+
+    <Switch
+        android:id="@+id/temperaturePrecisionSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="Show temperature to 1 decimal place"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dateFormatSwitch" />
+
     <TextView
         android:id="@+id/darkSkyExplanation"
         android:layout_width="0dp"
@@ -65,7 +89,7 @@
         android:text="Dark Sky is a more accurate and feature rich weather provider. Dark Sky users get more icons, as well as more planned features for the future. To use Dark Sky, sign up for a free Dark Sky developer account and paste your API key below."
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/weatherSwitch" />
+        app:layout_constraintTop_toBottomOf="@+id/temperaturePrecisionSwitch" />
 
     <Switch
         android:id="@+id/useDarkSkySwitch"
@@ -74,7 +98,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="Use the Dark Sky to provide weather data instead of OpenWeatherMap"
+        android:text="Use Dark Sky to provide weather data instead of OpenWeatherMap"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/darkSkyExplanation" />

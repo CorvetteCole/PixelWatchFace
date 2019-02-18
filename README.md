@@ -4,13 +4,34 @@ A minimalistic and open-source watchface for WearOS
 
 # TODO
 ## Watch App
+Current planned features:
+- New and more icons to match all of the different weather types available from Dark Sky
+- Built-in $3ish subscription if you don't want to use a Dark Sky API key and/or want to support the development of the app
+- Option to show the Dark Sky summary at the bottom of the watch face
+- Option to show calendar events similar to the "At a glance" widget on pixel devices
+- Option to adjust weather update interval (currently defaults to 30 min)
+
+Edit (features recommended by you guys):
+- Option to enable an ambient mode with white outlined text
+- Add more spacing between clock and time, increase sizes if possible
+- Move time down a bit to be more centered
+- Option to display watch battery
+- Enable burn in protection for ambient mode
+- Add methods to support development
+- Option to put complications beneath the weather readout
+- Option to toggle display of WearOS logo
+- Option to display heartbeat
+- Show upcoming alarms
 - Replace icons with the icons from here: 
 - Correspond all of those icons with Dark Sky weather codes
 - Try and match as many OpenStreetMap weather codes to icons as possible
 - Add summary for Dark Sky users that will show the "summary" from dark sky on the watch face
 - Add an "At a glance" style widget or complication that shows calendar data
 ### Done
+- Add comma after day to match Pixel phones
 - Retrieve the Dark Sky summary in the user's language
+- Option for European date style (Thu 14 Feb)
+- Option to remove the temperature decimal point
 ## Phone App
 - Add setting to let the user pick how often the watch checks for weather (30 min at the least, 6 hours at the most or similar)
 - Add setting to toggle the Dark Sky summary

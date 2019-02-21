@@ -549,15 +549,15 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             if (mShowTemperature && mLastWeather != null){
                     if (mUseCelsius) {
                         if (mShowTemperatureDecimalPoint){
-                            temperatureText = String.format("%2.1f °C", convertToCelsius(mLastWeather.getTemperature()));
+                            temperatureText = String.format("%.1f °C", convertToCelsius(mLastWeather.getTemperature()));
                         } else {
-                            temperatureText = String.format("%2f °C", convertToCelsius(mLastWeather.getTemperature()));
+                            temperatureText = String.format("%d °C", Math.round(convertToCelsius(mLastWeather.getTemperature())));
                         }
                     } else {
                         if (mShowTemperatureDecimalPoint){
-                            temperatureText = String.format("%3.1f °F", mLastWeather.getTemperature());
+                            temperatureText = String.format("%.1f °F", mLastWeather.getTemperature());
                         } else {
-                            temperatureText = String.format("%3f °F", mLastWeather.getTemperature());
+                            temperatureText = String.format("%d °F", Math.round(mLastWeather.getTemperature()));
                         }
                     }
                     if (mShowWeather){

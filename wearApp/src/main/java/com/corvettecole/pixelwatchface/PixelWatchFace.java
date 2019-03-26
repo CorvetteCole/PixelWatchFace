@@ -34,15 +34,12 @@ import android.view.WindowInsets;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
-import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
@@ -346,7 +343,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
         };
         private FusedLocationProviderClient mFusedLocationClient;
-        private final Bitmap wearOSBitmap = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo));
+        private final Bitmap mWearOSBitmap = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo));
+        private final Bitmap mWearOSBitmapAmbient = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo_ambient));
         private boolean mRegisteredTimeZoneReceiver = false;
         private Paint mBackgroundPaint;
         private Paint mTimePaint;
@@ -370,6 +368,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private boolean mShowWeather;
         private boolean mUseEuropeanDateFormat;
         private boolean mShowTemperatureDecimalPoint;
+        private boolean mShowInfoBarInAmbient;
 
         private long mLastWeatherUpdateTime = 0;
         private long mLastWeatherUpdateFailedTime = 0;
@@ -413,10 +412,13 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mTimePaint.setAntiAlias(true);
             mTimePaint.setColor(
                     ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
+            mTimePaint.setStrokeWidth(2f);
+
             mDatePaint = new Paint();
             mDatePaint.setTypeface(mProductSans);
             mDatePaint.setAntiAlias(true);
             mDatePaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
+            mDatePaint.setStrokeWidth(1f);
 
             // Loads locally saved settings values
             loadPreferences(mSharedPreferences);
@@ -506,6 +508,22 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 mDatePaint.setAntiAlias(!inAmbientMode);
             }
 
+            if (inAmbientMode){
+                mTimePaint.setStyle(Paint.Style.STROKE);
+                if (mShowInfoBarInAmbient){
+                    mDatePaint.setStyle(Paint.Style.STROKE);
+                } else {
+                    mDatePaint.setColor(Color.BLACK);
+                }
+            } else {
+                mTimePaint.setStyle(Paint.Style.FILL);
+                if (mShowInfoBarInAmbient){
+                    mDatePaint.setStyle(Paint.Style.FILL);
+                } else {
+                    mDatePaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
+                }
+            }
+
             // Whether the timer should be running depends on whether we're visible (as well as
             // whether we're in ambient mode), so we may need to start or stop the timer.
             updateTimer();
@@ -516,14 +534,13 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
             final String TAG = "onDraw";
-            // Draw the background.
-            if (isInAmbientMode()) {
-                canvas.drawColor(Color.BLACK);
-            } else {
-                canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
-            }
 
-            // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
+            // Draw the background.
+            canvas.drawColor(Color.BLACK);
+            // canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint); does some thing
+
+
+            // Draw H:MM
             long now = System.currentTimeMillis();
             mCalendar.setTimeInMillis(now);
 
@@ -563,7 +580,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                     if (mShowWeather){
                         totalLength = dateTextLength + bitmapMargin + mLastWeather.getIconBitmap().getWidth() + mDatePaint.measureText(temperatureText);
                     } else {
-                        totalLength = dateTextLength + mDatePaint.measureText(temperatureText);
+                        totalLength = dateTextLength + bitmapMargin + mDatePaint.measureText(temperatureText);
                     }
             } else if (!mShowTemperature && mShowWeather && mLastWeather != null){
                 totalLength = dateTextLength + bitmapMargin/2 + mLastWeather.getIconBitmap().getWidth();
@@ -574,13 +591,15 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             float infoBarXOffset = centerX - (totalLength / 2.0f);
             float infoBarYOffset = computeInfoBarYOffset(dateText, mDatePaint);
 
-            canvas.drawText(dateText, infoBarXOffset, mTimeYOffset + infoBarYOffset, mDatePaint);
-            if (mShowWeather && mLastWeather != null){
-                canvas.drawBitmap(mLastWeather.getIconBitmap(), infoBarXOffset + (dateTextLength + bitmapMargin/2),
-                        mTimeYOffset + infoBarYOffset - mLastWeather.getIconBitmap().getHeight() + 6.0f, null);
-                canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mLastWeather.getIconBitmap().getWidth()), mTimeYOffset + infoBarYOffset, mDatePaint);
-            } else if (!mShowWeather && mShowTemperature && mLastWeather != null){
-                canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin), mTimeYOffset + infoBarYOffset, mDatePaint);
+            if (mShowInfoBarInAmbient || !mAmbient) {
+                canvas.drawText(dateText, infoBarXOffset, mTimeYOffset + infoBarYOffset, mDatePaint);
+                if (mShowWeather && mLastWeather != null) {
+                    canvas.drawBitmap(mLastWeather.getIconBitmap(), infoBarXOffset + (dateTextLength + bitmapMargin / 2),
+                            mTimeYOffset + infoBarYOffset - mLastWeather.getIconBitmap().getHeight() + 6.0f, null);
+                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mLastWeather.getIconBitmap().getWidth()), mTimeYOffset + infoBarYOffset, mDatePaint);
+                } else if (!mShowWeather && mShowTemperature && mLastWeather != null) {
+                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin), mTimeYOffset + infoBarYOffset, mDatePaint);
+                }
             }
 
 
@@ -588,9 +607,15 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
 
             //draw wearOS icon
-            float mIconXOffset = bounds.exactCenterX() - (wearOSBitmap.getWidth() / 2.0f);
-            float mIconYOffset = mTimeYOffset - mTimeYOffset / 2 - wearOSBitmap.getHeight() - 16.0f;
-            canvas.drawBitmap(wearOSBitmap, mIconXOffset, mIconYOffset, null);
+            if (mAmbient){
+                float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmapAmbient.getWidth() / 2.0f);
+                float mIconYOffset = mTimeYOffset - mTimeYOffset / 2 - mWearOSBitmapAmbient.getHeight() - 16.0f;
+                canvas.drawBitmap(mWearOSBitmapAmbient, mIconXOffset, mIconYOffset, null);
+            } else {
+                float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmap.getWidth() / 2.0f);
+                float mIconYOffset = mTimeYOffset - mTimeYOffset / 2 - mWearOSBitmap.getHeight() - 16.0f;
+                canvas.drawBitmap(mWearOSBitmap, mIconXOffset, mIconYOffset, null);
+            }
 
             if (forceWeatherUpdate || (shouldTimerBeRunning() && ((mShowTemperature || mShowWeather) && (mLastWeatherUpdateTime == 0 || (System.currentTimeMillis() - mLastWeatherUpdateTime >= 30 * ONE_MIN && System.currentTimeMillis() - mLastWeatherUpdateFailedTime > 5 * ONE_MIN))))) {
                 forceWeatherUpdate = false;
@@ -647,7 +672,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private float computeInfoBarYOffset(String dateText, Paint datePaint) {
             Rect textBounds = new Rect();
             datePaint.getTextBounds(dateText, 0, dateText.length(), textBounds);
-            return textBounds.height() + 14.0f;
+            return textBounds.height() + 27.0f;
         }
 
         @Override
@@ -795,6 +820,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
                 mUseEuropeanDateFormat = dataMap.getBoolean("use_european_date");
                 mShowTemperatureDecimalPoint = dataMap.getBoolean("show_temperature_decimal");
+                mShowInfoBarInAmbient = dataMap.getBoolean("show_infobar_ambient", false);
 
 
                 boolean useDarkSkyTemp = mUseDarkSky;
@@ -836,6 +862,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             editor.putBoolean("show_weather", mShowWeather);
             editor.putBoolean("use_european_date", mUseEuropeanDateFormat);
             editor.putBoolean("show_temperature_decimal", mShowTemperatureDecimalPoint);
+            editor.putBoolean("show_infobar_ambient", mShowInfoBarInAmbient);
 
 
             editor.putString("dark_sky_api_key", mDarkSkyAPIKey);
@@ -848,6 +875,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mShowTemperature = sharedPreferences.getBoolean("show_temperature", false);
             mUseCelsius = sharedPreferences.getBoolean("use_celsius", false);
             mShowWeather = sharedPreferences.getBoolean("show_weather", false);
+
+            mShowInfoBarInAmbient = sharedPreferences.getBoolean("show_infobar_ambient", false);
 
             mUseEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
             mShowTemperatureDecimalPoint = sharedPreferences.getBoolean("show_temperature_decimal", false);

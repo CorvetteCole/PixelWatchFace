@@ -9,6 +9,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -28,6 +29,7 @@ import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Calendar;
 
@@ -41,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
     private Switch useDarkSkySwitch;
     private Switch useEuropeanDateFormatSwitch;
     private Switch showTemperatureDecimalSwitch;
+    private Switch showInfoBarAmbientSwitch;
 
     private EditText darkSkyKeyEditText;
 
@@ -52,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
     private boolean showTemperatureDecimalPoint;
     private String darkSkyAPIKey;
     private boolean useDarkSky;
+    private boolean showInfoBarAmbient;
     private BillingProcessor bp;
 
     @Override
@@ -68,6 +72,8 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         useDarkSkySwitch = findViewById(R.id.useDarkSkySwitch);
         useEuropeanDateFormatSwitch = findViewById(R.id.dateFormatSwitch);
         showTemperatureDecimalSwitch = findViewById(R.id.temperaturePrecisionSwitch);
+        showInfoBarAmbientSwitch = findViewById(R.id.infoBarAmbientSwitch);
+
 
 
 
@@ -124,6 +130,14 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
             }
         });
 
+        showInfoBarAmbientSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                sharedPreferences.edit().putBoolean("show_infobar_ambient", isChecked).apply();
+                syncToWear();
+            }
+        });
+
         useDarkSkySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -162,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         showWeather = sharedPreferences.getBoolean("show_weather", false);
         useEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
         showTemperatureDecimalPoint = sharedPreferences.getBoolean("show_temperature_decimal", false);
+        showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", false);
 
 
         darkSkyAPIKey = sharedPreferences.getString("dark_sky_api_key", "");
@@ -169,7 +184,8 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
     }
 
     private void syncToWear(){
-        Toast.makeText(this, "something changed, syncing to watch", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "something changed, syncing to watch", Toast.LENGTH_SHORT).show();
+        Snackbar.make(findViewById(android.R.id.content), "Syncing to watch...", Snackbar.LENGTH_SHORT).show();
         loadPreferences();
         String TAG = "syncToWear";
         DataClient mDataClient = Wearable.getDataClient(this);
@@ -190,6 +206,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         dataMap.putBoolean("show_weather", showWeather);
         dataMap.putBoolean("use_european_date", useEuropeanDateFormat);
         dataMap.putBoolean("show_temperature_decimal", showTemperatureDecimalPoint);
+        dataMap.putBoolean("show_infobar_ambient", showInfoBarAmbient);
         dataMap.putString("dark_sky_api_key", darkSkyAPIKey);
         dataMap.putBoolean("use_dark_sky", useDarkSky);
 
@@ -221,6 +238,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         showWeatherSwitch.setChecked(showWeather);
         useEuropeanDateFormatSwitch.setChecked(useEuropeanDateFormat);
         showTemperatureDecimalSwitch.setChecked(showTemperatureDecimalPoint);
+        showInfoBarAmbientSwitch.setChecked(showInfoBarAmbient);
 
         useDarkSkySwitch.setChecked(useDarkSky);
         darkSkyKeyEditText.setText(darkSkyAPIKey);

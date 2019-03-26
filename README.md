@@ -12,11 +12,8 @@ Current planned features:
 - Option to adjust weather update interval (currently defaults to 30 min)
 
 Edit (features recommended by you guys):
-- Option to enable an ambient mode with white outlined text
-- Add more spacing between clock and time, increase sizes if possible
 - Move time down a bit to be more centered
 - Option to display watch battery
-- Enable burn in protection for ambient mode
 - Add methods to support development
 - Option to put complications beneath the weather readout
 - Option to toggle display of WearOS logo
@@ -28,6 +25,9 @@ Edit (features recommended by you guys):
 - Add summary for Dark Sky users that will show the "summary" from dark sky on the watch face
 - Add an "At a glance" style widget or complication that shows calendar data
 ### Done
+- Option to enable an ambient mode with white outlined text
+- Add more spacing between clock and time, increase sizes if possible
+- Enable burn in protection for ambient mode
 - Add comma after day to match Pixel phones
 - Retrieve the Dark Sky summary in the user's language
 - Option for European date style (Thu 14 Feb)

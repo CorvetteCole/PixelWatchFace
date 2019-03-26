@@ -512,16 +512,11 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 mTimePaint.setStyle(Paint.Style.STROKE);
                 if (mShowInfoBarInAmbient){
                     mDatePaint.setStyle(Paint.Style.STROKE);
-                } else {
-                    mDatePaint.setColor(Color.BLACK);
                 }
             } else {
                 mTimePaint.setStyle(Paint.Style.FILL);
-                if (mShowInfoBarInAmbient){
-                    mDatePaint.setStyle(Paint.Style.FILL);
-                } else {
-                    mDatePaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
-                }
+                mDatePaint.setStyle(Paint.Style.FILL);
+
             }
 
             // Whether the timer should be running depends on whether we're visible (as well as

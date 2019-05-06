@@ -349,6 +349,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private Paint mBackgroundPaint;
         private Paint mTimePaint;
         private Paint mDatePaint;
+        private Paint mWeatherPaint;
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
          * disable anti-aliasing in ambient mode.
@@ -402,16 +403,14 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
             // Initializes background.
             mBackgroundPaint = new Paint();
-            mBackgroundPaint.setColor(
-                    ContextCompat.getColor(getApplicationContext(), R.color.background));
+            mBackgroundPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.background));
             mProductSans = ResourcesCompat.getFont(getApplicationContext(), R.font.product_sans_regular);
 
             // Initializes Watch Face.
             mTimePaint = new Paint();
             mTimePaint.setTypeface(mProductSans);
             mTimePaint.setAntiAlias(true);
-            mTimePaint.setColor(
-                    ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
+            mTimePaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
             mTimePaint.setStrokeWidth(2f);
 
             mDatePaint = new Paint();
@@ -419,6 +418,12 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mDatePaint.setAntiAlias(true);
             mDatePaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
             mDatePaint.setStrokeWidth(1f);
+
+            mWeatherPaint = new Paint();
+            mWeatherPaint.setTypeface(mProductSans);
+            mWeatherPaint.setAntiAlias(true);
+            mWeatherPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
+            mWeatherPaint.setStrokeWidth(1f);
 
             // Loads locally saved settings values
             loadPreferences(mSharedPreferences);
@@ -478,9 +483,12 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                     ? R.dimen.digital_time_text_size_round : R.dimen.digital_time_text_size);
             float dateTextSize = resources.getDimension(isRound
                     ? R.dimen.digital_date_text_size_round : R.dimen.digital_date_text_size);
+            float weatherTextSize = resources.getDimension(isRound
+                    ? R.dimen.digital_date_text_size_round : R.dimen.digital_date_text_size);
 
             mTimePaint.setTextSize(timeTextSize);
             mDatePaint.setTextSize(dateTextSize);
+            mWeatherPaint.setTextSize(weatherTextSize);
 
 
         }
@@ -506,6 +514,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             if (mLowBitAmbient) {
                 mTimePaint.setAntiAlias(!inAmbientMode);
                 mDatePaint.setAntiAlias(!inAmbientMode);
+                mWeatherPaint.setAntiAlias(!inAmbientMode);
             }
 
             if (inAmbientMode){
@@ -516,6 +525,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             } else {
                 mTimePaint.setStyle(Paint.Style.FILL);
                 mDatePaint.setStyle(Paint.Style.FILL);
+                mWeatherPaint.setStyle(Paint.Style.FILL);
 
             }
 
@@ -543,6 +553,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             float mTimeXOffset = computeXOffset(mTimeText, mTimePaint, bounds);
             float mTimeYOffset = computeTimeYOffset(mTimeText, mTimePaint, bounds);
             canvas.drawText(mTimeText, mTimeXOffset, mTimeYOffset, mTimePaint);
+
+            // Draw Date
             String dateText;
             if (mUseEuropeanDateFormat){
                 dateText = String.format("%.3s, %d %.3s", android.text.format.DateFormat.format("EEEE", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH),
@@ -552,54 +564,69 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         android.text.format.DateFormat.format("MMMM", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH));
             }
 
+            float centerX = bounds.exactCenterX();
+            float dateTextLength = mDatePaint.measureText(dateText);
+
+            float infoBarXOffset = centerX - (dateTextLength / 2.0f);
+            float infoBarYOffset = computeInfoBarYOffset(dateText, mDatePaint);
+
+            if (mShowInfoBarInAmbient || !mAmbient) {
+                canvas.drawText(dateText, infoBarXOffset, mTimeYOffset + infoBarYOffset, mDatePaint);
+            }
+
+
+            //Moving Draw weather to new line
+
             String temperatureText = "";
             float totalLength;
             float centerX = bounds.exactCenterX();
             float dateTextLength = mDatePaint.measureText(dateText);
 
-            float bitmapMargin = 20.0f;
+
             if (mShowTemperature && mLastWeather != null){
-                    if (mUseCelsius) {
-                        if (mShowTemperatureDecimalPoint){
-                            temperatureText = String.format("%.1f °C", convertToCelsius(mLastWeather.getTemperature()));
-                        } else {
-                            temperatureText = String.format("%d °C", Math.round(convertToCelsius(mLastWeather.getTemperature())));
-                        }
+                if (mUseCelsius) {
+                    if (mShowTemperatureDecimalPoint){
+                        temperatureText = String.format("%.1f °C", convertToCelsius(mLastWeather.getTemperature()));
                     } else {
-                        if (mShowTemperatureDecimalPoint){
-                            temperatureText = String.format("%.1f °F", mLastWeather.getTemperature());
-                        } else {
-                            temperatureText = String.format("%d °F", Math.round(mLastWeather.getTemperature()));
-                        }
+                        temperatureText = String.format("%d °C", Math.round(convertToCelsius(mLastWeather.getTemperature())));
                     }
-                    if (mShowWeather){
-                        totalLength = dateTextLength + bitmapMargin + mLastWeather.getIconBitmap().getWidth() + mDatePaint.measureText(temperatureText);
+                } else {
+                    if (mShowTemperatureDecimalPoint){
+                        temperatureText = String.format("%.1f °F", mLastWeather.getTemperature());
                     } else {
-                        totalLength = dateTextLength + bitmapMargin + mDatePaint.measureText(temperatureText);
+                        temperatureText = String.format("%d °F", Math.round(mLastWeather.getTemperature()));
                     }
+                }
+                if (mShowWeather){
+                    //show weather icon + temperature
+                    totalLength = mLastWeather.getIconBitmap().getWidth() + mDatePaint.measureText(temperatureText);
+                } else {
+                    //show temperature ONLY
+                    totalLength = mDatePaint.measureText(temperatureText);
+                }
             } else if (!mShowTemperature && mShowWeather && mLastWeather != null){
-                totalLength = dateTextLength + bitmapMargin/2 + mLastWeather.getIconBitmap().getWidth();
-            } else {
-                totalLength = dateTextLength;
+                //show weather icon ONLY
+                totalLength = mLastWeather.getIconBitmap().getWidth();
             }
 
-            float infoBarXOffset = centerX - (totalLength / 2.0f);
-            float infoBarYOffset = computeInfoBarYOffset(dateText, mDatePaint);
+            // calculate X and Y offsets
+            float infoTempXOffset = centerX - (totalLength / 2.0f);
+            float infoTempYOffset = computeTempYOffset(temperatureText, mWeatherPaint);
 
             if (mShowInfoBarInAmbient || !mAmbient) {
-                canvas.drawText(dateText, infoBarXOffset, mTimeYOffset + infoBarYOffset, mDatePaint);
+                //show Date
+                //canvas.drawText(dateText, infoBarXOffset, mTimeYOffset + infoBarYOffset, mDatePaint);
+                //if show temperature + ICON is true
                 if (mShowWeather && mLastWeather != null) {
-                    canvas.drawBitmap(mLastWeather.getIconBitmap(), infoBarXOffset + (dateTextLength + bitmapMargin / 2),
-                            mTimeYOffset + infoBarYOffset - mLastWeather.getIconBitmap().getHeight() + 6.0f, null);
-                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mLastWeather.getIconBitmap().getWidth()), mTimeYOffset + infoBarYOffset, mDatePaint);
+                    //draw ICON
+                    canvas.drawBitmap(mLastWeather.getIconBitmap(), infoTempXOffset + (dateTextLength + bitmapMargin / 2),mTimeYOffset + infoBarYOffset + infoTempYOffset - mLastWeather.getIconBitmap().getHeight() + 6.0f, null);
+                    //draw temperature
+                    canvas.drawText(temperatureText, infoTempXOffset + (mLastWeather.getIconBitmap().getWidth()), mTimeYOffset + infoBarYOffset + infoTempYOffset, mWeatherPaint);
                 } else if (!mShowWeather && mShowTemperature && mLastWeather != null) {
-                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin), mTimeYOffset + infoBarYOffset, mDatePaint);
+                    //show temperature ONLY
+                    canvas.drawText(temperatureText, infoTempXOffset, mTimeYOffset + infoBarYOffset + infoTempYOffset, mWeatherPaint);
                 }
             }
-
-
-            //
-
 
             //draw wearOS icon
             if (mAmbient){
@@ -667,6 +694,12 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private float computeInfoBarYOffset(String dateText, Paint datePaint) {
             Rect textBounds = new Rect();
             datePaint.getTextBounds(dateText, 0, dateText.length(), textBounds);
+            return textBounds.height() + 27.0f;
+        }
+
+        private float computeTempYOffset(String tempText, Paint tempPaint) {
+            Rect textBounds = new Rect();
+            tempPaint.getTextBounds(tempText, 0, tempText.length(), textBounds);
             return textBounds.height() + 27.0f;
         }
 

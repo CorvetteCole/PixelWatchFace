@@ -411,8 +411,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mTimePaint = new Paint();
             mTimePaint.setTypeface(mProductSans);
             mTimePaint.setAntiAlias(true);
-            mTimePaint.setColor(
-                    ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
+            mTimePaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
             mTimePaint.setStrokeWidth(2f);
 
             mDatePaint = new Paint();
@@ -518,13 +517,14 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 mDatePaint.setAntiAlias(!inAmbientMode);
             }
 
+            //AG - CHANGED FONT COLOR TO GRAY FOR AMBIENT MODE
             if (inAmbientMode){
                 //mTimePaint.setStyle(Paint.Style.STROKE);
-                mTimePaint.setColor(Color.GRAY);
+                mTimePaint.setColor(0xff666666);
                 if (mShowInfoBarInAmbient){
                     //mDatePaint.setStyle(Paint.Style.STROKE);
-                    mDatePaint.setColor(Color.GRAY);
-                    mWeatherPaint.setColor(Color.GRAY);
+                    mDatePaint.setColor(0xff666666);
+                    mWeatherPaint.setColor(0xff666666);
                 }
             } else {
                 mTimePaint.setStyle(Paint.Style.FILL);
@@ -561,7 +561,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             float mTimeYOffset = computeTimeYOffset(mTimeText, mTimePaint, bounds);
             canvas.drawText(mTimeText, mTimeXOffset, mTimeYOffset, mTimePaint);
 
-            //draw Date
+            //Draw Date
             String dateText;
             if (mUseEuropeanDateFormat){
                 dateText = String.format("%.3s, %d %.3s", android.text.format.DateFormat.format("EEEE", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH),
@@ -571,13 +571,13 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         android.text.format.DateFormat.format("MMMM", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH));
             }
 
-            //TODO : Refactor and cleanup code 
+
             String temperatureText = "";
-            float totalLength;
+            float totalLength = 0.0f;
             float centerX = bounds.exactCenterX();
             float dateTextLength = mDatePaint.measureText(dateText);
 
-            //start new code to draw date
+            //ag - start new code to draw date
             float infoBarXOffset = centerX - (dateTextLength / 2.0f);
             float infoBarYOffset = computeInfoBarYOffset(dateText, mDatePaint);
             if (mShowInfoBarInAmbient || !mAmbient) {
@@ -601,15 +601,15 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                     }
                 }
                 if (mShowWeather){
-                    totalLength = dateTextLength + bitmapMargin + mLastWeather.getIconBitmap().getWidth() + mDatePaint.measureText(temperatureText);
+                    totalLength = mLastWeather.getIconBitmap().getWidth() + mWeatherPaint.measureText(temperatureText);
                 } else {
-                    totalLength = dateTextLength + bitmapMargin + mDatePaint.measureText(temperatureText);
+                    totalLength = mWeatherPaint.measureText(temperatureText);
                 }
             } else if (!mShowTemperature && mShowWeather && mLastWeather != null){
-                totalLength = dateTextLength + bitmapMargin/2 + mLastWeather.getIconBitmap().getWidth();
-            } else {
-                totalLength = dateTextLength;
-            }
+                totalLength = mLastWeather.getIconBitmap().getWidth();
+            } //else {
+              //  totalLength =  mWeatherPaint.measureText(temperatureText);
+            //}
 
             //comment out old code
             /*
@@ -629,16 +629,19 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             */
 
 
-            //new code Draw Weather always
-            float weatherTextLength = mWeatherPaint.measureText(temperatureText);
+            //ag - new code Draw Weather
+            float weatherTextLength = totalLength; //mWeatherPaint.measureText(temperatureText);
             float infoWeatherXOffSet = centerX - (weatherTextLength / 2.0f);
             float infoWeatherYOffSet = computeInfoBarYOffset(temperatureText, mWeatherPaint);
-            if (!mShowWeather && mShowTemperature && mLastWeather != null) {
+            if (!mAmbient && mShowWeather && mLastWeather != null) {
+                canvas.drawBitmap(mLastWeather.getIconBitmap(), infoWeatherXOffSet,
+                        mTimeYOffset + infoBarYOffset + infoWeatherYOffSet - mLastWeather.getIconBitmap().getHeight() + 6.0f, null);
+                canvas.drawText(temperatureText, infoWeatherXOffSet + (bitmapMargin/2 + mLastWeather.getIconBitmap().getWidth()), mTimeYOffset + infoBarYOffset  + infoWeatherYOffSet, mWeatherPaint);
+            } else { //if (!mShowWeather && mShowTemperature && mLastWeather != null) {
+                infoWeatherXOffSet = centerX - (mWeatherPaint.measureText(temperatureText) / 2.0f);
                 canvas.drawText(temperatureText, infoWeatherXOffSet, mTimeYOffset + infoBarYOffset + infoWeatherYOffSet, mWeatherPaint);
             }
             // end new code
-
-            //
 
 
             //draw wearOS icon
@@ -737,7 +740,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
         private void getForecast(double latitude, double longitude, boolean useDarkSky) {
             final String TAG = "getForecast";
-            String apiKey = getString(R.string.openstreetmap_api_key);
+            String apiKey = getString(R.string.openweathermap_api_key);
             String forecastUrl = "https://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude + "&units=imperial&appid=" + apiKey;
 
             if (useDarkSky) {

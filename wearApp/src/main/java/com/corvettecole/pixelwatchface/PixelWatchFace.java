@@ -16,8 +16,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -52,9 +50,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
@@ -62,6 +58,12 @@ import java.util.concurrent.TimeUnit;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
+
+import static com.corvettecole.pixelwatchface.Utils.convertToCelsius;
+import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
+import static com.corvettecole.pixelwatchface.Utils.getCurrentDetails;
+import static com.corvettecole.pixelwatchface.Utils.getHour;
+import static com.corvettecole.pixelwatchface.Utils.isNetworkAvailable;
 
 /**
  * Important Note: Because watch face apps do not have a default Activity in
@@ -134,200 +136,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mRequestCode = this.getIntent().getIntExtra("KEY_REQUEST_CODE", PERMISSIONS_CODE);
 
             ActivityCompat.requestPermissions(this, mPermissions, mRequestCode);
-        }
-    }
-
-
-    public class CurrentWeather {
-        private String mIcon;
-        private long mTime;
-        private double mTemperature;
-        private double mHumidity;
-        private double mPrecipChance;
-        private String mSummary;
-        private String mTimeZone;
-        private Bitmap mIconBitmap;
-        private String mWeatherProvider;
-
-        public String getTimeZone() {
-            return mTimeZone;
-        }
-
-        public void setTimeZone(String timeZone) {
-            mTimeZone = timeZone;
-        }
-
-        public String getIcon() {
-            return mIcon;
-        }
-
-        public void setIcon(String icon) {
-            mIcon = icon;
-        }
-
-
-
-        public Bitmap getIconBitmap(){
-            if (mIconBitmap == null){
-                mIconBitmap = Bitmap.createScaledBitmap(drawableToBitmap(getDrawable(getIconId())), 34, 34, false);
-            }
-            return mIconBitmap;
-        }
-
-        public int getIconId() {
-            //#TODO use custom icons so as to have fitting icons for every weather condition from any provider (see these: http://adamwhitcroft.com/climacons/)
-            int iconId = R.drawable.clear_day;
-            if (getWeatherProvider().equalsIgnoreCase("DarkSky")) {
-                // clear-day, clear-night, rain, snow, sleet, wind, fog, cloudy, partly-cloudy-day, or partly-cloudy-night.
-                switch (mIcon) {
-                    case "clear-day":
-                        iconId = R.drawable.clear_day;
-                        break;
-                    case "clear-night":
-                        iconId = R.drawable.clear_night;
-                        break;
-                    case "rain":
-                        iconId = R.drawable.rain;
-                        break;
-                    case "snow":
-                        iconId = R.drawable.snow;
-                        break;
-                    case "sleet":
-                        iconId = R.drawable.sleet;
-                        break;
-                    case "wind":
-                        iconId = R.drawable.wind;
-                        break;
-                    case "fog":
-                        iconId = R.drawable.fog;
-                        break;
-                    case "cloudy":
-                        iconId = R.drawable.cloudy;
-                        break;
-                    case "partly-cloudy-day":
-                        iconId = R.drawable.partly_cloudy;
-                        break;
-                    case "partly-cloudy-night":
-                        iconId = R.drawable.cloudy_night;
-                        break;
-                }
-            } else if (getWeatherProvider().equalsIgnoreCase("OpenStreetMap")){
-                switch (mIcon) {
-                    case "01d":
-                        iconId = R.drawable.clear_day;
-                        break;
-                    case "01n":
-                        iconId = R.drawable.clear_night;
-                        break;
-                    case "02d":
-                        iconId = R.drawable.partly_cloudy;
-                        break;
-                    case "02n":
-                        iconId = R.drawable.cloudy_night;
-                        break;
-                    case "03d":
-                        iconId = R.drawable.partly_cloudy;
-                        break;
-                    case "03n":
-                        iconId = R.drawable.cloudy_night;
-                        break;
-                    case "04d":
-                        iconId = R.drawable.cloudy;
-                        break;
-                    case "04n":
-                        iconId = R.drawable.cloudy;
-                        break;
-                    case "09d":
-                        iconId = R.drawable.rain;
-                        break;
-                    case "09n":
-                        iconId = R.drawable.rain;
-                        break;
-                    case "10d":
-                        iconId = R.drawable.rain;
-                        break;
-                    case "10n":
-                        iconId = R.drawable.rain;
-                        break;
-                    case "11d":
-                        iconId = R.drawable.rain;
-                        break;
-                    case "11n":
-                        iconId = R.drawable.rain;
-                        break;
-                    case "13d":
-                        iconId = R.drawable.snow;
-                        break;
-                    case "13n":
-                        iconId = R.drawable.snow;
-                        break;
-                    case "50d":
-                        iconId = R.drawable.fog;
-                        break;
-                    case "50n":
-                        iconId = R.drawable.fog;
-                        break;
-                }
-            }
-            return iconId;
-        }
-
-        public long getTime() {
-            return mTime;
-        }
-
-        public String getFormattedTime() {
-            SimpleDateFormat formatter = new SimpleDateFormat("h:mm a");
-            formatter.setTimeZone(TimeZone.getTimeZone(getTimeZone()));
-            Date dateTime = new Date(getTime() * 1000);
-            String timeString = formatter.format(dateTime);
-
-            return timeString;
-        }
-
-        public void setTime(long time) {
-            mTime = time;
-        }
-
-        public double getTemperature() {
-            return mTemperature;
-        }
-
-        public void setTemperature(double temperature) {
-            mTemperature = temperature;
-        }
-
-        public double getHumidity() {
-            return mHumidity;
-        }
-
-        public void setHumidity(double humidity) {
-            mHumidity = humidity;
-        }
-
-        public int getPrecipChance() {
-            double precipPercentage = mPrecipChance * 100;
-            return (int)Math.round(precipPercentage);
-        }
-
-        public void setPrecipChance(double precipChance) {
-            mPrecipChance = precipChance;
-        }
-
-        public String getSummary() {
-            return mSummary;
-        }
-
-        public void setSummary(String summary) {
-            mSummary = summary;
-        }
-
-        public String getWeatherProvider() {
-            return mWeatherProvider;
-        }
-
-        public void setWeatherProvider(String mWeatherProvider) {
-            this.mWeatherProvider = mWeatherProvider;
         }
     }
 
@@ -539,7 +347,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             long now = System.currentTimeMillis();
             mCalendar.setTimeInMillis(now);
 
-            String mTimeText = String.format("%d:%02d", getHour(mCalendar), mCalendar.get(Calendar.MINUTE));
+            String mTimeText = String.format("%d:%02d", getHour(mCalendar, mUse24HourTime), mCalendar.get(Calendar.MINUTE));
             float mTimeXOffset = computeXOffset(mTimeText, mTimePaint, bounds);
             float mTimeYOffset = computeTimeYOffset(mTimeText, mTimePaint, bounds);
             canvas.drawText(mTimeText, mTimeXOffset, mTimeYOffset, mTimePaint);
@@ -573,12 +381,12 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         }
                     }
                     if (mShowWeather){
-                        totalLength = dateTextLength + bitmapMargin + mLastWeather.getIconBitmap().getWidth() + mDatePaint.measureText(temperatureText);
+                        totalLength = dateTextLength + bitmapMargin + mLastWeather.getIconBitmap(getApplicationContext()).getWidth() + mDatePaint.measureText(temperatureText);
                     } else {
                         totalLength = dateTextLength + bitmapMargin + mDatePaint.measureText(temperatureText);
                     }
             } else if (!mShowTemperature && mShowWeather && mLastWeather != null){
-                totalLength = dateTextLength + bitmapMargin/2 + mLastWeather.getIconBitmap().getWidth();
+                totalLength = dateTextLength + bitmapMargin/2 + mLastWeather.getIconBitmap(getApplicationContext()).getWidth();
             } else {
                 totalLength = dateTextLength;
             }
@@ -589,9 +397,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             if (mShowInfoBarInAmbient || !mAmbient) {
                 canvas.drawText(dateText, infoBarXOffset, mTimeYOffset + infoBarYOffset, mDatePaint);
                 if (mShowWeather && mLastWeather != null) {
-                    canvas.drawBitmap(mLastWeather.getIconBitmap(), infoBarXOffset + (dateTextLength + bitmapMargin / 2),
-                            mTimeYOffset + infoBarYOffset - mLastWeather.getIconBitmap().getHeight() + 6.0f, null);
-                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mLastWeather.getIconBitmap().getWidth()), mTimeYOffset + infoBarYOffset, mDatePaint);
+                    canvas.drawBitmap(mLastWeather.getIconBitmap(getApplicationContext()), infoBarXOffset + (dateTextLength + bitmapMargin / 2),
+                            mTimeYOffset + infoBarYOffset - mLastWeather.getIconBitmap(getApplicationContext()).getHeight() + 6.0f, null);
+                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mLastWeather.getIconBitmap(getApplicationContext()).getWidth()), mTimeYOffset + infoBarYOffset, mDatePaint);
                 } else if (!mShowWeather && mShowTemperature && mLastWeather != null) {
                     canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin), mTimeYOffset + infoBarYOffset, mDatePaint);
                 }
@@ -711,7 +519,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
 
 
-            if (isNetworkAvailable()){
+            if (isNetworkAvailable(getApplicationContext())){
 
                 OkHttpClient client = new OkHttpClient();
                 Request request = new Request.Builder()
@@ -758,51 +566,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
         }
 
-        private CurrentWeather getCurrentDetails(String jsonData, Boolean useDarkSky) throws JSONException {
-            final String TAG = "getCurrentDetails";
-            JSONObject forecast = new JSONObject(jsonData);
-            CurrentWeather currentWeather = new CurrentWeather();
-            if (useDarkSky) {
-                currentWeather.setWeatherProvider("DarkSky");
-                String timezone = forecast.getString("timezone");
-                JSONObject currently = forecast.getJSONObject("currently");
-                currentWeather.setHumidity(currently.getDouble("humidity"));
-                currentWeather.setTime(currently.getLong("time"));
-                currentWeather.setIcon(currently.getString("icon"));
-                currentWeather.setPrecipChance(currently.getDouble("precipProbability"));
-                currentWeather.setSummary(currently.getString("summary"));
-                currentWeather.setTemperature(currently.getDouble("temperature"));
-                currentWeather.setTimeZone(timezone);
-                Log.d(TAG, currentWeather.getFormattedTime());
-            } else {
-                currentWeather.setWeatherProvider("OpenStreetMap");
-                String tempIcon = forecast.getJSONArray("weather").toString();
-                JSONObject main = forecast.getJSONObject("main");
-                currentWeather.setHumidity(main.getDouble("humidity")/100); //adjust OpenStreetMap format to dark sky format with /100
-                currentWeather.setTemperature(main.getDouble("temp"));
-                Log.d(TAG, tempIcon.substring(tempIcon.indexOf("\"icon\":\"") + 8, tempIcon.indexOf("\"}]")));
-                currentWeather.setIcon(tempIcon.substring(tempIcon.indexOf("\"icon\":\"") + 8, tempIcon.indexOf("\"}]")));
-            }
-
-            return currentWeather;
-        }
-
-        private double convertToCelsius(double fahrenheit){
-            return (fahrenheit - 32)/1.8;
-        }
-
-        private boolean isNetworkAvailable() {
-            ConnectivityManager manager = (ConnectivityManager)
-                    getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo networkInfo = manager.getActiveNetworkInfo();
-            boolean isAvailable = false;
-
-            if(networkInfo != null && networkInfo.isConnected()) {
-                isAvailable = true;
-            }
-            return isAvailable;
-        }
-
         private void updateSettings(DataMap dataMap) {
             String TAG = "updateSettings";
             try {
@@ -835,16 +598,11 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         }
 
         private void requestPermissions(){
-            if (mShowTemperature && ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.ACCESS_COARSE_LOCATION)
+            if ((mShowWeather || mShowTemperature) && ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED){
                 Intent mPermissionRequestIntent = new Intent(getBaseContext(), PermissionRequestActivity.class);
                 mPermissionRequestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                if (mShowWeather && ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    mPermissionRequestIntent.putExtra("KEY_PERMISSIONS", new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION});
-                } else {
-                    mPermissionRequestIntent.putExtra("KEY_PERMISSIONS", Manifest.permission.ACCESS_COARSE_LOCATION);
-                }
+                mPermissionRequestIntent.putExtra("KEY_PERMISSIONS", new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION});
                 startActivity(mPermissionRequestIntent);
             }
         }
@@ -878,21 +636,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
             mDarkSkyAPIKey = sharedPreferences.getString("dark_sky_api_key", "");
             mUseDarkSky = sharedPreferences.getBoolean("use_dark_sky", false);
-        }
-
-        private int getHour(Calendar mCalendar){
-            if (mUse24HourTime){
-                return mCalendar.get(Calendar.HOUR_OF_DAY);
-            } else {
-                int hour = mCalendar.get(Calendar.HOUR_OF_DAY);
-                if (hour == 0) {
-                    return 12;
-                } else if (hour > 12) {
-                    return hour - 12;
-                } else {
-                    return hour;
-                }
-            }
         }
 
         /**
@@ -951,28 +694,5 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         }
         */
 
-    }
-
-
-    public static Bitmap drawableToBitmap (Drawable drawable) {
-        Bitmap bitmap = null;
-
-        if (drawable instanceof BitmapDrawable) {
-            BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-            if(bitmapDrawable.getBitmap() != null) {
-                return bitmapDrawable.getBitmap();
-            }
-        }
-
-        if(drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
-            bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
-        } else {
-            bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        }
-
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-        return bitmap;
     }
 }

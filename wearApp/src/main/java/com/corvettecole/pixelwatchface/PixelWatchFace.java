@@ -17,8 +17,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.location.Location;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -46,7 +45,6 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -150,13 +148,23 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 invalidate();
             }
         };
+        private final BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                mBatteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+                invalidate();
+            }
+        };
+
         private FusedLocationProviderClient mFusedLocationClient;
         private final Bitmap mWearOSBitmap = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo));
         private final Bitmap mWearOSBitmapAmbient = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo_ambient));
         private boolean mRegisteredTimeZoneReceiver = false;
+        private boolean mRegisteredBatteryReceiver = false;
         private Paint mBackgroundPaint;
         private Paint mTimePaint;
-        private Paint mDatePaint;
+        private Paint mInfoPaint;
+        private int mBatteryLevel;
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
          * disable anti-aliasing in ambient mode.
@@ -220,13 +228,13 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mTimePaint.setAntiAlias(true);
             mTimePaint.setColor(
                     ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
-            mTimePaint.setStrokeWidth(2f);
+            mTimePaint.setStrokeWidth(3f);
 
-            mDatePaint = new Paint();
-            mDatePaint.setTypeface(mProductSans);
-            mDatePaint.setAntiAlias(true);
-            mDatePaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
-            mDatePaint.setStrokeWidth(1f);
+            mInfoPaint = new Paint();
+            mInfoPaint.setTypeface(mProductSans);
+            mInfoPaint.setAntiAlias(true);
+            mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
+            mInfoPaint.setStrokeWidth(2f);
 
             // Loads locally saved settings values
             loadPreferences(mSharedPreferences);
@@ -244,13 +252,13 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             super.onVisibilityChanged(visible);
 
             if (visible) {
-                registerReceiver();
+                registerReceivers();
 
                 // Update time zone in case it changed while we weren't visible.
                 mCalendar.setTimeZone(TimeZone.getDefault());
                 invalidate();
             } else {
-                unregisterReceiver();
+                unregisterReceivers();
             }
 
             // Whether the timer should be running depends on whether we're visible (as well as
@@ -258,21 +266,34 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             updateTimer();
         }
 
-        private void registerReceiver() {
-            if (mRegisteredTimeZoneReceiver) {
+        private void registerReceivers() {
+            if (mRegisteredBatteryReceiver && mRegisteredTimeZoneReceiver) {
                 return;
             }
-            mRegisteredTimeZoneReceiver = true;
-            IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
-            PixelWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
+            if (!mRegisteredBatteryReceiver) {
+                mRegisteredBatteryReceiver = true;
+                IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+                PixelWatchFace.this.registerReceiver(mBatteryReceiver, filter);
+            }
+            if (!mRegisteredTimeZoneReceiver) {
+                mRegisteredTimeZoneReceiver = true;
+                IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
+                PixelWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
+            }
         }
 
-        private void unregisterReceiver() {
-            if (!mRegisteredTimeZoneReceiver) {
+        private void unregisterReceivers() {
+            if (!mRegisteredBatteryReceiver && !mRegisteredTimeZoneReceiver) {
                 return;
             }
-            mRegisteredTimeZoneReceiver = false;
-            PixelWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
+            if (mRegisteredTimeZoneReceiver) {
+                mRegisteredTimeZoneReceiver = false;
+                PixelWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
+            }
+            if (mRegisteredBatteryReceiver) {
+                mRegisteredBatteryReceiver = false;
+                PixelWatchFace.this.unregisterReceiver(mBatteryReceiver);
+            }
         }
 
         @Override
@@ -288,7 +309,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                     ? R.dimen.digital_date_text_size_round : R.dimen.digital_date_text_size);
 
             mTimePaint.setTextSize(timeTextSize);
-            mDatePaint.setTextSize(dateTextSize);
+            mInfoPaint.setTextSize(dateTextSize);
 
 
         }
@@ -313,17 +334,18 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mAmbient = inAmbientMode;
             if (mLowBitAmbient) {
                 mTimePaint.setAntiAlias(!inAmbientMode);
-                mDatePaint.setAntiAlias(!inAmbientMode);
+                mInfoPaint.setAntiAlias(!inAmbientMode);
             }
 
             if (inAmbientMode){
                 mTimePaint.setStyle(Paint.Style.STROKE);
                 if (mShowInfoBarInAmbient){
-                    mDatePaint.setStyle(Paint.Style.STROKE);
+                    //TODO: change date between the pixel ambient gray and white instead of making it stroked
+                    mInfoPaint.setStyle(Paint.Style.STROKE);
                 }
             } else {
                 mTimePaint.setStyle(Paint.Style.FILL);
-                mDatePaint.setStyle(Paint.Style.FILL);
+                mInfoPaint.setStyle(Paint.Style.FILL);
 
             }
 
@@ -363,7 +385,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             String temperatureText = "";
             float totalLength;
             float centerX = bounds.exactCenterX();
-            float dateTextLength = mDatePaint.measureText(dateText);
+            float dateTextLength = mInfoPaint.measureText(dateText);
 
             float bitmapMargin = 20.0f;
             if (mShowTemperature && mLastWeather != null){
@@ -381,9 +403,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         }
                     }
                     if (mShowWeather){
-                        totalLength = dateTextLength + bitmapMargin + mLastWeather.getIconBitmap(getApplicationContext()).getWidth() + mDatePaint.measureText(temperatureText);
+                        totalLength = dateTextLength + bitmapMargin + mLastWeather.getIconBitmap(getApplicationContext()).getWidth() + mInfoPaint.measureText(temperatureText);
                     } else {
-                        totalLength = dateTextLength + bitmapMargin + mDatePaint.measureText(temperatureText);
+                        totalLength = dateTextLength + bitmapMargin + mInfoPaint.measureText(temperatureText);
                     }
             } else if (!mShowTemperature && mShowWeather && mLastWeather != null){
                 totalLength = dateTextLength + bitmapMargin/2 + mLastWeather.getIconBitmap(getApplicationContext()).getWidth();
@@ -392,16 +414,16 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
 
             float infoBarXOffset = centerX - (totalLength / 2.0f);
-            float infoBarYOffset = computeInfoBarYOffset(dateText, mDatePaint);
+            float infoBarYOffset = computeInfoBarYOffset(dateText, mInfoPaint);
 
             if (mShowInfoBarInAmbient || !mAmbient) {
-                canvas.drawText(dateText, infoBarXOffset, mTimeYOffset + infoBarYOffset, mDatePaint);
+                canvas.drawText(dateText, infoBarXOffset, mTimeYOffset + infoBarYOffset, mInfoPaint);
                 if (mShowWeather && mLastWeather != null) {
                     canvas.drawBitmap(mLastWeather.getIconBitmap(getApplicationContext()), infoBarXOffset + (dateTextLength + bitmapMargin / 2),
                             mTimeYOffset + infoBarYOffset - mLastWeather.getIconBitmap(getApplicationContext()).getHeight() + 6.0f, null);
-                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mLastWeather.getIconBitmap(getApplicationContext()).getWidth()), mTimeYOffset + infoBarYOffset, mDatePaint);
+                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mLastWeather.getIconBitmap(getApplicationContext()).getWidth()), mTimeYOffset + infoBarYOffset, mInfoPaint);
                 } else if (!mShowWeather && mShowTemperature && mLastWeather != null) {
-                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin), mTimeYOffset + infoBarYOffset, mDatePaint);
+                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin), mTimeYOffset + infoBarYOffset, mInfoPaint);
                 }
             }
 

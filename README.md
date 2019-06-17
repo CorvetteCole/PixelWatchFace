@@ -1,6 +1,27 @@
 # PixelWatchFace
 A minimalistic and open-source watchface for WearOS
 
+# Roadmap
+## First Update (Refactor time woooo!)
+- Create standard interface for settings on both devices, allowing new features to be implemented easily
+- Move all constants to constants
+- Move all strings to a strings xml to allow for translation
+- Make the permissions dialog keep showing if the user doesn't accept and weather is still enabled
+- Add battery percent
+- Add setting to allow user to toggle outlined text in ambient mode
+- Make code more modular and independent
+## Second Update
+- Full rehaul of mobile app so settings are easy to navigate
+- Dynamic stroke width based on ambient lighting
+- Add setting to allow user to change update interval for weather
+## Third Update
+- Add option to allow user to support me by giving money
+- Add all watch settings to watch app, so phone is no longer needed
+- Replace weather icons with new ones that match the ones on Pixel phones
+- Add support for Dark Sky weather summary
+## Fourth Update
+- Add the "At A Glance" widget
+- Something else, idk
 
 # TODO
 ## Watch App

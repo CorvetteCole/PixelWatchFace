@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
     private Switch useEuropeanDateFormatSwitch;
     private Switch showTemperatureDecimalSwitch;
     private Switch showInfoBarAmbientSwitch;
+    private Switch showBatterySwitch;
 
     private EditText darkSkyKeyEditText;
 
@@ -56,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
     private String darkSkyAPIKey;
     private boolean useDarkSky;
     private boolean showInfoBarAmbient;
+    private boolean showBattery;
     private BillingProcessor bp;
 
     @Override
@@ -73,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         useEuropeanDateFormatSwitch = findViewById(R.id.dateFormatSwitch);
         showTemperatureDecimalSwitch = findViewById(R.id.temperaturePrecisionSwitch);
         showInfoBarAmbientSwitch = findViewById(R.id.infoBarAmbientSwitch);
-
+        showBatterySwitch = findViewById(R.id.batterySwitch);
 
 
 
@@ -95,6 +97,9 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 sharedPreferences.edit().putBoolean("show_temperature", isChecked).apply();
                 syncToWear();
+                if (isChecked) {
+                    Snackbar.make(findViewById(android.R.id.content), "Check your watch face for locations prompt", Snackbar.LENGTH_LONG).show();
+                }
             }
         });
 
@@ -111,6 +116,9 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 sharedPreferences.edit().putBoolean("show_weather", isChecked).apply();
                 syncToWear();
+                if (isChecked) {
+                    Snackbar.make(findViewById(android.R.id.content), "Check your watch face for locations prompt", Snackbar.LENGTH_LONG).show();
+                }
             }
         });
 
@@ -146,6 +154,13 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
             }
         });
 
+        showBatterySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                sharedPreferences.edit().putBoolean("show_battery", isChecked).apply();
+                syncToWear();
+            }
+        });
         darkSkyKeyEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -177,6 +192,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         useEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
         showTemperatureDecimalPoint = sharedPreferences.getBoolean("show_temperature_decimal", false);
         showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", false);
+        showBattery = sharedPreferences.getBoolean("show_battery", true);
 
 
         darkSkyAPIKey = sharedPreferences.getString("dark_sky_api_key", "");
@@ -209,6 +225,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         dataMap.putBoolean("show_infobar_ambient", showInfoBarAmbient);
         dataMap.putString("dark_sky_api_key", darkSkyAPIKey);
         dataMap.putBoolean("use_dark_sky", useDarkSky);
+        dataMap.putBoolean("show_battery", showBattery);
 
         putDataMapReq.getDataMap().putDataMap("com.corvettecole.pixelwatchface", dataMap);
         PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
@@ -239,7 +256,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         useEuropeanDateFormatSwitch.setChecked(useEuropeanDateFormat);
         showTemperatureDecimalSwitch.setChecked(showTemperatureDecimalPoint);
         showInfoBarAmbientSwitch.setChecked(showInfoBarAmbient);
-
+        showBatterySwitch.setChecked(showBattery);
         useDarkSkySwitch.setChecked(useDarkSky);
         darkSkyKeyEditText.setText(darkSkyAPIKey);
     }

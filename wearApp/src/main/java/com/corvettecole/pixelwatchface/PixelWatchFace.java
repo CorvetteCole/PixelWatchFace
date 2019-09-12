@@ -372,7 +372,14 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             long now = System.currentTimeMillis();
             mCalendar.setTimeInMillis(now);
 
-            String mTimeText = String.format("%d:%02d", getHour(mCalendar, mUse24HourTime), mCalendar.get(Calendar.MINUTE));
+            // pad hour with 0 or not depending on if 24 hour time is being used
+            String mTimeText = "";
+            if (mUse24HourTime){
+                mTimeText = String.format("0%d:%02d", getHour(mCalendar, mUse24HourTime), mCalendar.get(Calendar.MINUTE));
+            } else {
+                mTimeText = String.format("%d:%02d", getHour(mCalendar, mUse24HourTime), mCalendar.get(Calendar.MINUTE));
+            }
+
             float mTimeXOffset = computeXOffset(mTimeText, mTimePaint, bounds);
             float timeYOffset = computeTimeYOffset(mTimeText, mTimePaint, bounds);
             canvas.drawText(mTimeText, mTimeXOffset, timeYOffset, mTimePaint);
@@ -507,7 +514,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private float computerBatteryYOffset(String batteryText, Paint batteryPaint, Rect watchBounds) {
             Rect textBounds = new Rect();
             batteryPaint.getTextBounds(batteryText, 0, batteryText.length(), textBounds);
-            return watchBounds.bottom - textBounds.height() / 2.0f;
+            return watchBounds.bottom - textBounds.height() * 1.5f/* / 2.0f*/;
         }
 
         @Override

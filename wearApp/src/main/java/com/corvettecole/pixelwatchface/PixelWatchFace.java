@@ -375,7 +375,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             // pad hour with 0 or not depending on if 24 hour time is being used
             String mTimeText = "";
             if (mUse24HourTime){
-                mTimeText = String.format("0%d:%02d", getHour(mCalendar, mUse24HourTime), mCalendar.get(Calendar.MINUTE));
+                mTimeText = String.format("%02d:%02d", getHour(mCalendar, mUse24HourTime), mCalendar.get(Calendar.MINUTE));
             } else {
                 mTimeText = String.format("%d:%02d", getHour(mCalendar, mUse24HourTime), mCalendar.get(Calendar.MINUTE));
             }

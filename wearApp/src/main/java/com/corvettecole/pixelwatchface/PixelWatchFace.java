@@ -152,7 +152,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             @Override
             public void onReceive(Context context, Intent intent) {
                 mBatteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
-                invalidate();
             }
         };
 

@@ -581,7 +581,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                                 try {
                                     mLastWeather = getCurrentDetails(jsonData, mUseDarkSky);
                                     mLastWeatherUpdateTime = System.currentTimeMillis();
-                                    invalidate();
+                                    //invalidate();
                                 } catch (JSONException e) {
                                     Log.e(TAG, e.toString());
                                     mLastWeatherUpdateFailedTime = System.currentTimeMillis();

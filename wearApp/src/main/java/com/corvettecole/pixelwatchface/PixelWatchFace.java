@@ -30,6 +30,7 @@ import android.view.WindowInsets;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataEvent;
@@ -53,6 +54,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
@@ -185,6 +187,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private boolean mShowTemperatureDecimalPoint;
         private boolean mShowInfoBarInAmbient;
 
+        private boolean mWeatherUpdating = false;
         private long mLastWeatherUpdateTime = 0;
         private long mLastWeatherUpdateFailedTime = 0;
         private CurrentWeather mLastWeather;
@@ -460,10 +463,11 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 canvas.drawBitmap(mWearOSBitmap, mIconXOffset, mIconYOffset, null);
             }
 
-            if (mForceWeatherUpdate || (shouldTimerBeRunning() && ((mShowTemperature || mShowWeather) && (mLastWeatherUpdateTime == 0 || (System.currentTimeMillis() - mLastWeatherUpdateTime >= 30 * ONE_MIN && System.currentTimeMillis() - mLastWeatherUpdateFailedTime > 5 * ONE_MIN))))) {
+            // TODO rewrite this logic, not happy with it as is. Too unclear
+            if (shouldTimerBeRunning() && ((mShowTemperature || mShowWeather) && (!mWeatherUpdating && (mForceWeatherUpdate || (System.currentTimeMillis() - mLastWeatherUpdateTime >= 30 * ONE_MIN && System.currentTimeMillis() - mLastWeatherUpdateFailedTime > 5 * ONE_MIN))))) {
                 mForceWeatherUpdate = false;
+                mWeatherUpdating = true;  //ensures that this code doesn't run every minute if mLastWeatherUpdateTime remains 0. Instead it will run every 30 min like usual.
 
-                mLastWeatherUpdateTime = 1;  //ensures that this code doesn't run every minute if mLastWeatherUpdateTime remains 0. Instead it will run every 30 min like usual.
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions();
                 }
@@ -474,6 +478,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         .addOnSuccessListener(new OnSuccessListener<Location>() {
                             @Override
                             public void onSuccess(Location location) {
+
                                 // Got last known location. In some rare situations this can be null.
                                 if (location != null) {
                                     // Logic to handle location object
@@ -481,9 +486,16 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                                     getForecast(location.getLatitude(), location.getLongitude(), mUseDarkSky);
                                 } else {
                                     mLastWeatherUpdateFailedTime = System.currentTimeMillis();
+                                    mWeatherUpdating = false;
                                 }
                             }
-                        });
+                        }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        mWeatherUpdating = false;
+                        mLastWeatherUpdateFailedTime = System.currentTimeMillis();
+                    }
+                });
             }
         }
 
@@ -570,10 +582,12 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                     public void onFailure(Request request, IOException e) {
                         Log.d(TAG, "Couldn't retrieve weather data");
                         mLastWeatherUpdateFailedTime = System.currentTimeMillis();
+                        mWeatherUpdating = false;
                     }
 
                     @Override
                     public void onResponse(Response response) throws IOException {
+                        mWeatherUpdating = false;
                         try {
                             String jsonData = response.body().string();
                             Log.v(TAG, jsonData);
@@ -597,10 +611,10 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         }
                     }
                 });
-            }
-
-            else {
+            } else {
                 Log.d(TAG, "Couldn't retrieve weather data: network not available");
+                mWeatherUpdating = false;
+                mLastWeatherUpdateFailedTime = System.currentTimeMillis();
             }
         }
 

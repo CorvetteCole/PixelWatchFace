@@ -61,7 +61,6 @@ import androidx.core.content.res.ResourcesCompat;
 
 import static com.corvettecole.pixelwatchface.Utils.convertToCelsius;
 import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
-import static com.corvettecole.pixelwatchface.Utils.getCurrentDetails;
 import static com.corvettecole.pixelwatchface.Utils.getHour;
 import static com.corvettecole.pixelwatchface.Utils.isNetworkAvailable;
 
@@ -110,35 +109,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         }
     }
 
-    public static class PermissionRequestActivity extends Activity {
-        private static int PERMISSIONS_CODE = 0;
-        String[] mPermissions;
-        int mRequestCode;
-
-        @Override
-        public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-            final String TAG = "PermissionRequest";
-            if (requestCode == mRequestCode) {
-                for (int i = 0; i < permissions.length; i++) {
-                    String permission = permissions[i];
-                    int grantResult = grantResults[i];
-                    Log.d(TAG, "" + permission + " " + (grantResult == PackageManager.PERMISSION_GRANTED ? "granted" : "revoked"));
-                }
-            }
-            finish();
-        }
-
-        @Override
-        protected void onStart() {
-            super.onStart();
-            mPermissions = new String[1];
-            mPermissions[0] = this.getIntent().getStringExtra("KEY_PERMISSIONS");
-            mRequestCode = this.getIntent().getIntExtra("KEY_REQUEST_CODE", PERMISSIONS_CODE);
-
-            ActivityCompat.requestPermissions(this, mPermissions, mRequestCode);
-        }
-    }
-
     private class Engine extends CanvasWatchFaceService.Engine implements DataClient.OnDataChangedListener {
 
         private final Handler mUpdateTimeHandler = new EngineHandler(this);
@@ -174,6 +144,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private boolean mBurnInProtection;
         private boolean mAmbient;
 
+        private long mPermissionRequestedTime = 0;
+
         private float mIconTitleYOffset;
 
         private Typeface mProductSans;
@@ -190,7 +162,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private boolean mWeatherUpdating = false;
         private long mLastWeatherUpdateTime = 0;
         private long mLastWeatherUpdateFailedTime = 0;
-        private CurrentWeather mLastWeather;
+        private CurrentWeather mLastWeather = new CurrentWeather(getApplicationContext());
         private final long ONE_MIN = 60000;
         private long mGetLastLocationCalled = 0;
 
@@ -328,7 +300,10 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         @Override
         public void onTimeTick() {
             super.onTimeTick();
-            invalidate();
+            invalidate(); // forces redraw (calls onDraw)
+            String TAG = "onTimeTick";
+            Log.d(TAG, "onTimeTick called");
+            getWeather();
         }
 
         @Override
@@ -341,9 +316,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 mInfoPaint.setAntiAlias(!inAmbientMode);
             }
 
-            if (inAmbientMode){
+            if (inAmbientMode) {
                 mTimePaint.setStyle(Paint.Style.STROKE);
-                if (mShowInfoBarInAmbient){
+                if (mShowInfoBarInAmbient) {
                     //TODO: change date between the pixel ambient gray and white instead of making it stroked
                     mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text_ambient));
                 }
@@ -366,8 +341,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             final String TAG = "onDraw";
 
             // Draw the background.
-            canvas.drawColor(Color.BLACK);
-            // canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint); does some thing
+            //canvas.drawColor(Color.BLACK);  // test not drawing background every render pass
+            canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
 
 
             // Draw H:MM
@@ -376,7 +351,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
             // pad hour with 0 or not depending on if 24 hour time is being used
             String mTimeText = "";
-            if (mUse24HourTime){
+            if (mUse24HourTime) {
                 mTimeText = String.format("%02d:%02d", getHour(mCalendar, mUse24HourTime), mCalendar.get(Calendar.MINUTE));
             } else {
                 mTimeText = String.format("%d:%02d", getHour(mCalendar, mUse24HourTime), mCalendar.get(Calendar.MINUTE));
@@ -386,7 +361,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             float timeYOffset = computeTimeYOffset(mTimeText, mTimePaint, bounds);
             canvas.drawText(mTimeText, mTimeXOffset, timeYOffset, mTimePaint);
             String dateText;
-            if (mUseEuropeanDateFormat){
+            if (mUseEuropeanDateFormat) {
                 dateText = String.format("%.3s, %d %.3s", android.text.format.DateFormat.format("EEEE", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH),
                         android.text.format.DateFormat.format("MMMM", mCalendar));
             } else {
@@ -400,27 +375,27 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             float dateTextLength = mInfoPaint.measureText(dateText);
 
             float bitmapMargin = 20.0f;
-            if (mShowTemperature && mLastWeather != null){
-                    if (mUseCelsius) {
-                        if (mShowTemperatureDecimalPoint){
-                            temperatureText = String.format("%.1f °C", convertToCelsius(mLastWeather.getTemperature()));
-                        } else {
-                            temperatureText = String.format("%d °C", Math.round(convertToCelsius(mLastWeather.getTemperature())));
-                        }
+            if (mShowTemperature && mLastWeather != null) {
+                if (mUseCelsius) {
+                    if (mShowTemperatureDecimalPoint) {
+                        temperatureText = String.format("%.1f °C", convertToCelsius(mLastWeather.getTemperature()));
                     } else {
-                        if (mShowTemperatureDecimalPoint){
-                            temperatureText = String.format("%.1f °F", mLastWeather.getTemperature());
-                        } else {
-                            temperatureText = String.format("%d °F", Math.round(mLastWeather.getTemperature()));
-                        }
+                        temperatureText = String.format("%d °C", Math.round(convertToCelsius(mLastWeather.getTemperature())));
                     }
-                    if (mShowWeather){
-                        totalLength = dateTextLength + bitmapMargin + mLastWeather.getIconBitmap(getApplicationContext()).getWidth() + mInfoPaint.measureText(temperatureText);
+                } else {
+                    if (mShowTemperatureDecimalPoint) {
+                        temperatureText = String.format("%.1f °F", mLastWeather.getTemperature());
                     } else {
-                        totalLength = dateTextLength + bitmapMargin + mInfoPaint.measureText(temperatureText);
+                        temperatureText = String.format("%d °F", Math.round(mLastWeather.getTemperature()));
                     }
-            } else if (!mShowTemperature && mShowWeather && mLastWeather != null){
-                totalLength = dateTextLength + bitmapMargin/2 + mLastWeather.getIconBitmap(getApplicationContext()).getWidth();
+                }
+                if (mShowWeather) {
+                    totalLength = dateTextLength + bitmapMargin + mLastWeather.getIconBitmap(getApplicationContext()).getWidth() + mInfoPaint.measureText(temperatureText);
+                } else {
+                    totalLength = dateTextLength + bitmapMargin + mInfoPaint.measureText(temperatureText);
+                }
+            } else if (!mShowTemperature && mShowWeather && mLastWeather != null) {
+                totalLength = dateTextLength + bitmapMargin / 2 + mLastWeather.getIconBitmap(getApplicationContext()).getWidth();
             } else {
                 totalLength = dateTextLength;
             }
@@ -430,7 +405,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
             // draw infobar
             if (mShowInfoBarInAmbient || !mAmbient) {
-
 
 
                 canvas.drawText(dateText, infoBarXOffset, timeYOffset + infoBarYOffset, mInfoPaint);
@@ -444,7 +418,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
 
             // draw battery percentage
-            if (mShowBattery){
+            if (mShowBattery) {
                 String battery = String.format("%d%%", mBatteryLevel);
                 float batteryXOffset = computeXOffset(battery, mInfoPaint, bounds);
                 float batteryYOffset = computerBatteryYOffset(battery, mInfoPaint, bounds);
@@ -453,7 +427,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
 
             // draw wearOS icon
-            if (mAmbient){
+            if (mAmbient) {
                 float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmapAmbient.getWidth() / 2.0f);
                 float mIconYOffset = timeYOffset - timeYOffset / 2 - mWearOSBitmapAmbient.getHeight() - 16.0f;
                 canvas.drawBitmap(mWearOSBitmapAmbient, mIconXOffset, mIconYOffset, null);
@@ -462,44 +436,40 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 float mIconYOffset = timeYOffset - timeYOffset / 2 - mWearOSBitmap.getHeight() - 16.0f;
                 canvas.drawBitmap(mWearOSBitmap, mIconXOffset, mIconYOffset, null);
             }
+        }
 
-            // TODO rewrite this logic, not happy with it as is. Too unclear
-            if (shouldTimerBeRunning() && ((mShowTemperature || mShowWeather) && (!mWeatherUpdating && (mForceWeatherUpdate || (System.currentTimeMillis() - mLastWeatherUpdateTime >= 30 * ONE_MIN && System.currentTimeMillis() - mLastWeatherUpdateFailedTime > 5 * ONE_MIN))))) {
-                mForceWeatherUpdate = false;
-                mWeatherUpdating = true;  //ensures that this code doesn't run every minute if mLastWeatherUpdateTime remains 0. Instead it will run every 30 min like usual.
-
+        private void getWeather(){
+            String TAG = "getWeather";
+            if ((mShowTemperature || mShowWeather) && mLastWeather.shouldUpdateWeather()) {
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "requesting permission");
                     requestPermissions();
-                }
-
-                mGetLastLocationCalled = System.currentTimeMillis();
-                Log.d(TAG, "calling getLastLocation()");
-                mFusedLocationClient.getLastLocation()
-                        .addOnSuccessListener(new OnSuccessListener<Location>() {
-                            @Override
-                            public void onSuccess(Location location) {
-
+                } else {
+                    // TODO spawn AsyncTask to handle location and weather update, make sure it is thread safe
+                    // TODO later convert all weather update stuff to using JobScheduler
+                    mGetLastLocationCalled = System.currentTimeMillis();
+                    Log.d(TAG, "calling getLastLocation()");
+                    mFusedLocationClient.getLastLocation()
+                            .addOnSuccessListener(location -> {
                                 // Got last known location. In some rare situations this can be null.
                                 if (location != null) {
                                     // Logic to handle location object
-                                    Log.d(TAG, "called getForecast(" + location.getLatitude() + "," + location.getLongitude() + ")");
-                                    getForecast(location.getLatitude(), location.getLongitude(), mUseDarkSky);
+                                    Log.d(TAG, "updating forecast with location: (" + location.getLatitude() + "," + location.getLongitude() + ")");
+                                    mLastWeather.updateForecast(location.getLatitude(), location.getLongitude());
                                 } else {
-                                    mLastWeatherUpdateFailedTime = System.currentTimeMillis();
-                                    mWeatherUpdating = false;
+                                    // if no location got, check permission
+                                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                        Log.d(TAG, "requesting permission");
+                                        requestPermissions();
+                                    }
                                 }
-                            }
-                        }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        mWeatherUpdating = false;
-                        mLastWeatherUpdateFailedTime = System.currentTimeMillis();
-                    }
-                });
+                            }).addOnFailureListener(e -> {
+                        Log.e(TAG, e.toString());
+                        // if no location got, check permission
+                    });
+                }
             }
         }
-
-
 
 
         private float computeXOffset(String text, Paint paint, Rect watchBounds) {
@@ -553,71 +523,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
         }
 
-        private void getForecast(double latitude, double longitude, boolean useDarkSky) {
-            final String TAG = "getForecast";
-            String apiKey = getString(R.string.openstreetmap_api_key);
-            String forecastUrl = "https://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude + "&units=imperial&appid=" + apiKey;
-
-            if (useDarkSky) {
-                if (mDarkSkyAPIKey != null) {
-                    apiKey = mDarkSkyAPIKey;
-                }
-                forecastUrl = "https://api.forecast.io/forecast/" +
-                        apiKey + "/" + latitude + "," + longitude + "?lang=" + Locale.getDefault().getLanguage();
-                Log.d(TAG, "forecastURL: " + "https://api.forecast.io/forecast/" +
-                        apiKey + "/" + latitude + "," + longitude + "?lang=" + Locale.getDefault().getLanguage());
-            }
-
-
-            if (isNetworkAvailable(getApplicationContext())){
-
-                OkHttpClient client = new OkHttpClient();
-                Request request = new Request.Builder()
-                        .url(forecastUrl)
-                        .build();
-
-                Call call = client.newCall(request);
-                call.enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Request request, IOException e) {
-                        Log.d(TAG, "Couldn't retrieve weather data");
-                        mLastWeatherUpdateFailedTime = System.currentTimeMillis();
-                        mWeatherUpdating = false;
-                    }
-
-                    @Override
-                    public void onResponse(Response response) throws IOException {
-                        mWeatherUpdating = false;
-                        try {
-                            String jsonData = response.body().string();
-                            Log.v(TAG, jsonData);
-                            if (response.isSuccessful()) {
-                                try {
-                                    mLastWeather = getCurrentDetails(jsonData, mUseDarkSky);
-                                    mLastWeatherUpdateTime = System.currentTimeMillis();
-                                    //invalidate();
-                                } catch (JSONException e) {
-                                    Log.e(TAG, e.toString());
-                                    mLastWeatherUpdateFailedTime = System.currentTimeMillis();
-                                }
-                            } else {
-                                Log.d(TAG, "Couldn't retrieve weather data: response not successful");
-                                mLastWeatherUpdateFailedTime = System.currentTimeMillis();
-                            }
-                        }
-                        catch (IOException e) {
-                            Log.e(TAG, e.toString());
-                            mLastWeatherUpdateFailedTime = System.currentTimeMillis();
-                        }
-                    }
-                });
-            } else {
-                Log.d(TAG, "Couldn't retrieve weather data: network not available");
-                mWeatherUpdating = false;
-                mLastWeatherUpdateFailedTime = System.currentTimeMillis();
-            }
-        }
-
         private void updateSettings(DataMap dataMap) {
             String TAG = "updateSettings";
             boolean showTemperature = mShowTemperature;
@@ -640,31 +545,35 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
                 boolean useDarkSkyTemp = mUseDarkSky;
                 mUseDarkSky = dataMap.getBoolean("use_dark_sky", false);
-                if (useDarkSkyTemp != mUseDarkSky || showTemperature != mShowTemperature || showWeather != mShowWeather){  //detect if weather provider has changed
+                mLastWeather.setUseDarkSky(mUseDarkSky);
+                if (useDarkSkyTemp != mUseDarkSky || showTemperature != mShowTemperature || showWeather != mShowWeather) {  //detect if weather provider has changed
                     mForceWeatherUpdate = true;
+                    getWeather();
                 }
-
-                requestPermissions();
-
                 savePreferences(mSharedPreferences);
                 invalidate(); //should invalidate the view and force a redraw
-            } catch (Exception e){
+            } catch (Exception e) {
                 Log.e(TAG, "error processing DataMap");
                 Log.e(TAG, e.toString());
             }
         }
 
-        private void requestPermissions(){
-            if ((mShowWeather || mShowTemperature) && ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.ACCESS_FINE_LOCATION)
-                    != PackageManager.PERMISSION_GRANTED){
-                Intent mPermissionRequestIntent = new Intent(getBaseContext(), PermissionRequestActivity.class);
-                mPermissionRequestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                mPermissionRequestIntent.putExtra("KEY_PERMISSIONS", new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION});
-                startActivity(mPermissionRequestIntent);
+        private void requestPermissions() {
+            if (mPermissionRequestedTime == 0 || mPermissionRequestedTime - System.currentTimeMillis() > ONE_MIN) {
+                Log.d("requestPermission", "Actually requesting permission, more than one minute has passed");
+                mPermissionRequestedTime = System.currentTimeMillis();
+                if (ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    Intent mPermissionRequestIntent = new Intent(getBaseContext(), PermissionRequestActivity.class);
+                    mPermissionRequestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mPermissionRequestIntent.putExtra("KEY_PERMISSIONS", Manifest.permission.ACCESS_FINE_LOCATION);
+                    //mPermissionRequestIntent.putExtra("KEY_PERMISSIONS", new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION});
+                    startActivity(mPermissionRequestIntent);
+                }
             }
         }
 
-        private void savePreferences(SharedPreferences sharedPreferences){
+        private void savePreferences(SharedPreferences sharedPreferences) {
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putBoolean("use_24_hour_time", mUse24HourTime);
             editor.putBoolean("show_temperature", mShowTemperature);
@@ -680,7 +589,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             editor.apply();
         }
 
-        private void loadPreferences(SharedPreferences sharedPreferences){
+        private void loadPreferences(SharedPreferences sharedPreferences) {
             mUse24HourTime = sharedPreferences.getBoolean("use_24_hour_time", false);
             mShowTemperature = sharedPreferences.getBoolean("show_temperature", false);
             mUseCelsius = sharedPreferences.getBoolean("use_celsius", false);

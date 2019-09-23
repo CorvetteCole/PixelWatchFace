@@ -16,6 +16,8 @@ import java.util.Calendar;
 
 public class Utils {
 
+    public static final long ONE_MIN = 60000;
+
     public static Bitmap drawableToBitmap (Drawable drawable) {
         Bitmap bitmap = null;
 
@@ -69,32 +71,5 @@ public class Utils {
         return (fahrenheit - 32)/1.8;
     }
 
-    public static CurrentWeather getCurrentDetails(String jsonData, Boolean useDarkSky) throws JSONException {
-        final String TAG = "getCurrentDetails";
-        JSONObject forecast = new JSONObject(jsonData);
-        CurrentWeather currentWeather = new CurrentWeather();
-        if (useDarkSky) {
-            currentWeather.setWeatherProvider("DarkSky");
-            String timezone = forecast.getString("timezone");
-            JSONObject currently = forecast.getJSONObject("currently");
-            currentWeather.setHumidity(currently.getDouble("humidity"));
-            currentWeather.setTime(currently.getLong("time"));
-            currentWeather.setIcon(currently.getString("icon"));
-            currentWeather.setPrecipChance(currently.getDouble("precipProbability"));
-            currentWeather.setSummary(currently.getString("summary"));
-            currentWeather.setTemperature(currently.getDouble("temperature"));
-            currentWeather.setTimeZone(timezone);
-            Log.d(TAG, currentWeather.getFormattedTime());
-        } else {
-            currentWeather.setWeatherProvider("OpenStreetMap");
-            String tempIcon = forecast.getJSONArray("weather").toString();
-            JSONObject main = forecast.getJSONObject("main");
-            currentWeather.setHumidity(main.getDouble("humidity")/100); //adjust OpenStreetMap format to dark sky format with /100
-            currentWeather.setTemperature(main.getDouble("temp"));
-            Log.d(TAG, tempIcon.substring(tempIcon.indexOf("\"icon\":\"") + 8, tempIcon.indexOf("\"}]")));
-            currentWeather.setIcon(tempIcon.substring(tempIcon.indexOf("\"icon\":\"") + 8, tempIcon.indexOf("\"}]")));
-        }
-        return currentWeather;
-    }
 
 }

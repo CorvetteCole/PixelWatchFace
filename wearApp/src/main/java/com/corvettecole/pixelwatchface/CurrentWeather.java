@@ -4,6 +4,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import androidx.concurrent.futures.CallbackToFutureAdapter;
+import androidx.work.ListenableWorker;
+
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
@@ -18,16 +21,20 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.Future;
 
 import static com.corvettecole.pixelwatchface.Utils.ONE_MIN;
+import static com.corvettecole.pixelwatchface.Utils.convertToCelsius;
 import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
 import static com.corvettecole.pixelwatchface.Utils.isNetworkAvailable;
 
 public class CurrentWeather {
 
+    private static volatile CurrentWeather instance;
+
     private String mIconName = "clear-day";
     private long mTime;
-    private double mTemperature;
+    private double mTemperature = Double.MIN_VALUE;
     private double mHumidity;
     private double mPrecipChance;
     private String mSummary;
@@ -39,7 +46,10 @@ public class CurrentWeather {
 
     private String mOpenWeatherMapKey;
     private String mDarkSkyKey;
-    private boolean mUseDarkSky;
+
+    private boolean mUseDarkSky = false;
+    private boolean mUseCelsius = false;
+    private boolean mShowTemperatureDecimalPoint = false;
 
     private long mLastWeatherUpdateTime = 0;
     private long mLastWeatherUpdateFailedTime = 0;
@@ -47,43 +57,42 @@ public class CurrentWeather {
 
     OkHttpClient client;
 
-    CurrentWeather(Context context) {
-        mApplicationContext = context.getApplicationContext();
-        mOpenWeatherMapKey = context.getString(R.string.openstreetmap_api_key);
-        client = new OkHttpClient();
+    private CurrentWeather(Context context) {
+        if (instance != null) {
+            throw new RuntimeException("Use getInstance() method to get the single instance of this class");
+        } else {
+            mApplicationContext = context.getApplicationContext();
+            mOpenWeatherMapKey = context.getString(R.string.openstreetmap_api_key);
+            client = new OkHttpClient();
+        }
     }
 
-    public boolean shouldUpdateWeather() {
-
-        if (mWeatherUpdating){
-            return false;
+    public static CurrentWeather getInstance(Context context) {
+        if (instance == null) {
+            synchronized (CurrentWeather.class) {
+                if (instance == null) {
+                    instance = new CurrentWeather(context.getApplicationContext());
+                }
+            }
         }
-        // no updates have been attempted, time to attempt
-        else if (mLastWeatherUpdateTime == 0 && mLastWeatherUpdateFailedTime == 0) {
-            return true;
-        } else {
-            // if the weather update failed more recently than the weather was updated last, and it has been 6 minutes since then, this is true
-            // or
-            // if the weather updated more recently than the weather update failed last, and it has been 30 minutes since then or weather update has been forced, this is true
-            return ((mLastWeatherUpdateFailedTime > mLastWeatherUpdateTime && System.currentTimeMillis() - mLastWeatherUpdateFailedTime >= 5 * ONE_MIN) || (mLastWeatherUpdateTime > mLastWeatherUpdateFailedTime && System.currentTimeMillis() - mLastWeatherUpdateTime >= 30 * ONE_MIN));
-        }
-
+        return instance;
     }
 
-    public void updateForecast(double latitude, double longitude) {
-        final String TAG = "getForecast";
-        String forecastUrl;
+    // TODO consider putting the weather update code in the WeatherUpdateWorker
+    public Future<ListenableWorker.Result> updateForecast(double latitude, double longitude) {
+        return CallbackToFutureAdapter.getFuture(completer -> {
+            final String TAG = "getForecast";
+            String forecastUrl;
 
-        if (mUseDarkSky && mDarkSkyKey != null) {
-            forecastUrl = "https://api.forecast.io/forecast/" +
-                    mDarkSkyKey + "/" + latitude + "," + longitude + "?lang=" + Locale.getDefault().getLanguage();
-            Log.d(TAG, "forecastURL: " + "https://api.forecast.io/forecast/" +
-                    mDarkSkyKey + "/" + latitude + "," + longitude + "?lang=" + Locale.getDefault().getLanguage());
-        } else {
-            forecastUrl = "https://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude + "&units=imperial&appid=" + mOpenWeatherMapKey;
-        }
+            if (mUseDarkSky && mDarkSkyKey != null) {
+                forecastUrl = "https://api.forecast.io/forecast/" +
+                        mDarkSkyKey + "/" + latitude + "," + longitude + "?lang=" + Locale.getDefault().getLanguage();
+                Log.d(TAG, "forecastURL: " + "https://api.forecast.io/forecast/" +
+                        mDarkSkyKey + "/" + latitude + "," + longitude + "?lang=" + Locale.getDefault().getLanguage());
+            } else {
+                forecastUrl = "https://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude + "&units=imperial&appid=" + mOpenWeatherMapKey;
+            }
 
-        if (isNetworkAvailable(mApplicationContext)) {
 
             mWeatherUpdating = true;
 
@@ -99,9 +108,11 @@ public class CurrentWeather {
             call.enqueue(new Callback() {
                 @Override
                 public void onFailure(Request request, IOException e) {
+
                     Log.d(TAG, "Couldn't retrieve weather data");
-                    mLastWeatherUpdateFailedTime = System.currentTimeMillis();
-                    mWeatherUpdating = false;
+                    // TODO figure out if i can just use freakin volley because seriously fuck okhttp
+                    //return e;
+                    completer.setException(e);
                 }
 
                 @Override
@@ -114,24 +125,27 @@ public class CurrentWeather {
                             try {
                                 parseWeatherJSON(jsonData);
                                 mLastWeatherUpdateTime = System.currentTimeMillis();
+                                completer.set(ListenableWorker.Result.success());
                                 //invalidate();
                             } catch (JSONException e) {
+                                completer.set(ListenableWorker.Result.retry());
                                 Log.e(TAG, e.toString());
                                 mLastWeatherUpdateFailedTime = System.currentTimeMillis();
                             }
                         } else {
                             Log.d(TAG, "Couldn't retrieve weather data: response not successful");
+                            completer.set(ListenableWorker.Result.retry());
                             mLastWeatherUpdateFailedTime = System.currentTimeMillis();
                         }
                     } catch (IOException e) {
                         Log.e(TAG, e.toString());
+                        completer.set(ListenableWorker.Result.retry());
                         mLastWeatherUpdateFailedTime = System.currentTimeMillis();
                     }
                 }
             });
-        } else {
-            Log.d(TAG, "Couldn't retrieve weather data: network not available");
-        }
+            return completer;
+        });
     }
 
     private void parseWeatherJSON(String json) throws JSONException {
@@ -159,6 +173,24 @@ public class CurrentWeather {
             mIconName = tempIcon.substring(tempIcon.indexOf("\"icon\":\"") + 8, tempIcon.indexOf("\"}]"));
         }
 
+    }
+
+    public String getFormattedTemperature() {
+        String unit = mUseCelsius ? "°C" : "°F";
+        if (mTemperature == Double.MIN_VALUE){
+            if (mShowTemperatureDecimalPoint) {
+                return "--.- " + unit;
+            } else {
+                return "-- " + unit;
+            }
+        } else {
+            double temperature = mUseCelsius ? convertToCelsius(mTemperature) : mTemperature;
+            if (mShowTemperatureDecimalPoint) {
+                return String.format("%.1f %s", temperature, unit);
+            } else {
+                return String.format("%d %s", Math.round(temperature), unit);
+            }
+        }
     }
 
     public String getTimeZone() {
@@ -289,18 +321,6 @@ public class CurrentWeather {
         return timeString;
     }
 
-    public void setTime(long time) {
-        mTime = time;
-    }
-
-    public double getTemperature() {
-        return mTemperature;
-    }
-
-    public void setTemperature(double temperature) {
-        mTemperature = temperature;
-    }
-
     public double getHumidity() {
         return mHumidity;
     }
@@ -340,5 +360,13 @@ public class CurrentWeather {
 
     public void setUseDarkSky(boolean mUseDarkSky) {
         this.mUseDarkSky = mUseDarkSky;
+    }
+
+    public void setUseCelsius(boolean mUseCelsius) {
+        this.mUseCelsius = mUseCelsius;
+    }
+
+    public void setShowTemperatureDecimalPoint(boolean showTemperatureDecimalPoint){
+        this.mShowTemperatureDecimalPoint = showTemperatureDecimalPoint;
     }
 }

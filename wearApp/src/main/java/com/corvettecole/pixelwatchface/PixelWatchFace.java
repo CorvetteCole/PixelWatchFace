@@ -534,6 +534,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 boolean useDarkSkyTemp = mUseDarkSky;
                 mUseDarkSky = dataMap.getBoolean("use_dark_sky", false);
                 mLastWeather.setUseDarkSky(mUseDarkSky);
+                mLastWeather.setDarkSkyKey(mDarkSkyAPIKey);
 
                 mLastWeather.setShowTemperatureDecimalPoint(mShowTemperatureDecimalPoint);
                 mLastWeather.setUseCelsius(mUseCelsius);
@@ -599,6 +600,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mShowBattery = sharedPreferences.getBoolean("show_battery", true);
 
 
+            mLastWeather.setDarkSkyKey(mDarkSkyAPIKey);
+            mLastWeather.setUseDarkSky(mUseDarkSky);
             mLastWeather.setUseCelsius(mUseCelsius);
             mLastWeather.setShowTemperatureDecimalPoint(mShowTemperatureDecimalPoint);
         }

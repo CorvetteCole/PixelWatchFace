@@ -300,9 +300,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             invalidate(); // forces redraw (calls onDraw)
             String TAG = "onTimeTick";
             Log.d(TAG, "onTimeTick called");
-            if (!mWeatherUpdaterInitialized) {
+            //if (!mWeatherUpdaterInitialized) {
                 initWeatherUpdater(false);
-            }
+            //}
         }
 
         @Override
@@ -437,7 +437,10 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                                 .setRequiredNetworkType(NetworkType.CONNECTED)
                                 .build();
                         OneTimeWorkRequest forceWeatherUpdate =
-                                new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class).build();
+                                new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class)
+                                        .setConstraints(constraints)
+                                        .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY, TimeUnit.MINUTES)
+                                        .build();
                         WorkManager.getInstance(getApplicationContext()).enqueue(forceWeatherUpdate);
                     } else {
                         Log.d(TAG, "setting up weather periodic request");
@@ -448,11 +451,11 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                                 new PeriodicWorkRequest.Builder(WeatherUpdateWorker.class, WEATHER_UPDATE_INTERVAL, TimeUnit.MINUTES)
                                         .setConstraints(constraints)
                                         .addTag(WEATHER_UPDATE_WORKER)
-                                        .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, WEATHER_BACKOFF_DELAY, TimeUnit.SECONDS)
+                                        .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY, TimeUnit.MINUTES)
                                         .build();
                         WorkManager.getInstance(getApplicationContext())
                                 .enqueueUniquePeriodicWork(WEATHER_UPDATE_WORKER, ExistingPeriodicWorkPolicy.KEEP, weatherUpdater);
-                        mWeatherUpdaterInitialized = true;
+                        //mWeatherUpdaterInitialized = true;
                     }
                 }
             }

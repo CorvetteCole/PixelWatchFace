@@ -26,7 +26,6 @@ import java.util.concurrent.Future;
 import static com.corvettecole.pixelwatchface.Utils.ONE_MIN;
 import static com.corvettecole.pixelwatchface.Utils.convertToCelsius;
 import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
-import static com.corvettecole.pixelwatchface.Utils.isNetworkAvailable;
 
 public class CurrentWeather {
 
@@ -150,6 +149,7 @@ public class CurrentWeather {
 
     private void parseWeatherJSON(String json) throws JSONException {
         final String TAG = "parseWeatherJSON";
+        final String lastIconName = mIconName;
 
         JSONObject forecast = new JSONObject(json);
         if (mUseDarkSky) {
@@ -172,7 +172,10 @@ public class CurrentWeather {
             Log.d(TAG, tempIcon.substring(tempIcon.indexOf("\"icon\":\"") + 8, tempIcon.indexOf("\"}]")));
             mIconName = tempIcon.substring(tempIcon.indexOf("\"icon\":\"") + 8, tempIcon.indexOf("\"}]"));
         }
-
+        // set icon bitmap to null so that the icon is refreshed when next retrieved
+        if (!lastIconName.equals(mIconName)){
+            mIconBitmap = null;
+        }
     }
 
     public String getFormattedTemperature() {

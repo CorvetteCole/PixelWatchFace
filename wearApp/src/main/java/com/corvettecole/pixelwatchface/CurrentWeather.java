@@ -23,7 +23,6 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.Future;
 
-import static com.corvettecole.pixelwatchface.Utils.ONE_MIN;
 import static com.corvettecole.pixelwatchface.Utils.convertToCelsius;
 import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
 
@@ -35,24 +34,14 @@ public class CurrentWeather {
     private long mTime;
     private double mTemperature = Double.MIN_VALUE;
     private double mHumidity;
-    private double mPrecipChance;
+    private double mPrecipitationChance;
     private String mSummary;
     private String mTimeZone;
     private Bitmap mIconBitmap;
     private String mWeatherProvider;
 
-    private Context mApplicationContext;
-
     private String mOpenWeatherMapKey;
-    private String mDarkSkyKey;
-
-    private boolean mUseDarkSky = false;
-    private boolean mUseCelsius = false;
-    private boolean mShowTemperatureDecimalPoint = false;
-
-    private long mLastWeatherUpdateTime = 0;
-    private long mLastWeatherUpdateFailedTime = 0;
-    private boolean mWeatherUpdating = false;
+    private Settings mSettings;
 
     OkHttpClient client;
 
@@ -60,7 +49,7 @@ public class CurrentWeather {
         if (instance != null) {
             throw new RuntimeException("Use getInstance() method to get the single instance of this class");
         } else {
-            mApplicationContext = context.getApplicationContext();
+            mSettings = Settings.getInstance(context.getApplicationContext());
             mOpenWeatherMapKey = context.getString(R.string.openstreetmap_api_key);
             client = new OkHttpClient();
         }
@@ -83,17 +72,14 @@ public class CurrentWeather {
             final String TAG = "getForecast";
             String forecastUrl;
 
-            if (mUseDarkSky && mDarkSkyKey != null) {
+            if (mSettings.isUseDarkSky() && mSettings.getDarkSkyAPIKey() != null) {
                 forecastUrl = "https://api.forecast.io/forecast/" +
-                        mDarkSkyKey + "/" + latitude + "," + longitude + "?lang=" + Locale.getDefault().getLanguage();
+                        mSettings.getDarkSkyAPIKey() + "/" + latitude + "," + longitude + "?lang=" + Locale.getDefault().getLanguage();
                 Log.d(TAG, "forecastURL: " + "https://api.forecast.io/forecast/" +
-                        mDarkSkyKey + "/" + latitude + "," + longitude + "?lang=" + Locale.getDefault().getLanguage());
+                        mSettings.getDarkSkyAPIKey() + "/" + latitude + "," + longitude + "?lang=" + Locale.getDefault().getLanguage());
             } else {
                 forecastUrl = "https://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude + "&units=imperial&appid=" + mOpenWeatherMapKey;
             }
-
-
-            mWeatherUpdating = true;
 
             if (client == null) {
                 client = new OkHttpClient();
@@ -116,30 +102,25 @@ public class CurrentWeather {
 
                 @Override
                 public void onResponse(Response response) throws IOException {
-                    mWeatherUpdating = false;
                     try {
                         String jsonData = response.body().string();
                         Log.v(TAG, jsonData);
                         if (response.isSuccessful()) {
                             try {
                                 parseWeatherJSON(jsonData);
-                                mLastWeatherUpdateTime = System.currentTimeMillis();
                                 completer.set(ListenableWorker.Result.success());
                                 //invalidate();
                             } catch (JSONException e) {
                                 completer.set(ListenableWorker.Result.retry());
                                 Log.e(TAG, e.toString());
-                                mLastWeatherUpdateFailedTime = System.currentTimeMillis();
                             }
                         } else {
                             Log.d(TAG, "Couldn't retrieve weather data: response not successful");
                             completer.set(ListenableWorker.Result.retry());
-                            mLastWeatherUpdateFailedTime = System.currentTimeMillis();
                         }
                     } catch (IOException e) {
                         Log.e(TAG, e.toString());
                         completer.set(ListenableWorker.Result.retry());
-                        mLastWeatherUpdateFailedTime = System.currentTimeMillis();
                     }
                 }
             });
@@ -152,14 +133,14 @@ public class CurrentWeather {
         final String lastIconName = mIconName;
 
         JSONObject forecast = new JSONObject(json);
-        if (mUseDarkSky) {
+        if (mSettings.isUseDarkSky()) {
             setWeatherProvider("DarkSky");
             mTimeZone = forecast.getString("timezone");
             JSONObject currently = forecast.getJSONObject("currently");
             mHumidity = currently.getDouble("humidity");
             mTime = currently.getLong("time");
             mIconName = currently.getString("icon");
-            mPrecipChance = currently.getDouble("precipProbability");
+            mPrecipitationChance = currently.getDouble("precipProbability");
             mSummary = currently.getString("summary");
             mTemperature = currently.getDouble("temperature");
             Log.d(TAG, getFormattedTime());
@@ -179,16 +160,16 @@ public class CurrentWeather {
     }
 
     public String getFormattedTemperature() {
-        String unit = mUseCelsius ? "°C" : "°F";
+        String unit = mSettings.isUseCelsius() ? "°C" : "°F";
         if (mTemperature == Double.MIN_VALUE){
-            if (mShowTemperatureDecimalPoint) {
+            if (mSettings.isShowTemperatureFractional()) {
                 return "--.- " + unit;
             } else {
                 return "-- " + unit;
             }
         } else {
-            double temperature = mUseCelsius ? convertToCelsius(mTemperature) : mTemperature;
-            if (mShowTemperatureDecimalPoint) {
+            double temperature = mSettings.isUseCelsius() ? convertToCelsius(mTemperature) : mTemperature;
+            if (mSettings.isShowTemperatureFractional()) {
                 return String.format("%.1f %s", temperature, unit);
             } else {
                 return String.format("%d %s", Math.round(temperature), unit);
@@ -333,12 +314,12 @@ public class CurrentWeather {
     }
 
     public int getPrecipChance() {
-        double precipPercentage = mPrecipChance * 100;
+        double precipPercentage = mPrecipitationChance * 100;
         return (int) Math.round(precipPercentage);
     }
 
     public void setPrecipChance(double precipChance) {
-        mPrecipChance = precipChance;
+        mPrecipitationChance = precipChance;
     }
 
     public String getSummary() {
@@ -357,19 +338,5 @@ public class CurrentWeather {
         this.mWeatherProvider = mWeatherProvider;
     }
 
-    public void setDarkSkyKey(String mDarkSkyKey) {
-        this.mDarkSkyKey = mDarkSkyKey;
-    }
 
-    public void setUseDarkSky(boolean mUseDarkSky) {
-        this.mUseDarkSky = mUseDarkSky;
-    }
-
-    public void setUseCelsius(boolean mUseCelsius) {
-        this.mUseCelsius = mUseCelsius;
-    }
-
-    public void setShowTemperatureDecimalPoint(boolean showTemperatureDecimalPoint){
-        this.mShowTemperatureDecimalPoint = showTemperatureDecimalPoint;
-    }
 }

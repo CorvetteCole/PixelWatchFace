@@ -2,14 +2,18 @@ package com.corvettecole.pixelwatchface;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceManager;
+
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -32,6 +36,8 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Calendar;
+
+import static java.security.AccessController.getContext;
 
 public class MainActivity extends AppCompatActivity implements BillingProcessor.IBillingHandler/*DataClient.OnDataChangedListener*/ {
 
@@ -60,6 +66,8 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
     private boolean showBattery;
     private BillingProcessor bp;
 
+    String[] supportOptions = new String[]{"$1","$3","$5","$10"};
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,12 +85,18 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         showInfoBarAmbientSwitch = findViewById(R.id.infoBarAmbientSwitch);
         showBatterySwitch = findViewById(R.id.batterySwitch);
 
-
-
         darkSkyKeyEditText = findViewById(R.id.darkSkyEditText);
 
         loadPreferences();
         loadSettingStates();
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                        getApplicationContext(),
+                        R.layout.dropdown_menu_popup_menu,
+                        supportOptions);
+        AutoCompleteTextView editTextFilledExposedDropdown =
+                findViewById(R.id.filled_exposed_dropdown);
+        editTextFilledExposedDropdown.setAdapter(adapter);
 
         use24HourTimeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override

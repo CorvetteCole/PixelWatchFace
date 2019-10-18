@@ -2,14 +2,6 @@
 A minimalistic and open-source watchface for WearOS
 
 # Roadmap
-## First Update (Refactor time woooo!)
-- Create standard interface for settings on both devices, allowing new features to be implemented easily
-- Move all constants to constants
-- Move all strings to a strings xml to allow for translation
-- Make the permissions dialog keep showing if the user doesn't accept and weather is still enabled
-- Add battery percent
-- Add setting to allow user to toggle outlined text in ambient mode
-- Make code more modular and independent
 ## Second Update
 - Full rehaul of mobile app so settings are easy to navigate
 - Dynamic stroke width based on ambient lighting
@@ -22,6 +14,19 @@ A minimalistic and open-source watchface for WearOS
 ## Fourth Update
 - Add the "At A Glance" widget
 - Something else, idk
+
+# Roadmap (Completed)
+## First Update (Refactor time woooo!)
+- Create standard interface for settings on both devices, allowing new features to be implemented easily
+- Move all constants to constants
+- Move all strings to a strings xml to allow for translation
+- Make the permissions dialog keep showing if the user doesn't accept and weather is still enabled
+- Add battery percent
+- Add setting to allow user to toggle outlined text in ambient mode
+- Make code more modular and independent
+
+
+
 
 # TODO
 ## Watch App

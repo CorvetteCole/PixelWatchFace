@@ -248,8 +248,8 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         dataMap.putBoolean("show_weather", showWeather);
         dataMap.putBoolean("use_european_date", useEuropeanDateFormat);
         dataMap.putBoolean("show_temperature_decimal", showTemperatureDecimalPoint);
-        dataMap.putBoolean("use_thin_ambient", showInfoBarAmbient);
-        dataMap.putBoolean("show_infobar_ambient", useThinAmbient);
+        dataMap.putBoolean("use_thin_ambient", useThinAmbient);
+        dataMap.putBoolean("show_infobar_ambient", showInfoBarAmbient);
         dataMap.putString("dark_sky_api_key", darkSkyAPIKey);
         dataMap.putBoolean("use_dark_sky", useDarkSky);
         dataMap.putBoolean("show_battery", showBattery);

@@ -286,8 +286,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
 
             if (inAmbientMode) {
-                mTimePaint.setStyle(Paint.Style.FILL);
+                mTimePaint.setStyle(Paint.Style.STROKE);
                 if (mSettings.isUseThinAmbient()){
+                    mTimePaint.setStyle(Paint.Style.FILL);
                     mTimePaint.setTypeface(mProductSansThin);
                 }
                 if (mSettings.isShowInfoBarAmbient()) {

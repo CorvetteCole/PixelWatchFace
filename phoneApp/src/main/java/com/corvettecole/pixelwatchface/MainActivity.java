@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
     private Switch useDarkSkySwitch;
     private Switch useEuropeanDateFormatSwitch;
     private Switch showTemperatureDecimalSwitch;
+    private Switch useThinAmbientSwitch;
     private Switch showInfoBarAmbientSwitch;
     private Switch showBatterySwitch;
 
@@ -62,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
     private boolean showTemperatureDecimalPoint;
     private String darkSkyAPIKey;
     private boolean useDarkSky;
+    private boolean useThinAmbient;
     private boolean showInfoBarAmbient;
     private boolean showBattery;
     private BillingProcessor bp;
@@ -82,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         useDarkSkySwitch = findViewById(R.id.useDarkSkySwitch);
         useEuropeanDateFormatSwitch = findViewById(R.id.dateFormatSwitch);
         showTemperatureDecimalSwitch = findViewById(R.id.temperaturePrecisionSwitch);
+        useThinAmbientSwitch = findViewById(R.id.useThinAmbientSwitch);
         showInfoBarAmbientSwitch = findViewById(R.id.infoBarAmbientSwitch);
         showBatterySwitch = findViewById(R.id.batterySwitch);
 
@@ -152,6 +155,14 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
             }
         });
 
+        useThinAmbientSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                sharedPreferences.edit().putBoolean("use_thin_ambient", isChecked).apply();
+                syncToWear();
+            }
+        });
+
         showInfoBarAmbientSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
@@ -205,6 +216,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         showWeather = sharedPreferences.getBoolean("show_weather", false);
         useEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
         showTemperatureDecimalPoint = sharedPreferences.getBoolean("show_temperature_decimal", false);
+        showInfoBarAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
         showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", false);
         showBattery = sharedPreferences.getBoolean("show_battery", true);
 
@@ -236,7 +248,8 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         dataMap.putBoolean("show_weather", showWeather);
         dataMap.putBoolean("use_european_date", useEuropeanDateFormat);
         dataMap.putBoolean("show_temperature_decimal", showTemperatureDecimalPoint);
-        dataMap.putBoolean("show_infobar_ambient", showInfoBarAmbient);
+        dataMap.putBoolean("use_thin_ambient", showInfoBarAmbient);
+        dataMap.putBoolean("show_infobar_ambient", useThinAmbient);
         dataMap.putString("dark_sky_api_key", darkSkyAPIKey);
         dataMap.putBoolean("use_dark_sky", useDarkSky);
         dataMap.putBoolean("show_battery", showBattery);
@@ -269,6 +282,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         showWeatherSwitch.setChecked(showWeather);
         useEuropeanDateFormatSwitch.setChecked(useEuropeanDateFormat);
         showTemperatureDecimalSwitch.setChecked(showTemperatureDecimalPoint);
+        useThinAmbientSwitch.setChecked(useThinAmbient);
         showInfoBarAmbientSwitch.setChecked(showInfoBarAmbient);
         showBatterySwitch.setChecked(showBattery);
         useDarkSkySwitch.setChecked(useDarkSky);

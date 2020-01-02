@@ -137,6 +137,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private long mPermissionRequestedTime = 0;
 
         private Typeface mProductSans;
+        private Typeface mProductSansThin;
 
 
         private CurrentWeather mCurrentWeather = CurrentWeather.getInstance(getApplicationContext());
@@ -162,6 +163,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mBackgroundPaint.setColor(
                     ContextCompat.getColor(getApplicationContext(), R.color.background));
             mProductSans = ResourcesCompat.getFont(getApplicationContext(), R.font.product_sans_regular);
+            mProductSansThin = ResourcesCompat.getFont(getApplicationContext(), R.font.product_sans_thin);
 
             // Initializes Watch Face.
             mTimePaint = new Paint();
@@ -284,7 +286,10 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
 
             if (inAmbientMode) {
-                mTimePaint.setStyle(Paint.Style.STROKE);
+                mTimePaint.setStyle(Paint.Style.FILL);
+                if (mSettings.isUseThinAmbient()){
+                    mTimePaint.setTypeface(mProductSansThin);
+                }
                 if (mSettings.isShowInfoBarAmbient()) {
                     //TODO: change date between the pixel ambient gray and white instead of making it stroked
                     mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text_ambient));

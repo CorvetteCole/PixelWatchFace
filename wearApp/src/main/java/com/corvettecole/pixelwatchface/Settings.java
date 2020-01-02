@@ -15,7 +15,7 @@ public class Settings {
 
 
     private boolean use24HourTime, showTemperature, showWeatherIcon, useCelsius,
-            useEuropeanDateFormat, showInfoBarAmbient, showTemperatureFractional,
+            useEuropeanDateFormat, useThinAmbient, showInfoBarAmbient, showTemperatureFractional,
             showBattery, useDarkSky, useCommaFractional;
 
     private String darkSkyAPIKey;
@@ -62,6 +62,10 @@ public class Settings {
 
     public boolean isUseEuropeanDateFormat() {
         return useEuropeanDateFormat;
+    }
+
+    public boolean isUseThinAmbient() {
+        return useThinAmbient;
     }
 
     public boolean isShowInfoBarAmbient() {
@@ -116,6 +120,7 @@ public class Settings {
         useCelsius = sharedPreferences.getBoolean("use_celsius", false);
         showWeatherIcon = sharedPreferences.getBoolean("show_weather", false);
 
+        useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", true);
         showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", true);
 
         useEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
@@ -135,6 +140,7 @@ public class Settings {
         editor.putBoolean("show_weather", showWeatherIcon);
         editor.putBoolean("use_european_date", useEuropeanDateFormat);
         editor.putBoolean("show_temperature_decimal", showTemperatureFractional);
+        editor.putBoolean("use_thin_ambient", useThinAmbient);
         editor.putBoolean("show_infobar_ambient", showInfoBarAmbient);
         editor.putBoolean("show_battery", showBattery);
 

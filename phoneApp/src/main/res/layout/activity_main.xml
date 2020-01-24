@@ -123,6 +123,19 @@
         app:layout_constraintTop_toBottomOf="@+id/dateFormatSwitch" />
 
     <Switch
+        android:id="@+id/useThinAmbientSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="testing testing"
+        android:text="Use thin text in ambient mode"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/temperaturePrecisionSwitch" />
+
+    <Switch
         android:id="@+id/infoBarAmbientSwitch"
         android:layout_width="match_parent"
         android:layout_height="48dp"

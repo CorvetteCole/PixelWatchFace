@@ -6,16 +6,19 @@ Play Store link: https://play.google.com/store/apps/details?id=com.corvettecole.
 # Roadmap
 ## In-Progress
 ### Second Update
+- Add option to allow users to support development with an in-app purchase on Android
+- Add all watch settings to the watch app for iOS users
+- Automatically set the default 12/24h time based on what the device is set to upon first install
+- Add setting to allow users to change the weather update attempt interval
+### Third Update
+- Add seconds display option to devices with the Snapdragon 3100, taking advantage of the low power mode
 - Full rehaul of mobile app so settings are easy to navigate
 - Dynamic stroke width based on ambient lighting
-- Add setting to allow user to change update interval for weather
-### Third Update
-- Add option to allow user to support me by giving money
-- Add all watch settings to watch app, so phone is no longer needed
 - Replace weather icons with new ones that match the ones on Pixel phones
 - Add support for Dark Sky weather summary
 ### Fourth Update
 - Add the "At A Glance" widget
+- Complication support
 - Something else, idk
 
 ## Completed

@@ -8,7 +8,7 @@ Play Store link: https://play.google.com/store/apps/details?id=com.corvettecole.
 ### Second Update
 - Add autoscaling so app looks consistent across all watches, keeps battery percentage from being off screen etc
 - Add option to allow users to support development with an in-app purchase on Android
-- Add all watch settings to the watch app for iOS users
+- Add all watch settings to the watch app for iOS users (https://developer.android.com/training/wearables/watch-faces/configuration)
 - Automatically set the default 12/24h time based on what the device is set to upon first install
 - Add setting to allow users to change the weather update attempt interval
 ### Third Update

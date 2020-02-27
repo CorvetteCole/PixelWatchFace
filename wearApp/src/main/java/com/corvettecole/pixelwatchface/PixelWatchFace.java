@@ -23,6 +23,17 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.work.BackoffPolicy;
+import androidx.work.Constraints;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataEvent;
@@ -36,17 +47,6 @@ import java.lang.ref.WeakReference;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
-
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
-import androidx.work.BackoffPolicy;
-import androidx.work.Constraints;
-import androidx.work.ExistingPeriodicWorkPolicy;
-import androidx.work.NetworkType;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
 
 import static com.corvettecole.pixelwatchface.Constants.WEATHER_BACKOFF_DELAY;
 import static com.corvettecole.pixelwatchface.Constants.WEATHER_UPDATE_INTERVAL;
@@ -286,18 +286,22 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
 
             if (inAmbientMode) {
-                mTimePaint.setStyle(Paint.Style.STROKE);
+
                 if (mSettings.isUseThinAmbient()){
                     mTimePaint.setStyle(Paint.Style.FILL);
                     mTimePaint.setTypeface(mProductSansThin);
+                } else {
+                    mTimePaint.setStyle(Paint.Style.STROKE);
                 }
                 if (mSettings.isShowInfoBarAmbient()) {
-                    //TODO: change date between the pixel ambient gray and white instead of making it stroked
                     mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text_ambient));
                 }
             } else {
-                mTimePaint.setStyle(Paint.Style.FILL);
-                mInfoPaint.setStyle(Paint.Style.FILL);
+                if (mSettings.isUseThinAmbient()) {
+                    mTimePaint.setTypeface(mProductSans);
+                } else {
+                    mTimePaint.setStyle(Paint.Style.FILL);
+                }
                 mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
 
             }
@@ -406,10 +410,10 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         Log.d(TAG, "requesting permission");
                     requestPermissions();
                 } else {
+                    Constraints constraints = new Constraints.Builder()
+                            .setRequiredNetworkType(NetworkType.CONNECTED)
+                            .build();
                     if (forceUpdate) {
-                        Constraints constraints = new Constraints.Builder()
-                                .setRequiredNetworkType(NetworkType.CONNECTED)
-                                .build();
                         OneTimeWorkRequest forceWeatherUpdate =
                                 new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class)
                                         .setConstraints(constraints)
@@ -418,18 +422,14 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         WorkManager.getInstance(getApplicationContext()).enqueue(forceWeatherUpdate);
                     } else {
                         Log.d(TAG, "setting up weather periodic request");
-                        Constraints constraints = new Constraints.Builder()
-                                .setRequiredNetworkType(NetworkType.CONNECTED)
-                                .build();
                         PeriodicWorkRequest weatherUpdater =
-                                new PeriodicWorkRequest.Builder(WeatherUpdateWorker.class, WEATHER_UPDATE_INTERVAL, TimeUnit.MINUTES)
+                                new PeriodicWorkRequest.Builder(WeatherUpdateWorker.class, WEATHER_UPDATE_INTERVAL, TimeUnit.MINUTES, 15, TimeUnit.MINUTES)
                                         .setConstraints(constraints)
                                         .addTag(WEATHER_UPDATE_WORKER)
-                                        .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY, TimeUnit.MINUTES)
+                                        .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY, TimeUnit.MINUTES)  // max 5 hour delay
                                         .build();
                         WorkManager.getInstance(getApplicationContext())
                                 .enqueueUniquePeriodicWork(WEATHER_UPDATE_WORKER, ExistingPeriodicWorkPolicy.KEEP, weatherUpdater);
-                        //mWeatherUpdaterInitialized = true;
                     }
                 }
             }

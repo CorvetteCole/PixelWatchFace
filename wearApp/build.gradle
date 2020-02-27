@@ -6,8 +6,8 @@ android {
         applicationId "com.corvettecole.pixelwatchface"
         minSdkVersion 23
         targetSdkVersion 29
-        versionCode 1034
-        versionName "1.4.0"
+        versionCode 1036
+        versionName "1.4.1.1-dev"
         multiDexEnabled true
     }
     compileOptions {
@@ -30,9 +30,9 @@ dependencies {
     implementation 'com.google.android.gms:play-services-wearable:17.0.0'
     implementation 'com.google.android.gms:play-services-location:17.0.0'
     implementation 'com.squareup.okhttp:okhttp:2.2.0'
-    implementation 'androidx.work:work-runtime:2.2.0'
+    implementation 'androidx.work:work-runtime:2.3.2'
 
-    implementation 'androidx.concurrent:concurrent-futures:1.0.0-rc01'
+    implementation 'androidx.concurrent:concurrent-futures:1.1.0-alpha01'
     implementation 'com.android.volley:volley:1.1.1'
 
     compileOnly 'com.google.android.wearable:wearable:2.5.0'

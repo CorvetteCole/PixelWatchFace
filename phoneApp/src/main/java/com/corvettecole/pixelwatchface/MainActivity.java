@@ -2,42 +2,31 @@ package com.corvettecole.pixelwatchface;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.preference.PreferenceManager;
-
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
-import android.widget.TextView;
-import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceManager;
 
 import com.anjlab.android.iab.v3.BillingProcessor;
 import com.anjlab.android.iab.v3.TransactionDetails;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.wearable.DataClient;
-import com.google.android.gms.wearable.DataEvent;
-import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMap;
-import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.Calendar;
-
-import static java.security.AccessController.getContext;
 
 public class MainActivity extends AppCompatActivity implements BillingProcessor.IBillingHandler/*DataClient.OnDataChangedListener*/ {
 
@@ -216,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         showWeather = sharedPreferences.getBoolean("show_weather", false);
         useEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
         showTemperatureDecimalPoint = sharedPreferences.getBoolean("show_temperature_decimal", false);
-        showInfoBarAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
+        useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
         showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", false);
         showBattery = sharedPreferences.getBoolean("show_battery", true);
 

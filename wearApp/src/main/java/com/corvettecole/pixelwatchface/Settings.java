@@ -4,12 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-
 import androidx.preference.PreferenceManager;
 
 import com.google.android.gms.wearable.DataMap;
-
-import java.util.Set;
 
 public class Settings {
 
@@ -120,7 +117,7 @@ public class Settings {
         useCelsius = sharedPreferences.getBoolean("use_celsius", false);
         showWeatherIcon = sharedPreferences.getBoolean("show_weather", false);
 
-        useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", true);
+        useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
         showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", true);
 
         useEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);

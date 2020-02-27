@@ -129,11 +129,9 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:contentDescription="testing testing"
         android:text="Use thin text in ambient mode"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/temperaturePrecisionSwitch" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Switch
         android:id="@+id/infoBarAmbientSwitch"
@@ -142,11 +140,9 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:contentDescription="testing testing"
         android:text="Show date/weather in ambient mode"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/temperaturePrecisionSwitch" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Switch
         android:id="@+id/batterySwitch"
@@ -157,8 +153,18 @@
         android:layout_marginEnd="8dp"
         android:text="Show battery level"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/infoBarAmbientSwitch"/>
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Switch
+        android:id="@+id/wearIconSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="Show WearOS icon"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/darkSkyExplanation"

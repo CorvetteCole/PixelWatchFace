@@ -13,7 +13,7 @@ public class Settings {
 
     private boolean use24HourTime, showTemperature, showWeatherIcon, useCelsius,
             useEuropeanDateFormat, useThinAmbient, showInfoBarAmbient, showTemperatureFractional,
-            showBattery, useDarkSky;
+            showBattery, showWearIcon, useDarkSky;
 
     private String darkSkyAPIKey;
 
@@ -77,6 +77,10 @@ public class Settings {
         return showBattery;
     }
 
+    public boolean isShowWearIcon() {
+        return showWearIcon;
+    }
+
     public boolean isUseDarkSky() {
         return useDarkSky;
     }
@@ -106,6 +110,7 @@ public class Settings {
         showInfoBarAmbient = dataMap.getBoolean("show_infobar_ambient", false);
 
         showBattery = dataMap.getBoolean("show_battery", true);
+        showWearIcon = dataMap.getBoolean("show_wear_icon", true);
 
         useDarkSky = dataMap.getBoolean("use_dark_sky", false);
 
@@ -129,6 +134,7 @@ public class Settings {
         useDarkSky = sharedPreferences.getBoolean("use_dark_sky", false);
 
         showBattery = sharedPreferences.getBoolean("show_battery", true);
+        showWearIcon = sharedPreferences.getBoolean("show_wear_icon", true);
     }
 
     private void savePreferences() {
@@ -142,9 +148,11 @@ public class Settings {
         editor.putBoolean("use_thin_ambient", useThinAmbient);
         editor.putBoolean("show_infobar_ambient", showInfoBarAmbient);
         editor.putBoolean("show_battery", showBattery);
+        editor.putBoolean("show_wear_icon", showWearIcon);
 
         editor.putString("dark_sky_api_key", darkSkyAPIKey);
         editor.putBoolean("use_dark_sky", useDarkSky);
         editor.apply();
     }
+
 }

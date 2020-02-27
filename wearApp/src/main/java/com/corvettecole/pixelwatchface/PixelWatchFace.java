@@ -286,22 +286,17 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
 
             if (inAmbientMode) {
-
                 if (mSettings.isUseThinAmbient()){
                     mTimePaint.setStyle(Paint.Style.FILL);
                     mTimePaint.setTypeface(mProductSansThin);
                 } else {
+                    mTimePaint.setTypeface(mProductSans);
                     mTimePaint.setStyle(Paint.Style.STROKE);
                 }
-                if (mSettings.isShowInfoBarAmbient()) {
-                    mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text_ambient));
-                }
+                mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text_ambient));
             } else {
-                if (mSettings.isUseThinAmbient()) {
-                    mTimePaint.setTypeface(mProductSans);
-                } else {
-                    mTimePaint.setStyle(Paint.Style.FILL);
-                }
+                mTimePaint.setTypeface(mProductSans);
+                mTimePaint.setStyle(Paint.Style.FILL);
                 mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
 
             }
@@ -374,6 +369,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
                 canvas.drawText(dateText, infoBarXOffset, timeYOffset + infoBarYOffset, mInfoPaint);
                 if (mSettings.isShowWeatherIcon() && mCurrentWeather != null) {
+                    // TODO replace constant offsets with ratio based offsets
                     canvas.drawBitmap(mCurrentWeather.getIconBitmap(getApplicationContext()), infoBarXOffset + (dateTextLength + bitmapMargin / 2),
                             timeYOffset + infoBarYOffset - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight() + 6.0f, null);
                     canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth()), timeYOffset + infoBarYOffset, mInfoPaint);
@@ -392,14 +388,17 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
 
             // draw wearOS icon
-            if (mAmbient) {
-                float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmapAmbient.getWidth() / 2.0f);
-                float mIconYOffset = timeYOffset - timeYOffset / 2 - mWearOSBitmapAmbient.getHeight() - 16.0f;
-                canvas.drawBitmap(mWearOSBitmapAmbient, mIconXOffset, mIconYOffset, null);
-            } else {
-                float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmap.getWidth() / 2.0f);
-                float mIconYOffset = timeYOffset - timeYOffset / 2 - mWearOSBitmap.getHeight() - 16.0f;
-                canvas.drawBitmap(mWearOSBitmap, mIconXOffset, mIconYOffset, null);
+            if (mSettings.isShowWearIcon()) {
+                // TODO replace constant offsets with ratio based offsets
+                if (mAmbient) {
+                    float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmapAmbient.getWidth() / 2.0f);
+                    float mIconYOffset = timeYOffset - timeYOffset / 2 - mWearOSBitmapAmbient.getHeight() - 16.0f;
+                    canvas.drawBitmap(mWearOSBitmapAmbient, mIconXOffset, mIconYOffset, null);
+                } else {
+                    float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmap.getWidth() / 2.0f);
+                    float mIconYOffset = timeYOffset - timeYOffset / 2 - mWearOSBitmap.getHeight() - 16.0f;
+                    canvas.drawBitmap(mWearOSBitmap, mIconXOffset, mIconYOffset, null);
+                }
             }
         }
 
@@ -442,23 +441,27 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             return centerX - (textLength / 2.0f);
         }
 
+
         private float computeTimeYOffset(String timeText, Paint timePaint, Rect watchBounds) {
             float centerY = watchBounds.exactCenterY();
             Rect textBounds = new Rect();
             timePaint.getTextBounds(timeText, 0, timeText.length(), textBounds);
             int textHeight = textBounds.height();
+            // TODO replace constant offsets with ratio based offsets
             return centerY + (textHeight / 2.0f) - 25.0f; //-XX.Xf is the offset up from the center
         }
 
         private float computeInfoBarYOffset(String dateText, Paint datePaint) {
             Rect textBounds = new Rect();
             datePaint.getTextBounds(dateText, 0, dateText.length(), textBounds);
+            // TODO replace constant offsets with ratio based offsets
             return textBounds.height() + 27.0f;
         }
 
         private float computerBatteryYOffset(String batteryText, Paint batteryPaint, Rect watchBounds) {
             Rect textBounds = new Rect();
             batteryPaint.getTextBounds(batteryText, 0, batteryText.length(), textBounds);
+            // TODO replace constant offsets with ratio based offsets
             return watchBounds.bottom - textBounds.height() * 1.5f/* / 2.0f*/;
         }
 

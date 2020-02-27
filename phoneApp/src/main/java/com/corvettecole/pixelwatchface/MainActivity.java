@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
     private Switch useThinAmbientSwitch;
     private Switch showInfoBarAmbientSwitch;
     private Switch showBatterySwitch;
+    private Switch showWearIconSwitch;
 
     private EditText darkSkyKeyEditText;
 
@@ -55,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
     private boolean useThinAmbient;
     private boolean showInfoBarAmbient;
     private boolean showBattery;
+    private boolean showWearIcon;
     private BillingProcessor bp;
 
     String[] supportOptions = new String[]{"$1","$3","$5","$10"};
@@ -76,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         useThinAmbientSwitch = findViewById(R.id.useThinAmbientSwitch);
         showInfoBarAmbientSwitch = findViewById(R.id.infoBarAmbientSwitch);
         showBatterySwitch = findViewById(R.id.batterySwitch);
+        showWearIconSwitch = findViewById(R.id.wearIconSwitch);
 
         darkSkyKeyEditText = findViewById(R.id.darkSkyEditText);
 
@@ -175,6 +178,17 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
                 syncToWear();
             }
         });
+
+        showWearIconSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                sharedPreferences.edit().putBoolean("show_wear_icon", isChecked).apply();
+                syncToWear();
+            }
+        });
+
+
+
         darkSkyKeyEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -208,7 +222,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
         showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", false);
         showBattery = sharedPreferences.getBoolean("show_battery", true);
-
+        showWearIcon = sharedPreferences.getBoolean("show_wear_icon", true);
 
         darkSkyAPIKey = sharedPreferences.getString("dark_sky_api_key", "");
         useDarkSky = sharedPreferences.getBoolean("use_dark_sky", false);
@@ -242,6 +256,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         dataMap.putString("dark_sky_api_key", darkSkyAPIKey);
         dataMap.putBoolean("use_dark_sky", useDarkSky);
         dataMap.putBoolean("show_battery", showBattery);
+        dataMap.putBoolean("show_wear_icon", showWearIcon);
 
         putDataMapReq.getDataMap().putDataMap("com.corvettecole.pixelwatchface", dataMap);
         PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
@@ -274,6 +289,7 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         useThinAmbientSwitch.setChecked(useThinAmbient);
         showInfoBarAmbientSwitch.setChecked(showInfoBarAmbient);
         showBatterySwitch.setChecked(showBattery);
+        showWearIconSwitch.setChecked(showWearIcon);
         useDarkSkySwitch.setChecked(useDarkSky);
         darkSkyKeyEditText.setText(darkSkyAPIKey);
     }

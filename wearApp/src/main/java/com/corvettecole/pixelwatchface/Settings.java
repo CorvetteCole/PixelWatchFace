@@ -13,7 +13,7 @@ public class Settings {
 
     private boolean use24HourTime, showTemperature, showWeatherIcon, useCelsius,
             useEuropeanDateFormat, useThinAmbient, showInfoBarAmbient, showTemperatureFractional,
-            showBattery, useDarkSky, useCommaFractional;
+            showBattery, useDarkSky;
 
     private String darkSkyAPIKey;
 
@@ -101,6 +101,8 @@ public class Settings {
 
         useEuropeanDateFormat = dataMap.getBoolean("use_european_date");
         showTemperatureFractional = dataMap.getBoolean("show_temperature_decimal");
+
+        useThinAmbient = dataMap.getBoolean("use_thin_ambient");
         showInfoBarAmbient = dataMap.getBoolean("show_infobar_ambient", false);
 
         showBattery = dataMap.getBoolean("show_battery", true);
@@ -144,9 +146,5 @@ public class Settings {
         editor.putString("dark_sky_api_key", darkSkyAPIKey);
         editor.putBoolean("use_dark_sky", useDarkSky);
         editor.apply();
-    }
-
-    public boolean isUseCommaFractional() {
-        return useCommaFractional;
     }
 }

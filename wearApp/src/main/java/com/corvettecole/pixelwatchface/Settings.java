@@ -121,7 +121,7 @@ public class Settings {
         useDarkSky = dataMap.getBoolean("use_dark_sky", false);
 
         savePreferences();
-        if (tempUseDarkSky != useDarkSky || showTemperature != tempShowTemperature || showWeatherIcon != tempShowWeatherIcon) {  //detect if weather provider has changed
+        if (tempUseDarkSky != useDarkSky || showTemperature != tempShowTemperature || showWeatherIcon != tempShowWeatherIcon) {  //detect if weather related settings has changed
             updatesRequired.add(Constants.UPDATE_REQUIRED.WEATHER);
         }
         if (tempUseThinAmbient != useThinAmbient) { // check if font needs update

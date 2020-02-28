@@ -181,6 +181,11 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
             mInfoPaint.setStrokeWidth(2f);
 
+            // force initial weather update when watch face is created to fill in until periodic request runs
+            if (mCurrentWeather == null) {
+                initWeatherUpdater(true);
+            }
+
 
         }
 

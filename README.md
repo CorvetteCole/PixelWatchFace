@@ -4,6 +4,7 @@ A minimalistic and open-source watchface for WearOS
 Play Store link: https://play.google.com/store/apps/details?id=com.corvettecole.pixelwatchface
 
 # Roadmap
+Below is mostly out of date, serves as reference right now. check out the milestones for a better picture of what is coming
 ## In-Progress
 ### Second Update
 - Add autoscaling so app looks consistent across all watches, keeps battery percentage from being off screen etc

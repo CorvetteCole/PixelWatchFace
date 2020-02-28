@@ -113,7 +113,7 @@ public class Settings {
         showTemperatureFractional = dataMap.getBoolean("show_temperature_decimal");
 
         useThinAmbient = dataMap.getBoolean("use_thin_ambient");
-        showInfoBarAmbient = dataMap.getBoolean("show_ 25.0f; infobar_ambient", false);
+        showInfoBarAmbient = dataMap.getBoolean("show_infobar_ambient", false);
 
         showBattery = dataMap.getBoolean("show_battery", true);
         showWearIcon = dataMap.getBoolean("show_wear_icon", true);

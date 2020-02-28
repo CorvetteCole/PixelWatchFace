@@ -48,7 +48,9 @@ import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
-import static com.corvettecole.pixelwatchface.Constants.WEATHER_BACKOFF_DELAY;
+import static com.corvettecole.pixelwatchface.Constants.WEATHER_BACKOFF_DELAY_ONETIME;
+import static com.corvettecole.pixelwatchface.Constants.WEATHER_BACKOFF_DELAY_PERIODIC;
+import static com.corvettecole.pixelwatchface.Constants.WEATHER_FLEX_PERIOD;
 import static com.corvettecole.pixelwatchface.Constants.WEATHER_UPDATE_INTERVAL;
 import static com.corvettecole.pixelwatchface.Constants.WEATHER_UPDATE_WORKER;
 import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
@@ -271,7 +273,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             String TAG = "onTimeTick";
             Log.d(TAG, "onTimeTick called");
             //if (!mWeatherUpdaterInitialized) {
-                initWeatherUpdater(false);
+            initWeatherUpdater(false);
             //}
         }
 
@@ -285,21 +287,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 mInfoPaint.setAntiAlias(!inAmbientMode);
             }
 
-            if (inAmbientMode) {
-                if (mSettings.isUseThinAmbient()){
-                    mTimePaint.setStyle(Paint.Style.FILL);
-                    mTimePaint.setTypeface(mProductSansThin);
-                } else {
-                    mTimePaint.setTypeface(mProductSans);
-                    mTimePaint.setStyle(Paint.Style.STROKE);
-                }
-                mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text_ambient));
-            } else {
-                mTimePaint.setTypeface(mProductSans);
-                mTimePaint.setStyle(Paint.Style.FILL);
-                mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
-
-            }
+            updateFontConfig();
 
             // Whether the timer should be running depends on whether we're visible (as well as
             // whether we're in ambient mode), so we may need to start or stop the timer.
@@ -307,6 +295,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         }
 
 
+        //TODO massively optimize this so that calculations and object allocation etc etc are not
+        // performed here (this needs to run as fast as possible)
+        // https://developer.android.com/training/wearables/watch-faces/performance
         @SuppressLint("DefaultLocale")
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
@@ -402,11 +393,28 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
         }
 
-        private void initWeatherUpdater(boolean forceUpdate){
+        private void updateFontConfig() {
+            if (mAmbient) {
+                if (mSettings.isUseThinAmbient()) {
+                    mTimePaint.setStyle(Paint.Style.FILL);
+                    mTimePaint.setTypeface(mProductSansThin);
+                } else {
+                    mTimePaint.setTypeface(mProductSans);
+                    mTimePaint.setStyle(Paint.Style.STROKE);
+                }
+                mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text_ambient));
+            } else {
+                mTimePaint.setTypeface(mProductSans);
+                mTimePaint.setStyle(Paint.Style.FILL);
+                mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
+            }
+        }
+
+        private void initWeatherUpdater(boolean forceUpdate) {
             String TAG = "initWeatherUpdater";
             if (mSettings.isShowTemperature() || mSettings.isShowWeatherIcon()) {
                 if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        Log.d(TAG, "requesting permission");
+                    Log.d(TAG, "requesting permission");
                     requestPermissions();
                 } else {
                     Constraints constraints = new Constraints.Builder()
@@ -416,16 +424,20 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         OneTimeWorkRequest forceWeatherUpdate =
                                 new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class)
                                         .setConstraints(constraints)
-                                        .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY, TimeUnit.MINUTES)
+                                        // forced weather update is expected to happen sooner, so
+                                        // try again in (30 seconds * attempt count). After 3 failed
+                                        // attempts, it would wait 1.5 seconds before retrying again
+                                        .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_ONETIME, TimeUnit.SECONDS)
                                         .build();
                         WorkManager.getInstance(getApplicationContext()).enqueue(forceWeatherUpdate);
                     } else {
                         Log.d(TAG, "setting up weather periodic request");
                         PeriodicWorkRequest weatherUpdater =
-                                new PeriodicWorkRequest.Builder(WeatherUpdateWorker.class, WEATHER_UPDATE_INTERVAL, TimeUnit.MINUTES, 15, TimeUnit.MINUTES)
+                                new PeriodicWorkRequest.Builder(WeatherUpdateWorker.class, WEATHER_UPDATE_INTERVAL, TimeUnit.MINUTES, WEATHER_FLEX_PERIOD, TimeUnit.MINUTES)
                                         .setConstraints(constraints)
                                         .addTag(WEATHER_UPDATE_WORKER)
-                                        .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY, TimeUnit.MINUTES)  // max 5 hour delay
+                                        // periodic weather update is a little more lazy about scheduling. if it fails, try again in (5 minutes * attempt count) with 5 hours as the max
+                                        .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_PERIODIC, TimeUnit.MINUTES)
                                         .build();
                         WorkManager.getInstance(getApplicationContext())
                                 .enqueueUniquePeriodicWork(WEATHER_UPDATE_WORKER, ExistingPeriodicWorkPolicy.KEEP, weatherUpdater);
@@ -481,10 +493,19 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                         Log.d(TAG, dataMap.toString());
                         dataMap = dataMap.getDataMap("com.corvettecole.pixelwatchface");
                         Log.d(TAG, dataMap.toString());
-                        if (mSettings.updateSettings(dataMap)){
-                            initWeatherUpdater(true);
+
+                        for (Constants.UPDATE_REQUIRED updateRequired : mSettings.updateSettings(dataMap)) {
+                            switch (updateRequired) {
+                                case WEATHER:
+                                    initWeatherUpdater(true);
+                                    break;
+                                case FONT:
+                                    updateFontConfig();
+                                    break;
+                            }
                         }
-                        invalidate();
+
+                        invalidate();// forces redraw
                         //syncToPhone();
                     }
                 } else if (event.getType() == DataEvent.TYPE_DELETED) {

@@ -8,6 +8,8 @@ import androidx.preference.PreferenceManager;
 
 import com.google.android.gms.wearable.DataMap;
 
+import java.util.ArrayList;
+
 public class Settings {
 
 
@@ -89,11 +91,15 @@ public class Settings {
         return darkSkyAPIKey;
     }
 
-    public boolean updateSettings(DataMap dataMap) {  // returns if weather update required
+    public ArrayList<Constants.UPDATE_REQUIRED> updateSettings(DataMap dataMap) {  // returns if weather update required
         String TAG = "updateSettings";
         boolean tempShowTemperature = showTemperature;
         boolean tempShowWeatherIcon = showWeatherIcon;
         boolean tempUseDarkSky = useDarkSky;
+
+        boolean tempUseThinAmbient = useThinAmbient;
+
+        ArrayList<Constants.UPDATE_REQUIRED> updatesRequired = new ArrayList<>();
 
         Log.d(TAG, "timestamp: " + dataMap.getLong("timestamp"));
         use24HourTime = dataMap.getBoolean("use_24_hour_time");
@@ -107,7 +113,7 @@ public class Settings {
         showTemperatureFractional = dataMap.getBoolean("show_temperature_decimal");
 
         useThinAmbient = dataMap.getBoolean("use_thin_ambient");
-        showInfoBarAmbient = dataMap.getBoolean("show_infobar_ambient", false);
+        showInfoBarAmbient = dataMap.getBoolean("show_ 25.0f; infobar_ambient", false);
 
         showBattery = dataMap.getBoolean("show_battery", true);
         showWearIcon = dataMap.getBoolean("show_wear_icon", true);
@@ -115,7 +121,15 @@ public class Settings {
         useDarkSky = dataMap.getBoolean("use_dark_sky", false);
 
         savePreferences();
-        return (tempUseDarkSky != useDarkSky || showTemperature != tempShowTemperature || showWeatherIcon != tempShowWeatherIcon);  //detect if weather provider has changed
+        if (tempUseDarkSky != useDarkSky || showTemperature != tempShowTemperature || showWeatherIcon != tempShowWeatherIcon) {  //detect if weather provider has changed
+            updatesRequired.add(Constants.UPDATE_REQUIRED.WEATHER);
+        }
+        if (tempUseThinAmbient != useThinAmbient) { // check if font needs update
+            updatesRequired.add(Constants.UPDATE_REQUIRED.FONT);
+        }
+
+        return updatesRequired;
+
     }
 
     private void loadPreferences() {

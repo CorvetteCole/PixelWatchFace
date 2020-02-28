@@ -66,6 +66,7 @@ public class CurrentWeather {
         return instance;
     }
 
+    // TODO swtich from okhttp to volley
     // TODO consider putting the weather update code in the WeatherUpdateWorker
     public Future<ListenableWorker.Result> updateForecast(double latitude, double longitude) {
         return CallbackToFutureAdapter.getFuture(completer -> {

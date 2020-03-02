@@ -6,8 +6,6 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -85,13 +83,13 @@ public class MainActivity extends AppCompatActivity implements BillingProcessor.
         loadPreferences();
         loadSettingStates();
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                        getApplicationContext(),
-                        R.layout.dropdown_menu_popup_menu,
-                        supportOptions);
-        AutoCompleteTextView editTextFilledExposedDropdown =
-                findViewById(R.id.filled_exposed_dropdown);
-        editTextFilledExposedDropdown.setAdapter(adapter);
+//        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+//                        getApplicationContext(),
+//                        R.layout.dropdown_menu_popup_menu,
+//                        supportOptions);
+//        AutoCompleteTextView editTextFilledExposedDropdown =
+//                findViewById(R.id.filled_exposed_dropdown);
+//        editTextFilledExposedDropdown.setAdapter(adapter);
 
         use24HourTimeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override

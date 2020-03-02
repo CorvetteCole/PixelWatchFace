@@ -12,7 +12,7 @@
     android:layout_width="match_parent"
     android:orientation="vertical">
 
-
+    <!--
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/supportDevelopmentLayout"
         android:layout_width="match_parent"
@@ -48,7 +48,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout> -->
 
     <Switch
         android:id="@+id/timeFormatSwitch"

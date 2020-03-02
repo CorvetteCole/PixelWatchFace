@@ -20,6 +20,7 @@ import android.os.Message;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
 
@@ -136,14 +137,21 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private boolean mBurnInProtection;
         private boolean mAmbient;
 
+        private boolean mIsRound;
+        private int mChinSize;
+
         private long mPermissionRequestedTime = 0;
 
         private Typeface mProductSans;
         private Typeface mProductSansThin;
 
-
         private CurrentWeather mCurrentWeather = CurrentWeather.getInstance(getApplicationContext());
         private Settings mSettings = Settings.getInstance(getApplicationContext());
+
+        // offsets
+        private float mBatteryYOffset;
+
+
 
         private final long ONE_MIN = 60000;
 
@@ -152,6 +160,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             super.onCreate(holder);
 
             setWatchFaceStyle(new WatchFaceStyle.Builder(PixelWatchFace.this)
+                    .setShowUnreadCountIndicator(true)
+                    .setStatusBarGravity(Gravity.CENTER_HORIZONTAL)
+                    .setStatusBarGravity(Gravity.TOP)
                     .build());
 
             mCalendar = Calendar.getInstance();
@@ -249,13 +260,16 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         @Override
         public void onApplyWindowInsets(WindowInsets insets) {
             super.onApplyWindowInsets(insets);
+            Log.d("onApplyWindowInsets", "onApplyWindowInsets: " + (insets.isRound() ? "round" : "square"));
 
             // Load resources that have alternate values for round watches.
             Resources resources = PixelWatchFace.this.getResources();
-            boolean isRound = insets.isRound();
-            float timeTextSize = resources.getDimension(isRound
+            mIsRound = insets.isRound();
+            mChinSize = insets.getSystemWindowInsetBottom();
+
+            float timeTextSize = resources.getDimension(mIsRound
                     ? R.dimen.digital_time_text_size_round : R.dimen.digital_time_text_size);
-            float dateTextSize = resources.getDimension(isRound
+            float dateTextSize = resources.getDimension(mIsRound
                     ? R.dimen.digital_date_text_size_round : R.dimen.digital_date_text_size);
 
             mTimePaint.setTextSize(timeTextSize);
@@ -281,6 +295,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             initWeatherUpdater(false);
             //}
         }
+
 
         @Override
         public void onAmbientModeChanged(boolean inAmbientMode) {
@@ -308,9 +323,11 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         public void onDraw(Canvas canvas, Rect bounds) {
             final String TAG = "onDraw";
 
+            // TODO move all calculations to not the onDraw method, they don't need to be done every time
+
             // Draw the background.
             //canvas.drawColor(Color.BLACK);  // test not drawing background every render pass
-            canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
+            canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), mBackgroundPaint);
 
 
             // Draw H:MM
@@ -378,7 +395,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             if (mSettings.isShowBattery()) {
                 String battery = String.format("%d%%", mBatteryLevel);
                 float batteryXOffset = computeXOffset(battery, mInfoPaint, bounds);
-                float batteryYOffset = computerBatteryYOffset(battery, mInfoPaint, bounds);
+                float batteryYOffset = computeBatteryYOffset(battery, mInfoPaint, bounds);
 
                 canvas.drawText(battery, batteryXOffset, batteryYOffset, mInfoPaint);
             }
@@ -475,11 +492,10 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             return textBounds.height() + 27.0f;
         }
 
-        private float computerBatteryYOffset(String batteryText, Paint batteryPaint, Rect watchBounds) {
+        private float computeBatteryYOffset(String batteryText, Paint batteryPaint, Rect watchBounds) {
             Rect textBounds = new Rect();
             batteryPaint.getTextBounds(batteryText, 0, batteryText.length(), textBounds);
-            // TODO replace constant offsets with ratio based offsets
-            return watchBounds.bottom - textBounds.height() * 1.5f/* / 2.0f*/;
+            return (watchBounds.bottom - mChinSize) - textBounds.height();
         }
 
         @Override

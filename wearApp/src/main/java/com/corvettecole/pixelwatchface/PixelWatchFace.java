@@ -58,545 +58,574 @@ import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
 import static com.corvettecole.pixelwatchface.Utils.getHour;
 
 /**
- * Important Note: Because watch face apps do not have a default Activity in
- * their project, you will need to set your Configurations to
- * "Do not launch Activity" for both the Wear and/or Application modules. If you
- * are unsure how to do this, please review the "Run Starter project" section
- * in the Google Watch Face Code Lab:
- * https://codelabs.developers.google.com/codelabs/watchface/index.html#0
+ * Important Note: Because watch face apps do not have a default Activity in their project, you will
+ * need to set your Configurations to "Do not launch Activity" for both the Wear and/or Application
+ * modules. If you are unsure how to do this, please review the "Run Starter project" section in the
+ * Google Watch Face Code Lab: https://codelabs.developers.google.com/codelabs/watchface/index.html#0
  */
 public class PixelWatchFace extends CanvasWatchFaceService {
-    /**
-     * Update rate in milliseconds for interactive mode. Defaults to one minute
-     * because the watch face needs to update minutes in interactive mode.
-     */
-    private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
 
-    /**
-     * Handler message id for updating the time periodically in interactive mode.
-     */
-    private static final int MSG_UPDATE_TIME = 0;
+  /**
+   * Update rate in milliseconds for interactive mode. Defaults to one minute because the watch face
+   * needs to update minutes in interactive mode.
+   */
+  private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
+
+  /**
+   * Handler message id for updating the time periodically in interactive mode.
+   */
+  private static final int MSG_UPDATE_TIME = 0;
+
+  @Override
+  public Engine onCreateEngine() {
+    return new Engine();
+  }
+
+  private static class EngineHandler extends Handler {
+
+    private final WeakReference<PixelWatchFace.Engine> mWeakReference;
+
+    public EngineHandler(PixelWatchFace.Engine reference) {
+      mWeakReference = new WeakReference<>(reference);
+    }
 
     @Override
-    public Engine onCreateEngine() {
-        return new Engine();
+    public void handleMessage(Message msg) {
+      PixelWatchFace.Engine engine = mWeakReference.get();
+      if (engine != null) {
+        switch (msg.what) {
+          case MSG_UPDATE_TIME:
+            engine.handleUpdateTimeMessage();
+            break;
+        }
+      }
+    }
+  }
+
+  private class Engine extends CanvasWatchFaceService.Engine implements
+      DataClient.OnDataChangedListener {
+
+    private final Handler mUpdateTimeHandler = new EngineHandler(this);
+    private Calendar mCalendar;
+    private final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        mCalendar.setTimeZone(TimeZone.getDefault());
+        invalidate();
+      }
+    };
+    private final BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        mBatteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+      }
+    };
+
+    private FusedLocationProviderClient mFusedLocationClient;
+    private final Bitmap mWearOSBitmap = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo));
+    private final Bitmap mWearOSBitmapAmbient = drawableToBitmap(
+        getDrawable(R.drawable.ic_wear_os_logo_ambient));
+    private boolean mRegisteredTimeZoneReceiver = false;
+    private boolean mRegisteredBatteryReceiver = false;
+    private Paint mBackgroundPaint;
+    private Paint mTimePaint;
+    private Paint mInfoPaint;
+    private int mBatteryLevel;
+    /**
+     * Whether the display supports fewer bits for each color in ambient mode. When true, we disable
+     * anti-aliasing in ambient mode.
+     */
+    private boolean mLowBitAmbient;
+    private boolean mBurnInProtection;
+    private boolean mAmbient;
+
+    private boolean mIsRound;
+    private int mChinSize;
+
+    private long mPermissionRequestedTime = 0;
+
+    private Typeface mProductSans;
+    private Typeface mProductSansThin;
+
+    private CurrentWeather mCurrentWeather = CurrentWeather.getInstance(getApplicationContext());
+    private Settings mSettings = Settings.getInstance(getApplicationContext());
+
+    // offsets
+    private float mBatteryYOffset;
+
+
+    private final long ONE_MIN = 60000;
+
+    @Override
+    public void onCreate(SurfaceHolder holder) {
+      super.onCreate(holder);
+
+      setWatchFaceStyle(new WatchFaceStyle.Builder(PixelWatchFace.this)
+          .setShowUnreadCountIndicator(true)
+          .setStatusBarGravity(Gravity.CENTER_HORIZONTAL)
+          .setStatusBarGravity(Gravity.TOP)
+          .build());
+
+      mCalendar = Calendar.getInstance();
+      //Resources resources = PixelWatchFace.this.getResources();
+
+      // Initializes syncing with companion app
+      Wearable.getDataClient(getApplicationContext()).addListener(this);
+
+      // Initializes background.
+      mBackgroundPaint = new Paint();
+      mBackgroundPaint.setColor(
+          ContextCompat.getColor(getApplicationContext(), R.color.background));
+      mProductSans = ResourcesCompat.getFont(getApplicationContext(), R.font.product_sans_regular);
+      mProductSansThin = ResourcesCompat.getFont(getApplicationContext(), R.font.product_sans_thin);
+
+      // Initializes Watch Face.
+      mTimePaint = new Paint();
+      mTimePaint.setTypeface(mProductSans);
+      mTimePaint.setAntiAlias(true);
+      mTimePaint.setColor(
+          ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
+      mTimePaint.setStrokeWidth(3f);
+
+      mInfoPaint = new Paint();
+      mInfoPaint.setTypeface(mProductSans);
+      mInfoPaint.setAntiAlias(true);
+      mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
+      mInfoPaint.setStrokeWidth(2f);
+
+      // force initial weather update when watch face is created to fill in until periodic request runs
+      if (mCurrentWeather == null) {
+        initWeatherUpdater(true);
+      }
+
+
     }
 
-    private static class EngineHandler extends Handler {
-        private final WeakReference<PixelWatchFace.Engine> mWeakReference;
-
-        public EngineHandler(PixelWatchFace.Engine reference) {
-            mWeakReference = new WeakReference<>(reference);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            PixelWatchFace.Engine engine = mWeakReference.get();
-            if (engine != null) {
-                switch (msg.what) {
-                    case MSG_UPDATE_TIME:
-                        engine.handleUpdateTimeMessage();
-                        break;
-                }
-            }
-        }
+    @Override
+    public void onDestroy() {
+      mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
+      Wearable.getDataClient(getApplicationContext()).removeListener(this);
+      WorkManager.getInstance(getApplicationContext()).cancelAllWorkByTag(WEATHER_UPDATE_WORKER);
+      super.onDestroy();
     }
 
-    private class Engine extends CanvasWatchFaceService.Engine implements DataClient.OnDataChangedListener {
+    @Override
+    public void onVisibilityChanged(boolean visible) {
+      super.onVisibilityChanged(visible);
 
-        private final Handler mUpdateTimeHandler = new EngineHandler(this);
-        private Calendar mCalendar;
-        private final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                mCalendar.setTimeZone(TimeZone.getDefault());
-                invalidate();
-            }
-        };
-        private final BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                mBatteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
-            }
-        };
+      if (visible) {
+        registerReceivers();
 
-        private FusedLocationProviderClient mFusedLocationClient;
-        private final Bitmap mWearOSBitmap = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo));
-        private final Bitmap mWearOSBitmapAmbient = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo_ambient));
-        private boolean mRegisteredTimeZoneReceiver = false;
-        private boolean mRegisteredBatteryReceiver = false;
-        private Paint mBackgroundPaint;
-        private Paint mTimePaint;
-        private Paint mInfoPaint;
-        private int mBatteryLevel;
-        /**
-         * Whether the display supports fewer bits for each color in ambient mode. When true, we
-         * disable anti-aliasing in ambient mode.
-         */
-        private boolean mLowBitAmbient;
-        private boolean mBurnInProtection;
-        private boolean mAmbient;
+        // Update time zone in case it changed while we weren't visible.
+        mCalendar.setTimeZone(TimeZone.getDefault());
+        invalidate();
+      } else {
+        unregisterReceivers();
+      }
 
-        private boolean mIsRound;
-        private int mChinSize;
+      // Whether the timer should be running depends on whether we're visible (as well as
+      // whether we're in ambient mode), so we may need to start or stop the timer.
+      updateTimer();
+    }
 
-        private long mPermissionRequestedTime = 0;
+    private void registerReceivers() {
+      if (mRegisteredBatteryReceiver && mRegisteredTimeZoneReceiver) {
+        return;
+      }
+      if (!mRegisteredBatteryReceiver) {
+        mRegisteredBatteryReceiver = true;
+        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        PixelWatchFace.this.registerReceiver(mBatteryReceiver, filter);
+      }
+      if (!mRegisteredTimeZoneReceiver) {
+        mRegisteredTimeZoneReceiver = true;
+        IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
+        PixelWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
+      }
+    }
 
-        private Typeface mProductSans;
-        private Typeface mProductSansThin;
+    private void unregisterReceivers() {
+      if (!mRegisteredBatteryReceiver && !mRegisteredTimeZoneReceiver) {
+        return;
+      }
+      if (mRegisteredTimeZoneReceiver) {
+        mRegisteredTimeZoneReceiver = false;
+        PixelWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
+      }
+      if (mRegisteredBatteryReceiver) {
+        mRegisteredBatteryReceiver = false;
+        PixelWatchFace.this.unregisterReceiver(mBatteryReceiver);
+      }
+    }
 
-        private CurrentWeather mCurrentWeather = CurrentWeather.getInstance(getApplicationContext());
-        private Settings mSettings = Settings.getInstance(getApplicationContext());
+    @Override
+    public void onApplyWindowInsets(WindowInsets insets) {
+      super.onApplyWindowInsets(insets);
+      Log.d("onApplyWindowInsets",
+          "onApplyWindowInsets: " + (insets.isRound() ? "round" : "square"));
 
-        // offsets
-        private float mBatteryYOffset;
+      // Load resources that have alternate values for round watches.
+      Resources resources = PixelWatchFace.this.getResources();
+      mIsRound = insets.isRound();
+      mChinSize = insets.getSystemWindowInsetBottom();
 
+      float timeTextSize = resources.getDimension(mIsRound
+          ? R.dimen.digital_time_text_size_round : R.dimen.digital_time_text_size);
+      float dateTextSize = resources.getDimension(mIsRound
+          ? R.dimen.digital_date_text_size_round : R.dimen.digital_date_text_size);
 
-
-        private final long ONE_MIN = 60000;
-
-        @Override
-        public void onCreate(SurfaceHolder holder) {
-            super.onCreate(holder);
-
-            setWatchFaceStyle(new WatchFaceStyle.Builder(PixelWatchFace.this)
-                    .setShowUnreadCountIndicator(true)
-                    .setStatusBarGravity(Gravity.CENTER_HORIZONTAL)
-                    .setStatusBarGravity(Gravity.TOP)
-                    .build());
-
-            mCalendar = Calendar.getInstance();
-            //Resources resources = PixelWatchFace.this.getResources();
-
-            // Initializes syncing with companion app
-            Wearable.getDataClient(getApplicationContext()).addListener(this);
-
-            // Initializes background.
-            mBackgroundPaint = new Paint();
-            mBackgroundPaint.setColor(
-                    ContextCompat.getColor(getApplicationContext(), R.color.background));
-            mProductSans = ResourcesCompat.getFont(getApplicationContext(), R.font.product_sans_regular);
-            mProductSansThin = ResourcesCompat.getFont(getApplicationContext(), R.font.product_sans_thin);
-
-            // Initializes Watch Face.
-            mTimePaint = new Paint();
-            mTimePaint.setTypeface(mProductSans);
-            mTimePaint.setAntiAlias(true);
-            mTimePaint.setColor(
-                    ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
-            mTimePaint.setStrokeWidth(3f);
-
-            mInfoPaint = new Paint();
-            mInfoPaint.setTypeface(mProductSans);
-            mInfoPaint.setAntiAlias(true);
-            mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
-            mInfoPaint.setStrokeWidth(2f);
-
-            // force initial weather update when watch face is created to fill in until periodic request runs
-            if (mCurrentWeather == null) {
-                initWeatherUpdater(true);
-            }
+      mTimePaint.setTextSize(timeTextSize);
+      mInfoPaint.setTextSize(dateTextSize);
 
 
+    }
 
+    @Override
+    public void onPropertiesChanged(Bundle properties) {
+      super.onPropertiesChanged(properties);
+      mLowBitAmbient = properties.getBoolean(PROPERTY_LOW_BIT_AMBIENT, false);
+      mBurnInProtection = properties.getBoolean(PROPERTY_BURN_IN_PROTECTION, false);
+    }
+
+    @Override
+    public void onTimeTick() {
+      super.onTimeTick();
+      invalidate(); // forces redraw (calls onDraw)
+      String TAG = "onTimeTick";
+      Log.d(TAG, "onTimeTick called");
+      //if (!mWeatherUpdaterInitialized) {
+      initWeatherUpdater(false);
+      //}
+    }
+
+
+    @Override
+    public void onAmbientModeChanged(boolean inAmbientMode) {
+      super.onAmbientModeChanged(inAmbientMode);
+
+      mAmbient = inAmbientMode;
+      if (mLowBitAmbient) {
+        mTimePaint.setAntiAlias(!inAmbientMode);
+        mInfoPaint.setAntiAlias(!inAmbientMode);
+      }
+
+      updateFontConfig();
+
+      // Whether the timer should be running depends on whether we're visible (as well as
+      // whether we're in ambient mode), so we may need to start or stop the timer.
+      updateTimer();
+    }
+
+    // TODO use this to calculate y offsets outside of onDraw
+    @Override
+    public void onSurfaceChanged(
+        SurfaceHolder holder, int format, int width, int height) {
+
+      super.onSurfaceChanged(holder, format, width, height);
+    }
+
+
+    // TODO massively optimize this so that calculations and object allocation etc etc are not
+    // performed here (this needs to run as fast as possible)
+    // https://developer.android.com/training/wearables/watch-faces/performance
+    @SuppressLint("DefaultLocale")
+    @Override
+    public void onDraw(Canvas canvas, Rect bounds) {
+      final String TAG = "onDraw";
+
+      // TODO move most calculations to not the onDraw method, they don't need to be done every time
+
+      // Draw the background.
+      //canvas.drawColor(Color.BLACK);  // test not drawing background every render pass
+      canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
+
+      // Draw H:MM
+      long now = System.currentTimeMillis();
+      mCalendar.setTimeInMillis(now);
+
+      // pad hour with 0 or not depending on if 24 hour time is being used
+      String timeText = "";
+      if (mSettings.isUse24HourTime()) {
+        timeText = String
+            .format("%02d:%02d", getHour(mCalendar, true), mCalendar.get(Calendar.MINUTE));
+      } else {
+        timeText = String
+            .format("%d:%02d", getHour(mCalendar, false), mCalendar.get(Calendar.MINUTE));
+      }
+
+      float mTimeXOffset = computeXOffset(timeText, mTimePaint, bounds);
+
+      Rect timeTextBounds = new Rect();
+      mTimePaint.getTextBounds(timeText, 0, timeText.length(), timeTextBounds);
+      float timeYOffset = computeTimeYOffset(timeTextBounds, bounds);
+
+      canvas.drawText(timeText, mTimeXOffset, timeYOffset, mTimePaint);
+      String dateText;
+      if (mSettings.isUseEuropeanDateFormat()) {
+        dateText = String
+            .format("%.3s, %d %.3s", android.text.format.DateFormat.format("EEEE", mCalendar),
+                mCalendar.get(Calendar.DAY_OF_MONTH),
+                android.text.format.DateFormat.format("MMMM", mCalendar));
+      } else {
+        dateText = String
+            .format("%.3s, %.3s %d", android.text.format.DateFormat.format("EEEE", mCalendar),
+                android.text.format.DateFormat.format("MMMM", mCalendar),
+                mCalendar.get(Calendar.DAY_OF_MONTH));
+      }
+
+      String temperatureText = "";
+      float totalLength;
+      float centerX = bounds.exactCenterX();
+      float dateTextLength = mInfoPaint.measureText(dateText);
+
+      float bitmapMargin = 20.0f;
+      if (mSettings.isShowTemperature()) {
+        temperatureText = mCurrentWeather.getFormattedTemperature();
+        if (mSettings.isShowWeatherIcon()) {
+          totalLength =
+              dateTextLength + bitmapMargin + mCurrentWeather.getIconBitmap(getApplicationContext())
+                  .getWidth() + mInfoPaint.measureText(temperatureText);
+        } else {
+          totalLength = dateTextLength + bitmapMargin + mInfoPaint.measureText(temperatureText);
         }
+      } else if (mSettings.isShowWeatherIcon()) {
+        totalLength = dateTextLength + bitmapMargin / 2 + mCurrentWeather
+            .getIconBitmap(getApplicationContext()).getWidth();
+      } else {
+        totalLength = dateTextLength;
+      }
 
-        @Override
-        public void onDestroy() {
-            mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
-            Wearable.getDataClient(getApplicationContext()).removeListener(this);
-            WorkManager.getInstance(getApplicationContext()).cancelAllWorkByTag(WEATHER_UPDATE_WORKER);
-            super.onDestroy();
+      float infoBarXOffset = centerX - (totalLength / 2.0f);
+      float infoBarYOffset = computeInfoBarYOffset(dateText, mInfoPaint, timeTextBounds,
+          timeYOffset);
+
+      // draw infobar
+      if (mSettings.isShowInfoBarAmbient() || !mAmbient) {
+
+        canvas.drawText(dateText, infoBarXOffset, infoBarYOffset, mInfoPaint);
+        if (mSettings.isShowWeatherIcon() && mCurrentWeather != null) {
+          // TODO replace constant offsets with ratio based offsets
+          canvas.drawBitmap(mCurrentWeather.getIconBitmap(getApplicationContext()),
+              infoBarXOffset + (dateTextLength + bitmapMargin / 2),
+              infoBarYOffset
+                  - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight() / 1.4f,
+              null);
+          canvas.drawText(temperatureText,
+              infoBarXOffset + (dateTextLength + bitmapMargin + mCurrentWeather
+                  .getIconBitmap(getApplicationContext()).getWidth()), infoBarYOffset, mInfoPaint);
+        } else if (!mSettings.isShowWeatherIcon() && mSettings.isShowTemperature()
+            && mCurrentWeather != null) {
+          canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin),
+              infoBarYOffset, mInfoPaint);
         }
+      }
 
-        @Override
-        public void onVisibilityChanged(boolean visible) {
-            super.onVisibilityChanged(visible);
+      // draw battery percentage
+      if (mSettings.isShowBattery()) {
+        String battery = String.format("%d%%", mBatteryLevel);
+        float batteryXOffset = computeXOffset(battery, mInfoPaint, bounds);
+        float batteryYOffset = computeBatteryYOffset(battery, mInfoPaint, bounds);
 
-            if (visible) {
-                registerReceivers();
+        canvas.drawText(battery, batteryXOffset, batteryYOffset, mInfoPaint);
+      }
 
-                // Update time zone in case it changed while we weren't visible.
-                mCalendar.setTimeZone(TimeZone.getDefault());
-                invalidate();
-            } else {
-                unregisterReceivers();
+      // draw wearOS icon
+      if (mSettings.isShowWearIcon()) {
+        // TODO replace constant offsets with ratio based offsets
+        if (mAmbient) {
+          float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmapAmbient.getWidth() / 2.0f);
+          float mIconYOffset =
+              timeYOffset - timeYOffset / 2 - mWearOSBitmapAmbient.getHeight() - 16.0f;
+          canvas.drawBitmap(mWearOSBitmapAmbient, mIconXOffset, mIconYOffset, null);
+        } else {
+          float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmap.getWidth() / 2.0f);
+          float mIconYOffset = timeYOffset - timeYOffset / 2 - mWearOSBitmap.getHeight() - 16.0f;
+          canvas.drawBitmap(mWearOSBitmap, mIconXOffset, mIconYOffset, null);
+        }
+      }
+    }
+
+    private void updateFontConfig() {
+      if (mAmbient) {
+        if (mSettings.isUseThinAmbient()) {
+          mTimePaint.setStyle(Paint.Style.FILL);
+          mTimePaint.setTypeface(mProductSansThin);
+        } else {
+          mTimePaint.setTypeface(mProductSans);
+          mTimePaint.setStyle(Paint.Style.STROKE);
+        }
+        mInfoPaint.setColor(
+            ContextCompat.getColor(getApplicationContext(), R.color.digital_text_ambient));
+      } else {
+        mTimePaint.setTypeface(mProductSans);
+        mTimePaint.setStyle(Paint.Style.FILL);
+        mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
+      }
+    }
+
+    private void initWeatherUpdater(boolean forceUpdate) {
+      String TAG = "initWeatherUpdater";
+      if (mSettings.isShowTemperature() || mSettings.isShowWeatherIcon()) {
+        if (ActivityCompat
+            .checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+          Log.d(TAG, "requesting permission");
+          requestPermissions();
+        } else {
+          Constraints constraints = new Constraints.Builder()
+              .setRequiredNetworkType(NetworkType.CONNECTED)
+              .build();
+          if (forceUpdate) {
+            OneTimeWorkRequest forceWeatherUpdate =
+                new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class)
+                    .setConstraints(constraints)
+                    // forced weather update is expected to happen sooner, so
+                    // try again in (30 seconds * attempt count). After 3 failed
+                    // attempts, it would wait 1.5 seconds before retrying again
+                    .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_ONETIME,
+                        TimeUnit.SECONDS)
+                    .build();
+            WorkManager.getInstance(getApplicationContext()).enqueue(forceWeatherUpdate);
+          } else {
+            Log.d(TAG, "setting up weather periodic request");
+            PeriodicWorkRequest weatherUpdater =
+                new PeriodicWorkRequest.Builder(WeatherUpdateWorker.class, WEATHER_UPDATE_INTERVAL,
+                    TimeUnit.MINUTES, WEATHER_FLEX_PERIOD, TimeUnit.MINUTES)
+                    .setConstraints(constraints)
+                    .addTag(WEATHER_UPDATE_WORKER)
+                    // periodic weather update is a little more lazy about scheduling. if it fails, try again in (5 minutes * attempt count) with 5 hours as the max
+                    .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_PERIODIC,
+                        TimeUnit.MINUTES)
+                    .build();
+            WorkManager.getInstance(getApplicationContext())
+                .enqueueUniquePeriodicWork(WEATHER_UPDATE_WORKER, ExistingPeriodicWorkPolicy.KEEP,
+                    weatherUpdater);
+          }
+        }
+      }
+    }
+
+
+    private float computeXOffset(String text, Paint paint, Rect watchBounds) {
+      float centerX = watchBounds.exactCenterX();
+      float textLength = paint.measureText(text);
+      return centerX - (textLength / 2.0f);
+    }
+
+
+    private float computeTimeYOffset(Rect textBounds, Rect watchBounds) {
+      // TODO replace constant offsets with ratio based offsets
+      if (mSettings.isShowWearIcon()) {
+        return watchBounds.exactCenterY() + (textBounds.height()
+            / 4.0f); //-XX.Xf is the offset up from the center
+      } else {
+        return watchBounds.exactCenterY();
+      }
+    }
+
+    private float computeInfoBarYOffset(String dateText, Paint datePaint, Rect timeTextBounds,
+        float timeTextYOffset) {
+      Rect textBounds = new Rect();
+      datePaint.getTextBounds(dateText, 0, dateText.length(), textBounds);
+      return textBounds.height() * 1.8f + timeTextYOffset;
+    }
+
+    private float computeBatteryYOffset(String batteryText, Paint batteryPaint, Rect watchBounds) {
+      Rect textBounds = new Rect();
+      batteryPaint.getTextBounds(batteryText, 0, batteryText.length(), textBounds);
+      return (watchBounds.bottom - mChinSize) - textBounds.height();
+    }
+
+    @Override
+    public void onDataChanged(DataEventBuffer dataEvents) {
+      String TAG = "onDataChanged";
+      Log.d(TAG, "Data changed");
+      DataMap dataMap = new DataMap();
+      for (DataEvent event : dataEvents) {
+        if (event.getType() == DataEvent.TYPE_CHANGED) {
+          // DataItem changed
+          DataItem item = event.getDataItem();
+          Log.d(TAG, "DataItem uri: " + item.getUri());
+          if (item.getUri().getPath().compareTo("/settings") == 0) {
+            Log.d(TAG, "Companion app changed a setting!");
+            dataMap = DataMapItem.fromDataItem(item).getDataMap();
+            Log.d(TAG, dataMap.toString());
+            dataMap = dataMap.getDataMap("com.corvettecole.pixelwatchface");
+            Log.d(TAG, dataMap.toString());
+
+            for (Constants.UPDATE_REQUIRED updateRequired : mSettings.updateSettings(dataMap)) {
+              switch (updateRequired) {
+                case WEATHER:
+                  initWeatherUpdater(true);
+                  break;
+                case FONT:
+                  updateFontConfig();
+                  break;
+              }
             }
 
-            // Whether the timer should be running depends on whether we're visible (as well as
-            // whether we're in ambient mode), so we may need to start or stop the timer.
-            updateTimer();
+            invalidate();// forces redraw
+            //syncToPhone();
+          }
+        } else if (event.getType() == DataEvent.TYPE_DELETED) {
+          // DataItem deleted
         }
+      }
+    }
 
-        private void registerReceivers() {
-            if (mRegisteredBatteryReceiver && mRegisteredTimeZoneReceiver) {
-                return;
-            }
-            if (!mRegisteredBatteryReceiver) {
-                mRegisteredBatteryReceiver = true;
-                IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-                PixelWatchFace.this.registerReceiver(mBatteryReceiver, filter);
-            }
-            if (!mRegisteredTimeZoneReceiver) {
-                mRegisteredTimeZoneReceiver = true;
-                IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
-                PixelWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
-            }
+    private void requestPermissions() {
+      if (mPermissionRequestedTime == 0
+          || mPermissionRequestedTime - System.currentTimeMillis() > ONE_MIN) {
+        Log.d("requestPermission",
+            "Actually requesting permission, more than one minute has passed");
+        mPermissionRequestedTime = System.currentTimeMillis();
+        if (ContextCompat
+            .checkSelfPermission(getApplication(), Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+          Intent mPermissionRequestIntent = new Intent(getBaseContext(),
+              PermissionRequestActivity.class);
+          mPermissionRequestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+          mPermissionRequestIntent
+              .putExtra("KEY_PERMISSIONS", Manifest.permission.ACCESS_FINE_LOCATION);
+          //mPermissionRequestIntent.putExtra("KEY_PERMISSIONS", new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION});
+          startActivity(mPermissionRequestIntent);
         }
+      }
+    }
 
-        private void unregisterReceivers() {
-            if (!mRegisteredBatteryReceiver && !mRegisteredTimeZoneReceiver) {
-                return;
-            }
-            if (mRegisteredTimeZoneReceiver) {
-                mRegisteredTimeZoneReceiver = false;
-                PixelWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
-            }
-            if (mRegisteredBatteryReceiver) {
-                mRegisteredBatteryReceiver = false;
-                PixelWatchFace.this.unregisterReceiver(mBatteryReceiver);
-            }
-        }
+    /**
+     * Starts the {@link #mUpdateTimeHandler} timer if it should be running and isn't currently or
+     * stops it if it shouldn't be running but currently is.
+     */
+    private void updateTimer() {
+      mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
+      if (shouldTimerBeRunning()) {
+        mUpdateTimeHandler.sendEmptyMessage(MSG_UPDATE_TIME);
+      }
+    }
 
-        @Override
-        public void onApplyWindowInsets(WindowInsets insets) {
-            super.onApplyWindowInsets(insets);
-            Log.d("onApplyWindowInsets", "onApplyWindowInsets: " + (insets.isRound() ? "round" : "square"));
+    /**
+     * Returns whether the {@link #mUpdateTimeHandler} timer should be running. The timer should
+     * only run when we're visible and in interactive mode.
+     */
+    private boolean shouldTimerBeRunning() {
+      return isVisible() && !isInAmbientMode();
+    }
 
-            // Load resources that have alternate values for round watches.
-            Resources resources = PixelWatchFace.this.getResources();
-            mIsRound = insets.isRound();
-            mChinSize = insets.getSystemWindowInsetBottom();
+    /**
+     * Handle updating the time periodically in interactive mode.
+     */
+    private void handleUpdateTimeMessage() {
+      invalidate();
+      if (shouldTimerBeRunning()) {
+        long timeMs = System.currentTimeMillis();
+        long delayMs = INTERACTIVE_UPDATE_RATE_MS
+            - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
+        mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
+      }
+    }
 
-            float timeTextSize = resources.getDimension(mIsRound
-                    ? R.dimen.digital_time_text_size_round : R.dimen.digital_time_text_size);
-            float dateTextSize = resources.getDimension(mIsRound
-                    ? R.dimen.digital_date_text_size_round : R.dimen.digital_date_text_size);
-
-            mTimePaint.setTextSize(timeTextSize);
-            mInfoPaint.setTextSize(dateTextSize);
-
-
-
-
-        }
-
-        @Override
-        public void onPropertiesChanged(Bundle properties) {
-            super.onPropertiesChanged(properties);
-            mLowBitAmbient = properties.getBoolean(PROPERTY_LOW_BIT_AMBIENT, false);
-            mBurnInProtection = properties.getBoolean(PROPERTY_BURN_IN_PROTECTION, false);
-        }
-
-        @Override
-        public void onTimeTick() {
-            super.onTimeTick();
-            invalidate(); // forces redraw (calls onDraw)
-            String TAG = "onTimeTick";
-            Log.d(TAG, "onTimeTick called");
-            //if (!mWeatherUpdaterInitialized) {
-            initWeatherUpdater(false);
-            //}
-        }
-
-
-        @Override
-        public void onAmbientModeChanged(boolean inAmbientMode) {
-            super.onAmbientModeChanged(inAmbientMode);
-
-            mAmbient = inAmbientMode;
-            if (mLowBitAmbient) {
-                mTimePaint.setAntiAlias(!inAmbientMode);
-                mInfoPaint.setAntiAlias(!inAmbientMode);
-            }
-
-            updateFontConfig();
-
-            // Whether the timer should be running depends on whether we're visible (as well as
-            // whether we're in ambient mode), so we may need to start or stop the timer.
-            updateTimer();
-        }
-
-        // TODO use this to calculate y offsets outside of onDraw
-        @Override
-        public void onSurfaceChanged(
-                SurfaceHolder holder, int format, int width, int height) {
-
-            super.onSurfaceChanged(holder, format, width, height);
-        }
-
-
-        // TODO massively optimize this so that calculations and object allocation etc etc are not
-        // performed here (this needs to run as fast as possible)
-        // https://developer.android.com/training/wearables/watch-faces/performance
-        @SuppressLint("DefaultLocale")
-        @Override
-        public void onDraw(Canvas canvas, Rect bounds) {
-            final String TAG = "onDraw";
-
-            // TODO move most calculations to not the onDraw method, they don't need to be done every time
-
-            // Draw the background.
-            //canvas.drawColor(Color.BLACK);  // test not drawing background every render pass
-            canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
-
-
-            // Draw H:MM
-            long now = System.currentTimeMillis();
-            mCalendar.setTimeInMillis(now);
-
-            // pad hour with 0 or not depending on if 24 hour time is being used
-            String timeText = "";
-            if (mSettings.isUse24HourTime()) {
-                timeText = String.format("%02d:%02d", getHour(mCalendar, true), mCalendar.get(Calendar.MINUTE));
-            } else {
-                timeText = String.format("%d:%02d", getHour(mCalendar, false), mCalendar.get(Calendar.MINUTE));
-            }
-
-            float mTimeXOffset = computeXOffset(timeText, mTimePaint, bounds);
-
-            Rect timeTextBounds = new Rect();
-            mTimePaint.getTextBounds(timeText, 0, timeText.length(), timeTextBounds);
-            float timeYOffset = computeTimeYOffset(timeTextBounds, bounds);
-
-            canvas.drawText(timeText, mTimeXOffset, timeYOffset, mTimePaint);
-            String dateText;
-            if (mSettings.isUseEuropeanDateFormat()) {
-                dateText = String.format("%.3s, %d %.3s", android.text.format.DateFormat.format("EEEE", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH),
-                        android.text.format.DateFormat.format("MMMM", mCalendar));
-            } else {
-                dateText = String.format("%.3s, %.3s %d", android.text.format.DateFormat.format("EEEE", mCalendar),
-                        android.text.format.DateFormat.format("MMMM", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH));
-            }
-
-            String temperatureText = "";
-            float totalLength;
-            float centerX = bounds.exactCenterX();
-            float dateTextLength = mInfoPaint.measureText(dateText);
-
-            float bitmapMargin = 20.0f;
-            if (mSettings.isShowTemperature()) {
-                temperatureText = mCurrentWeather.getFormattedTemperature();
-                if (mSettings.isShowWeatherIcon()) {
-                    totalLength = dateTextLength + bitmapMargin + mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth() + mInfoPaint.measureText(temperatureText);
-                } else {
-                    totalLength = dateTextLength + bitmapMargin + mInfoPaint.measureText(temperatureText);
-                }
-            } else if (mSettings.isShowWeatherIcon()) {
-                totalLength = dateTextLength + bitmapMargin / 2 + mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth();
-            } else {
-                totalLength = dateTextLength;
-            }
-
-            float infoBarXOffset = centerX - (totalLength / 2.0f);
-            float infoBarYOffset = computeInfoBarYOffset(dateText, mInfoPaint, timeTextBounds, timeYOffset);
-
-            // draw infobar
-            if (mSettings.isShowInfoBarAmbient() || !mAmbient) {
-
-
-                canvas.drawText(dateText, infoBarXOffset, infoBarYOffset, mInfoPaint);
-                if (mSettings.isShowWeatherIcon() && mCurrentWeather != null) {
-                    // TODO replace constant offsets with ratio based offsets
-                    canvas.drawBitmap(mCurrentWeather.getIconBitmap(getApplicationContext()), infoBarXOffset + (dateTextLength + bitmapMargin / 2),
-                            infoBarYOffset - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight()/1.4f , null);
-                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth()), infoBarYOffset, mInfoPaint);
-                } else if (!mSettings.isShowWeatherIcon() && mSettings.isShowTemperature() && mCurrentWeather != null) {
-                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin), infoBarYOffset, mInfoPaint);
-                }
-            }
-
-            // draw battery percentage
-            if (mSettings.isShowBattery()) {
-                String battery = String.format("%d%%", mBatteryLevel);
-                float batteryXOffset = computeXOffset(battery, mInfoPaint, bounds);
-                float batteryYOffset = computeBatteryYOffset(battery, mInfoPaint, bounds);
-
-                canvas.drawText(battery, batteryXOffset, batteryYOffset, mInfoPaint);
-            }
-
-            // draw wearOS icon
-            if (mSettings.isShowWearIcon()) {
-                // TODO replace constant offsets with ratio based offsets
-                if (mAmbient) {
-                    float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmapAmbient.getWidth() / 2.0f);
-                    float mIconYOffset = timeYOffset - timeYOffset / 2 - mWearOSBitmapAmbient.getHeight() - 16.0f;
-                    canvas.drawBitmap(mWearOSBitmapAmbient, mIconXOffset, mIconYOffset, null);
-                } else {
-                    float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmap.getWidth() / 2.0f);
-                    float mIconYOffset = timeYOffset - timeYOffset / 2 - mWearOSBitmap.getHeight() - 16.0f;
-                    canvas.drawBitmap(mWearOSBitmap, mIconXOffset, mIconYOffset, null);
-                }
-            }
-        }
-
-        private void updateFontConfig() {
-            if (mAmbient) {
-                if (mSettings.isUseThinAmbient()) {
-                    mTimePaint.setStyle(Paint.Style.FILL);
-                    mTimePaint.setTypeface(mProductSansThin);
-                } else {
-                    mTimePaint.setTypeface(mProductSans);
-                    mTimePaint.setStyle(Paint.Style.STROKE);
-                }
-                mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text_ambient));
-            } else {
-                mTimePaint.setTypeface(mProductSans);
-                mTimePaint.setStyle(Paint.Style.FILL);
-                mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
-            }
-        }
-
-        private void initWeatherUpdater(boolean forceUpdate) {
-            String TAG = "initWeatherUpdater";
-            if (mSettings.isShowTemperature() || mSettings.isShowWeatherIcon()) {
-                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "requesting permission");
-                    requestPermissions();
-                } else {
-                    Constraints constraints = new Constraints.Builder()
-                            .setRequiredNetworkType(NetworkType.CONNECTED)
-                            .build();
-                    if (forceUpdate) {
-                        OneTimeWorkRequest forceWeatherUpdate =
-                                new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class)
-                                        .setConstraints(constraints)
-                                        // forced weather update is expected to happen sooner, so
-                                        // try again in (30 seconds * attempt count). After 3 failed
-                                        // attempts, it would wait 1.5 seconds before retrying again
-                                        .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_ONETIME, TimeUnit.SECONDS)
-                                        .build();
-                        WorkManager.getInstance(getApplicationContext()).enqueue(forceWeatherUpdate);
-                    } else {
-                        Log.d(TAG, "setting up weather periodic request");
-                        PeriodicWorkRequest weatherUpdater =
-                                new PeriodicWorkRequest.Builder(WeatherUpdateWorker.class, WEATHER_UPDATE_INTERVAL, TimeUnit.MINUTES, WEATHER_FLEX_PERIOD, TimeUnit.MINUTES)
-                                        .setConstraints(constraints)
-                                        .addTag(WEATHER_UPDATE_WORKER)
-                                        // periodic weather update is a little more lazy about scheduling. if it fails, try again in (5 minutes * attempt count) with 5 hours as the max
-                                        .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_PERIODIC, TimeUnit.MINUTES)
-                                        .build();
-                        WorkManager.getInstance(getApplicationContext())
-                                .enqueueUniquePeriodicWork(WEATHER_UPDATE_WORKER, ExistingPeriodicWorkPolicy.KEEP, weatherUpdater);
-                    }
-                }
-            }
-        }
-
-
-        private float computeXOffset(String text, Paint paint, Rect watchBounds) {
-            float centerX = watchBounds.exactCenterX();
-            float textLength = paint.measureText(text);
-            return centerX - (textLength / 2.0f);
-        }
-
-
-        private float computeTimeYOffset(Rect textBounds, Rect watchBounds) {
-            // TODO replace constant offsets with ratio based offsets
-            if (mSettings.isShowWearIcon()) {
-                return watchBounds.exactCenterY() + (textBounds.height() / 4.0f); //-XX.Xf is the offset up from the center
-            } else {
-                return watchBounds.exactCenterY();
-            }
-        }
-
-        private float computeInfoBarYOffset(String dateText, Paint datePaint, Rect timeTextBounds, float timeTextYOffset) {
-            Rect textBounds = new Rect();
-            datePaint.getTextBounds(dateText, 0, dateText.length(), textBounds);
-            return textBounds.height() * 1.8f + timeTextYOffset;
-        }
-
-        private float computeBatteryYOffset(String batteryText, Paint batteryPaint, Rect watchBounds) {
-            Rect textBounds = new Rect();
-            batteryPaint.getTextBounds(batteryText, 0, batteryText.length(), textBounds);
-            return (watchBounds.bottom - mChinSize) - textBounds.height();
-        }
-
-        @Override
-        public void onDataChanged(DataEventBuffer dataEvents) {
-            String TAG = "onDataChanged";
-            Log.d(TAG, "Data changed");
-            DataMap dataMap = new DataMap();
-            for (DataEvent event : dataEvents) {
-                if (event.getType() == DataEvent.TYPE_CHANGED) {
-                    // DataItem changed
-                    DataItem item = event.getDataItem();
-                    Log.d(TAG, "DataItem uri: " + item.getUri());
-                    if (item.getUri().getPath().compareTo("/settings") == 0) {
-                        Log.d(TAG, "Companion app changed a setting!");
-                        dataMap = DataMapItem.fromDataItem(item).getDataMap();
-                        Log.d(TAG, dataMap.toString());
-                        dataMap = dataMap.getDataMap("com.corvettecole.pixelwatchface");
-                        Log.d(TAG, dataMap.toString());
-
-                        for (Constants.UPDATE_REQUIRED updateRequired : mSettings.updateSettings(dataMap)) {
-                            switch (updateRequired) {
-                                case WEATHER:
-                                    initWeatherUpdater(true);
-                                    break;
-                                case FONT:
-                                    updateFontConfig();
-                                    break;
-                            }
-                        }
-
-                        invalidate();// forces redraw
-                        //syncToPhone();
-                    }
-                } else if (event.getType() == DataEvent.TYPE_DELETED) {
-                    // DataItem deleted
-                }
-            }
-        }
-
-        private void requestPermissions() {
-            if (mPermissionRequestedTime == 0 || mPermissionRequestedTime - System.currentTimeMillis() > ONE_MIN) {
-                Log.d("requestPermission", "Actually requesting permission, more than one minute has passed");
-                mPermissionRequestedTime = System.currentTimeMillis();
-                if (ContextCompat.checkSelfPermission(getApplication(), Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    Intent mPermissionRequestIntent = new Intent(getBaseContext(), PermissionRequestActivity.class);
-                    mPermissionRequestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    mPermissionRequestIntent.putExtra("KEY_PERMISSIONS", Manifest.permission.ACCESS_FINE_LOCATION);
-                    //mPermissionRequestIntent.putExtra("KEY_PERMISSIONS", new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION});
-                    startActivity(mPermissionRequestIntent);
-                }
-            }
-        }
-
-        /**
-         * Starts the {@link #mUpdateTimeHandler} timer if it should be running and isn't currently
-         * or stops it if it shouldn't be running but currently is.
-         */
-        private void updateTimer() {
-            mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
-            if (shouldTimerBeRunning()) {
-                mUpdateTimeHandler.sendEmptyMessage(MSG_UPDATE_TIME);
-            }
-        }
-
-        /**
-         * Returns whether the {@link #mUpdateTimeHandler} timer should be running. The timer should
-         * only run when we're visible and in interactive mode.
-         */
-        private boolean shouldTimerBeRunning() {
-            return isVisible() && !isInAmbientMode();
-        }
-
-        /**
-         * Handle updating the time periodically in interactive mode.
-         */
-        private void handleUpdateTimeMessage() {
-            invalidate();
-            if (shouldTimerBeRunning()) {
-                long timeMs = System.currentTimeMillis();
-                long delayMs = INTERACTIVE_UPDATE_RATE_MS
-                        - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
-                mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
-            }
-        }
-
-        // Class for debugging
+    // Class for debugging
         /*
         private void syncToPhone(){
             String TAG = "syncToPhone";
@@ -620,5 +649,5 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         }
         */
 
-    }
+  }
 }

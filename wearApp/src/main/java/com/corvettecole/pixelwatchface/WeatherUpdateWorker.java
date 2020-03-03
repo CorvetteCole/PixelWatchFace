@@ -19,40 +19,45 @@ import java.util.concurrent.ExecutionException;
 
 public class WeatherUpdateWorker extends ListenableWorker {
 
-    /**
-     * @param appContext   The application {@link Context}
-     * @param workerParams Parameters to setup the internal state of this worker
-     */
-    public WeatherUpdateWorker(@NonNull Context appContext, @NonNull WorkerParameters workerParams) {
-        super(appContext, workerParams);
-    }
+  /**
+   * @param appContext   The application {@link Context}
+   * @param workerParams Parameters to setup the internal state of this worker
+   */
+  public WeatherUpdateWorker(@NonNull Context appContext, @NonNull WorkerParameters workerParams) {
+    super(appContext, workerParams);
+  }
 
-    @NonNull
-    @Override
-    public ListenableFuture<Result> startWork() {
-        String TAG = "WeatherUpdateWorker";
-        CurrentWeather currentWeather = CurrentWeather.getInstance(getApplicationContext());
-        FusedLocationProviderClient mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplicationContext());
-        return CallbackToFutureAdapter.getFuture(completer -> {
-            mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-                if (location != null){
-                    Log.d(TAG, "updating forecast with location: (" + location.getLatitude() + "," + location.getLongitude() + ")");
-                    try {
-                        completer.set(currentWeather.updateForecast(location.getLatitude(), location.getLongitude()).get());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        completer.setException(e);
-                    }
-                } else {
-                    if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        completer.set(Result.failure());
-                    } else {
-                        // if no location, but permission exists, try again
-                        completer.set(Result.retry());
-                    }
-                }
-            });
-            return completer;
-        });
-    }
+  @NonNull
+  @Override
+  public ListenableFuture<Result> startWork() {
+    String TAG = "WeatherUpdateWorker";
+    CurrentWeather currentWeather = CurrentWeather.getInstance(getApplicationContext());
+    FusedLocationProviderClient mFusedLocationClient = LocationServices
+        .getFusedLocationProviderClient(getApplicationContext());
+    return CallbackToFutureAdapter.getFuture(completer -> {
+      mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+        if (location != null) {
+          Log.d(TAG, "updating forecast with location: (" + location.getLatitude() + "," + location
+              .getLongitude() + ")");
+          try {
+            completer.set(
+                currentWeather.updateForecast(location.getLatitude(), location.getLongitude())
+                    .get());
+          } catch (Exception e) {
+            e.printStackTrace();
+            completer.setException(e);
+          }
+        } else {
+          if (ActivityCompat.checkSelfPermission(getApplicationContext(),
+              Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            completer.set(Result.failure());
+          } else {
+            // if no location, but permission exists, try again
+            completer.set(Result.retry());
+          }
+        }
+      });
+      return completer;
+    });
+  }
 }

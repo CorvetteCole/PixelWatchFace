@@ -16,48 +16,50 @@ import java.util.Calendar;
 
 public class Utils {
 
-    public static final long ONE_MIN = 60000;
+  public static final long ONE_MIN = 60000;
 
-    public static Bitmap drawableToBitmap (Drawable drawable) {
-        Bitmap bitmap = null;
+  public static Bitmap drawableToBitmap(Drawable drawable) {
+    Bitmap bitmap = null;
 
-        if (drawable instanceof BitmapDrawable) {
-            BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-            if(bitmapDrawable.getBitmap() != null) {
-                return bitmapDrawable.getBitmap();
-            }
-        }
-
-        if(drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
-            bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
-        } else {
-            bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        }
-
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-        return bitmap;
+    if (drawable instanceof BitmapDrawable) {
+      BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+      if (bitmapDrawable.getBitmap() != null) {
+        return bitmapDrawable.getBitmap();
+      }
     }
 
-    public static int getHour(Calendar mCalendar, Boolean mUse24HourTime){
-        if (mUse24HourTime){
-            return mCalendar.get(Calendar.HOUR_OF_DAY);
-        } else {
-            int hour = mCalendar.get(Calendar.HOUR_OF_DAY);
-            if (hour == 0) {
-                return 12;
-            } else if (hour > 12) {
-                return hour - 12;
-            } else {
-                return hour;
-            }
-        }
+    if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
+      bitmap = Bitmap.createBitmap(1, 1,
+          Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
+    } else {
+      bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(),
+          Bitmap.Config.ARGB_8888);
     }
 
-    public static double convertToCelsius(double fahrenheit){
-        return (fahrenheit - 32)/1.8;
+    Canvas canvas = new Canvas(bitmap);
+    drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+    drawable.draw(canvas);
+    return bitmap;
+  }
+
+  public static int getHour(Calendar mCalendar, Boolean mUse24HourTime) {
+    if (mUse24HourTime) {
+      return mCalendar.get(Calendar.HOUR_OF_DAY);
+    } else {
+      int hour = mCalendar.get(Calendar.HOUR_OF_DAY);
+      if (hour == 0) {
+        return 12;
+      } else if (hour > 12) {
+        return hour - 12;
+      } else {
+        return hour;
+      }
     }
+  }
+
+  public static double convertToCelsius(double fahrenheit) {
+    return (fahrenheit - 32) / 1.8;
+  }
 
 
 }

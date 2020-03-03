@@ -134,9 +134,9 @@ public class Settings {
 
     private void loadPreferences() {
         use24HourTime = sharedPreferences.getBoolean("use_24_hour_time", false);
-        showTemperature = sharedPreferences.getBoolean("show_temperature", false);
+        showTemperature = sharedPreferences.getBoolean("show_temperature", true);
         useCelsius = sharedPreferences.getBoolean("use_celsius", false);
-        showWeatherIcon = sharedPreferences.getBoolean("show_weather", false);
+        showWeatherIcon = sharedPreferences.getBoolean("show_weather", true);
 
         useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
         showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", true);

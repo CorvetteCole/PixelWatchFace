@@ -399,7 +399,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 if (mSettings.isShowWeatherIcon() && mCurrentWeather != null) {
                     // TODO replace constant offsets with ratio based offsets
                     canvas.drawBitmap(mCurrentWeather.getIconBitmap(getApplicationContext()), infoBarXOffset + (dateTextLength + bitmapMargin / 2),
-                            infoBarYOffset - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight()/1.5f , null);
+                            infoBarYOffset - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight()/1.4f , null);
                     canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth()), infoBarYOffset, mInfoPaint);
                 } else if (!mSettings.isShowWeatherIcon() && mSettings.isShowTemperature() && mCurrentWeather != null) {
                     canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin), infoBarYOffset, mInfoPaint);
@@ -503,7 +503,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private float computeInfoBarYOffset(String dateText, Paint datePaint, Rect timeTextBounds, float timeTextYOffset) {
             Rect textBounds = new Rect();
             datePaint.getTextBounds(dateText, 0, dateText.length(), textBounds);
-            return textBounds.height() * 1.5f + timeTextYOffset;
+            return textBounds.height() * 1.8f + timeTextYOffset;
         }
 
         private float computeBatteryYOffset(String batteryText, Paint batteryPaint, Rect watchBounds) {

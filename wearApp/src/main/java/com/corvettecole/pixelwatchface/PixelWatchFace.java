@@ -198,6 +198,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
 
 
+
         }
 
         @Override
@@ -276,6 +277,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mInfoPaint.setTextSize(dateTextSize);
 
 
+
+
         }
 
         @Override
@@ -314,8 +317,16 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             updateTimer();
         }
 
+        // TODO use this to calculate y offsets outside of onDraw
+        @Override
+        public void onSurfaceChanged(
+                SurfaceHolder holder, int format, int width, int height) {
 
-        //TODO massively optimize this so that calculations and object allocation etc etc are not
+            super.onSurfaceChanged(holder, format, width, height);
+        }
+
+
+        // TODO massively optimize this so that calculations and object allocation etc etc are not
         // performed here (this needs to run as fast as possible)
         // https://developer.android.com/training/wearables/watch-faces/performance
         @SuppressLint("DefaultLocale")
@@ -323,11 +334,11 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         public void onDraw(Canvas canvas, Rect bounds) {
             final String TAG = "onDraw";
 
-            // TODO move all calculations to not the onDraw method, they don't need to be done every time
+            // TODO move most calculations to not the onDraw method, they don't need to be done every time
 
             // Draw the background.
             //canvas.drawColor(Color.BLACK);  // test not drawing background every render pass
-            canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), mBackgroundPaint);
+            canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
 
 
             // Draw H:MM
@@ -335,16 +346,20 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             mCalendar.setTimeInMillis(now);
 
             // pad hour with 0 or not depending on if 24 hour time is being used
-            String mTimeText = "";
+            String timeText = "";
             if (mSettings.isUse24HourTime()) {
-                mTimeText = String.format("%02d:%02d", getHour(mCalendar, true), mCalendar.get(Calendar.MINUTE));
+                timeText = String.format("%02d:%02d", getHour(mCalendar, true), mCalendar.get(Calendar.MINUTE));
             } else {
-                mTimeText = String.format("%d:%02d", getHour(mCalendar, false), mCalendar.get(Calendar.MINUTE));
+                timeText = String.format("%d:%02d", getHour(mCalendar, false), mCalendar.get(Calendar.MINUTE));
             }
 
-            float mTimeXOffset = computeXOffset(mTimeText, mTimePaint, bounds);
-            float timeYOffset = computeTimeYOffset(mTimeText, mTimePaint, bounds);
-            canvas.drawText(mTimeText, mTimeXOffset, timeYOffset, mTimePaint);
+            float mTimeXOffset = computeXOffset(timeText, mTimePaint, bounds);
+
+            Rect timeTextBounds = new Rect();
+            mTimePaint.getTextBounds(timeText, 0, timeText.length(), timeTextBounds);
+            float timeYOffset = computeTimeYOffset(timeTextBounds, bounds);
+
+            canvas.drawText(timeText, mTimeXOffset, timeYOffset, mTimePaint);
             String dateText;
             if (mSettings.isUseEuropeanDateFormat()) {
                 dateText = String.format("%.3s, %d %.3s", android.text.format.DateFormat.format("EEEE", mCalendar), mCalendar.get(Calendar.DAY_OF_MONTH),
@@ -374,17 +389,17 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             }
 
             float infoBarXOffset = centerX - (totalLength / 2.0f);
-            float infoBarYOffset = computeInfoBarYOffset(dateText, mInfoPaint);
+            float infoBarYOffset = computeInfoBarYOffset(dateText, mInfoPaint, timeTextBounds, timeYOffset);
 
             // draw infobar
             if (mSettings.isShowInfoBarAmbient() || !mAmbient) {
 
 
-                canvas.drawText(dateText, infoBarXOffset, timeYOffset + infoBarYOffset, mInfoPaint);
+                canvas.drawText(dateText, infoBarXOffset, infoBarYOffset, mInfoPaint);
                 if (mSettings.isShowWeatherIcon() && mCurrentWeather != null) {
                     // TODO replace constant offsets with ratio based offsets
                     canvas.drawBitmap(mCurrentWeather.getIconBitmap(getApplicationContext()), infoBarXOffset + (dateTextLength + bitmapMargin / 2),
-                            timeYOffset + infoBarYOffset - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight() + 6.0f, null);
+                            infoBarYOffset - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight() + 6.0f, null);
                     canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth()), timeYOffset + infoBarYOffset, mInfoPaint);
                 } else if (!mSettings.isShowWeatherIcon() && mSettings.isShowTemperature() && mCurrentWeather != null) {
                     canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin), timeYOffset + infoBarYOffset, mInfoPaint);
@@ -476,20 +491,19 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         }
 
 
-        private float computeTimeYOffset(String timeText, Paint timePaint, Rect watchBounds) {
-            float centerY = watchBounds.exactCenterY();
-            Rect textBounds = new Rect();
-            timePaint.getTextBounds(timeText, 0, timeText.length(), textBounds);
-            int textHeight = textBounds.height();
+        private float computeTimeYOffset(Rect textBounds, Rect watchBounds) {
             // TODO replace constant offsets with ratio based offsets
-            return centerY + (textHeight / 2.0f) - 25.0f; //-XX.Xf is the offset up from the center
+            if (mSettings.isShowWearIcon()) {
+                return watchBounds.exactCenterY() + (textBounds.height() / 2.0f) - 25.0f; //-XX.Xf is the offset up from the center
+            } else {
+                return watchBounds.exactCenterY() + (textBounds.height() / 2.0f);
+            }
         }
 
-        private float computeInfoBarYOffset(String dateText, Paint datePaint) {
+        private float computeInfoBarYOffset(String dateText, Paint datePaint, Rect timeTextBounds, float timeTextYOffset) {
             Rect textBounds = new Rect();
             datePaint.getTextBounds(dateText, 0, dateText.length(), textBounds);
-            // TODO replace constant offsets with ratio based offsets
-            return textBounds.height() + 27.0f;
+            return textBounds.height() * 1.5f + timeTextYOffset;
         }
 
         private float computeBatteryYOffset(String batteryText, Paint batteryPaint, Rect watchBounds) {

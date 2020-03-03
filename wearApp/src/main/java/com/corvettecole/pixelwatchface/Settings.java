@@ -113,10 +113,10 @@ public class Settings {
         showTemperatureFractional = dataMap.getBoolean("show_temperature_decimal");
 
         useThinAmbient = dataMap.getBoolean("use_thin_ambient");
-        showInfoBarAmbient = dataMap.getBoolean("show_infobar_ambient", false);
+        showInfoBarAmbient = dataMap.getBoolean("show_infobar_ambient");
 
         showBattery = dataMap.getBoolean("show_battery", true);
-        showWearIcon = dataMap.getBoolean("show_wear_icon", true);
+        showWearIcon = dataMap.getBoolean("show_wear_icon", false);
 
         useDarkSky = dataMap.getBoolean("use_dark_sky", false);
 
@@ -148,7 +148,7 @@ public class Settings {
         useDarkSky = sharedPreferences.getBoolean("use_dark_sky", false);
 
         showBattery = sharedPreferences.getBoolean("show_battery", true);
-        showWearIcon = sharedPreferences.getBoolean("show_wear_icon", true);
+        showWearIcon = sharedPreferences.getBoolean("show_wear_icon", false);
     }
 
     private void savePreferences() {

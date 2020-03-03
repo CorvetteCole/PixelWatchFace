@@ -399,10 +399,10 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 if (mSettings.isShowWeatherIcon() && mCurrentWeather != null) {
                     // TODO replace constant offsets with ratio based offsets
                     canvas.drawBitmap(mCurrentWeather.getIconBitmap(getApplicationContext()), infoBarXOffset + (dateTextLength + bitmapMargin / 2),
-                            infoBarYOffset - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight() + 6.0f, null);
-                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth()), timeYOffset + infoBarYOffset, mInfoPaint);
+                            infoBarYOffset - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight()/1.5f , null);
+                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin + mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth()), infoBarYOffset, mInfoPaint);
                 } else if (!mSettings.isShowWeatherIcon() && mSettings.isShowTemperature() && mCurrentWeather != null) {
-                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin), timeYOffset + infoBarYOffset, mInfoPaint);
+                    canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin), infoBarYOffset, mInfoPaint);
                 }
             }
 
@@ -494,9 +494,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         private float computeTimeYOffset(Rect textBounds, Rect watchBounds) {
             // TODO replace constant offsets with ratio based offsets
             if (mSettings.isShowWearIcon()) {
-                return watchBounds.exactCenterY() + (textBounds.height() / 2.0f) - 25.0f; //-XX.Xf is the offset up from the center
+                return watchBounds.exactCenterY() + (textBounds.height() / 4.0f); //-XX.Xf is the offset up from the center
             } else {
-                return watchBounds.exactCenterY() + (textBounds.height() / 2.0f);
+                return watchBounds.exactCenterY();
             }
         }
 

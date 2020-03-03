@@ -189,6 +189,10 @@ public class CurrentWeather {
     }
   }
 
+    public boolean isWeatherDataPresent() {
+        return mTemperature != Double.MIN_VALUE;
+    }
+
   public String getTimeZone() {
     return mTimeZone;
   }

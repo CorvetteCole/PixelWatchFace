@@ -194,7 +194,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       mInfoPaint.setStrokeWidth(2f);
 
       // force initial weather update when watch face is created to fill in until periodic request runs
-      if (mCurrentWeather == null) {
+        if (!mCurrentWeather.isWeatherDataPresent()) {
         initWeatherUpdater(true);
       }
 

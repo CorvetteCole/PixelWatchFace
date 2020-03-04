@@ -6,8 +6,8 @@ android {
         applicationId "com.corvettecole.pixelwatchface"
         minSdkVersion 23
         targetSdkVersion 29
-        versionCode 1045
-        versionName "1.4.6-dev"
+        versionCode 1046
+        versionName "1.4.7-dev"
         multiDexEnabled true
     }
     compileOptions {

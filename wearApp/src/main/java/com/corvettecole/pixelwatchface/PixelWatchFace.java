@@ -1,5 +1,11 @@
 package com.corvettecole.pixelwatchface;
 
+import static com.corvettecole.pixelwatchface.Constants.WEATHER_BACKOFF_DELAY_ONETIME;
+import static com.corvettecole.pixelwatchface.Constants.WEATHER_UPDATE_INTERVAL;
+import static com.corvettecole.pixelwatchface.Constants.WEATHER_UPDATE_WORKER;
+import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
+import static com.corvettecole.pixelwatchface.Utils.getHour;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
@@ -23,18 +29,15 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
-
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
-import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
-import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
-
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataEvent;
@@ -43,19 +46,10 @@ import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Wearable;
-
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
-
-import static com.corvettecole.pixelwatchface.Constants.WEATHER_BACKOFF_DELAY_ONETIME;
-import static com.corvettecole.pixelwatchface.Constants.WEATHER_BACKOFF_DELAY_PERIODIC;
-import static com.corvettecole.pixelwatchface.Constants.WEATHER_FLEX_PERIOD;
-import static com.corvettecole.pixelwatchface.Constants.WEATHER_UPDATE_INTERVAL;
-import static com.corvettecole.pixelwatchface.Constants.WEATHER_UPDATE_WORKER;
-import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
-import static com.corvettecole.pixelwatchface.Utils.getHour;
 
 /**
  * Important Note: Because watch face apps do not have a default Activity in their project, you will
@@ -143,6 +137,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     private int mChinSize;
 
     private long mPermissionRequestedTime = 0;
+    private long mWeatherRequestedTime = 0;
     private boolean mWeatherUpdaterInitialized = false;
 
     private Typeface mProductSans;
@@ -194,7 +189,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       mInfoPaint.setStrokeWidth(2f);
 
       // force initial weather update when watch face is created to fill in until periodic request runs
-        initWeatherUpdater(true);
+      initWeatherUpdater(true);
 
 
     }
@@ -291,9 +286,16 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       invalidate(); // forces redraw (calls onDraw)
       String TAG = "onTimeTick";
       Log.d(TAG, "onTimeTick called");
-      if (!mWeatherUpdaterInitialized) {
+
+      if (mWeatherRequestedTime == 0
+          || System.currentTimeMillis() - mWeatherRequestedTime >= TimeUnit.MINUTES
+          .toMillis(WEATHER_UPDATE_INTERVAL)) {
         initWeatherUpdater(false);
       }
+
+//      if (!mWeatherUpdaterInitialized) {
+//        initWeatherUpdater(false);
+//      }
     }
 
 
@@ -470,39 +472,60 @@ public class PixelWatchFace extends CanvasWatchFaceService {
           Log.d(TAG, "requesting permission");
           requestPermissions();
         } else {
+          Log.d(TAG, "last weather retrieved: " + mCurrentWeather.getTime());
+          Log.d(TAG, "current time: " + System.currentTimeMillis());
+
           Constraints constraints = new Constraints.Builder()
               .setRequiredNetworkType(NetworkType.CONNECTED)
               .build();
 
-          if (!mCurrentWeather.isWeatherDataPresent() || forceUpdate) {
-            OneTimeWorkRequest forceWeatherUpdate =
+          if (forceUpdate || mWeatherRequestedTime == 0
+              || System.currentTimeMillis() - mWeatherRequestedTime >= TimeUnit.MINUTES
+              .toMillis(WEATHER_UPDATE_INTERVAL)) {
+            OneTimeWorkRequest weatherUpdate =
                 new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class)
                     .setConstraints(constraints)
                     // forced weather update is expected to happen sooner, so
                     // try again in (30 seconds * attempt count). After 3 failed
-                    // attempts, it would wait 1.5 seconds before retrying again
+                    // attempts, it would wait 1.5 minutes before retrying again
                     .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_ONETIME,
                         TimeUnit.SECONDS)
                     .build();
-            WorkManager.getInstance(getApplicationContext()).enqueue(forceWeatherUpdate);
+            WorkManager.getInstance(getApplicationContext())
+                .enqueueUniqueWork(WEATHER_UPDATE_WORKER, ExistingWorkPolicy.REPLACE,
+                    weatherUpdate);
+            mWeatherRequestedTime = System.currentTimeMillis();
           }
 
-          if (!mWeatherUpdaterInitialized) {
-            Log.d(TAG, "setting up weather periodic request");
-            PeriodicWorkRequest weatherUpdater =
-                new PeriodicWorkRequest.Builder(WeatherUpdateWorker.class, WEATHER_UPDATE_INTERVAL,
-                    TimeUnit.MINUTES, WEATHER_FLEX_PERIOD, TimeUnit.MINUTES)
-                    .setConstraints(constraints)
-                    .addTag(WEATHER_UPDATE_WORKER)
-                    // periodic weather update is a little more lazy about scheduling. if it fails, try again in (5 minutes * attempt count) with 5 hours as the max
-                    .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_PERIODIC,
-                        TimeUnit.MINUTES)
-                    .build();
-            WorkManager.getInstance(getApplicationContext())
-                .enqueueUniquePeriodicWork(WEATHER_UPDATE_WORKER, ExistingPeriodicWorkPolicy.KEEP,
-                    weatherUpdater);
-            mWeatherUpdaterInitialized = true;
-          }
+//          if (!mCurrentWeather.isWeatherDataPresent() || forceUpdate) {
+//            OneTimeWorkRequest forceWeatherUpdate =
+//                new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class)
+//                    .setConstraints(constraints)
+//                    // forced weather update is expected to happen sooner, so
+//                    // try again in (30 seconds * attempt count). After 3 failed
+//                    // attempts, it would wait 1.5 seconds before retrying again
+//                    .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_ONETIME,
+//                        TimeUnit.SECONDS)
+//                    .build();
+//            WorkManager.getInstance(getApplicationContext()).enqueue(forceWeatherUpdate);
+//          }
+//
+//          if (!mWeatherUpdaterInitialized) {
+//            Log.d(TAG, "setting up weather periodic request");
+//            PeriodicWorkRequest weatherUpdater =
+//                new PeriodicWorkRequest.Builder(WeatherUpdateWorker.class, WEATHER_UPDATE_INTERVAL,
+//                    TimeUnit.MINUTES, WEATHER_FLEX_PERIOD, TimeUnit.MINUTES)
+//                    .setConstraints(constraints)
+//                    .addTag(WEATHER_UPDATE_WORKER)
+//                    // periodic weather update is a little more lazy about scheduling. if it fails, try again in (5 minutes * attempt count) with 5 hours as the max
+//                    .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_PERIODIC,
+//                        TimeUnit.MINUTES)
+//                    .build();
+//            WorkManager.getInstance(getApplicationContext())
+//                .enqueueUniquePeriodicWork(WEATHER_UPDATE_WORKER, ExistingPeriodicWorkPolicy.KEEP,
+//                    weatherUpdater);
+//            mWeatherUpdaterInitialized = true;
+//          }
         }
       }
     }
@@ -577,7 +600,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
     private void requestPermissions() {
       if (mPermissionRequestedTime == 0
-          || mPermissionRequestedTime - System.currentTimeMillis() > ONE_MIN) {
+          || System.currentTimeMillis() - mPermissionRequestedTime > TimeUnit.MINUTES.toMillis(1)) {
         Log.d("requestPermission",
             "Actually requesting permission, more than one minute has passed");
         mPermissionRequestedTime = System.currentTimeMillis();

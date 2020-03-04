@@ -16,3 +16,5 @@ wearApp/src/main/res/values/keys.xml
 wearApp/src/main/res/values/keys.xml
 wearApp/src/main/res/values/secrets.xml
 phoneApp/src/main/res/values/secrets.xml
+
+!/.idea

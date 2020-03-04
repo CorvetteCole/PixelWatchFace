@@ -1,17 +1,9 @@
 package com.corvettecole.pixelwatchface;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.util.Log;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.Calendar;
 
 public class Utils {
@@ -19,7 +11,7 @@ public class Utils {
   public static final long ONE_MIN = 60000;
 
   public static Bitmap drawableToBitmap(Drawable drawable) {
-    Bitmap bitmap = null;
+    Bitmap mBitmap = null;
 
     if (drawable instanceof BitmapDrawable) {
       BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
@@ -29,17 +21,17 @@ public class Utils {
     }
 
     if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
-      bitmap = Bitmap.createBitmap(1, 1,
+      mBitmap = Bitmap.createBitmap(1, 1,
           Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
     } else {
-      bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(),
+      mBitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(),
           Bitmap.Config.ARGB_8888);
     }
 
-    Canvas canvas = new Canvas(bitmap);
+    Canvas canvas = new Canvas(mBitmap);
     drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
     drawable.draw(canvas);
-    return bitmap;
+    return mBitmap;
   }
 
   public static int getHour(Calendar mCalendar, Boolean mUse24HourTime) {

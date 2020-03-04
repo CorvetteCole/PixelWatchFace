@@ -4,18 +4,14 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.concurrent.futures.CallbackToFutureAdapter;
 import androidx.core.app.ActivityCompat;
 import androidx.work.ListenableWorker;
 import androidx.work.WorkerParameters;
-
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.common.util.concurrent.ListenableFuture;
-
-import java.util.concurrent.ExecutionException;
 
 public class WeatherUpdateWorker extends ListenableWorker {
 
@@ -53,6 +49,7 @@ public class WeatherUpdateWorker extends ListenableWorker {
             completer.set(Result.failure());
           } else {
             // if no location, but permission exists, try again
+            Log.d(TAG, "error retrieving location");
             completer.set(Result.retry());
           }
         }

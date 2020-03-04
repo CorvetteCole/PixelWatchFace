@@ -26,7 +26,8 @@ public class WeatherUpdateWorker extends ListenableWorker {
   @NonNull
   @Override
   public ListenableFuture<Result> startWork() {
-    String TAG = "WeatherUpdateWorker";
+    String TAG = "weather_update_worker";
+    Log.d(TAG, "starting work...");
     CurrentWeather currentWeather = CurrentWeather.getInstance(getApplicationContext());
     FusedLocationProviderClient mFusedLocationClient = LocationServices
         .getFusedLocationProviderClient(getApplicationContext());

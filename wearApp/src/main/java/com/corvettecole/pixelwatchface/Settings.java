@@ -3,11 +3,8 @@ package com.corvettecole.pixelwatchface;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
-
 import androidx.preference.PreferenceManager;
-
 import com.google.android.gms.wearable.DataMap;
-
 import java.util.ArrayList;
 
 public class Settings {
@@ -17,7 +14,7 @@ public class Settings {
       useEuropeanDateFormat, useThinAmbient, showInfoBarAmbient, showTemperatureFractional,
       showBattery, showWearIcon, useDarkSky;
 
-  private String darkSkyAPIKey;
+  private String darkSkyAPIKey, openWeatherMapKey;
 
   private SharedPreferences sharedPreferences;
 
@@ -30,6 +27,7 @@ public class Settings {
     } else {
       sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
       loadPreferences();
+      openWeatherMapKey = context.getString(R.string.openstreetmap_api_key);
     }
   }
 
@@ -172,4 +170,7 @@ public class Settings {
     editor.apply();
   }
 
+  public String getOpenWeatherMapKey() {
+    return openWeatherMapKey;
+  }
 }

@@ -7,6 +7,7 @@ import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
 import static com.corvettecole.pixelwatchface.Utils.getHour;
 
 import android.Manifest;
+import android.Manifest.permission;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -20,6 +21,8 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.BatteryManager;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -133,6 +136,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     private boolean mBurnInProtection;
     private boolean mAmbient;
 
+    private boolean mFirstDrawCompleted = false;
+    private long mFirstDraw = 0;
+
     private boolean mIsRound;
     private int mChinSize;
 
@@ -148,8 +154,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
     // offsets
     private float mBatteryYOffset;
-
-    private final long ONE_MIN = 60000;
 
     @Override
     public void onCreate(SurfaceHolder holder) {
@@ -190,7 +194,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
       // force initial weather update when watch face is created to fill in until periodic request runs
       initWeatherUpdater(true);
-
 
     }
 
@@ -482,6 +485,17 @@ public class PixelWatchFace extends CanvasWatchFaceService {
           if (forceUpdate || mWeatherRequestedTime == 0
               || System.currentTimeMillis() - mWeatherRequestedTime >= TimeUnit.MINUTES
               .toMillis(WEATHER_UPDATE_INTERVAL)) {
+
+            OneTimeWorkRequest locationUpdate =
+                new OneTimeWorkRequest.Builder(LocationUpdateWorker.class)
+                    .setConstraints(constraints)
+                    // forced weather update is expected to happen sooner, so
+                    // try again in (30 seconds * attempt count). After 3 failed
+                    // attempts, it would wait 1.5 minutes before retrying again
+                    .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_ONETIME,
+                        TimeUnit.SECONDS)
+                    .build();
+
             OneTimeWorkRequest weatherUpdate =
                 new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class)
                     .setConstraints(constraints)
@@ -491,41 +505,14 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                     .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_ONETIME,
                         TimeUnit.SECONDS)
                     .build();
+
             WorkManager.getInstance(getApplicationContext())
-                .enqueueUniqueWork(WEATHER_UPDATE_WORKER, ExistingWorkPolicy.REPLACE,
-                    weatherUpdate);
+                .beginUniqueWork(WEATHER_UPDATE_WORKER, ExistingWorkPolicy.REPLACE, locationUpdate)
+                .then(weatherUpdate)
+                .enqueue();
+
             mWeatherRequestedTime = System.currentTimeMillis();
           }
-
-//          if (!mCurrentWeather.isWeatherDataPresent() || forceUpdate) {
-//            OneTimeWorkRequest forceWeatherUpdate =
-//                new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class)
-//                    .setConstraints(constraints)
-//                    // forced weather update is expected to happen sooner, so
-//                    // try again in (30 seconds * attempt count). After 3 failed
-//                    // attempts, it would wait 1.5 seconds before retrying again
-//                    .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_ONETIME,
-//                        TimeUnit.SECONDS)
-//                    .build();
-//            WorkManager.getInstance(getApplicationContext()).enqueue(forceWeatherUpdate);
-//          }
-//
-//          if (!mWeatherUpdaterInitialized) {
-//            Log.d(TAG, "setting up weather periodic request");
-//            PeriodicWorkRequest weatherUpdater =
-//                new PeriodicWorkRequest.Builder(WeatherUpdateWorker.class, WEATHER_UPDATE_INTERVAL,
-//                    TimeUnit.MINUTES, WEATHER_FLEX_PERIOD, TimeUnit.MINUTES)
-//                    .setConstraints(constraints)
-//                    .addTag(WEATHER_UPDATE_WORKER)
-//                    // periodic weather update is a little more lazy about scheduling. if it fails, try again in (5 minutes * attempt count) with 5 hours as the max
-//                    .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_PERIODIC,
-//                        TimeUnit.MINUTES)
-//                    .build();
-//            WorkManager.getInstance(getApplicationContext())
-//                .enqueueUniquePeriodicWork(WEATHER_UPDATE_WORKER, ExistingPeriodicWorkPolicy.KEEP,
-//                    weatherUpdater);
-//            mWeatherUpdaterInitialized = true;
-//          }
         }
       }
     }
@@ -599,23 +586,35 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     }
 
     private void requestPermissions() {
-      if (mPermissionRequestedTime == 0
-          || System.currentTimeMillis() - mPermissionRequestedTime > TimeUnit.MINUTES.toMillis(1)) {
+        Log.d("requestPermission", "mPermissionRequestTime: " + mPermissionRequestedTime);
         Log.d("requestPermission",
-            "Actually requesting permission, more than one minute has passed");
-        mPermissionRequestedTime = System.currentTimeMillis();
-        if (ContextCompat
-            .checkSelfPermission(getApplication(), Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED) {
-          Intent mPermissionRequestIntent = new Intent(getBaseContext(),
-              PermissionRequestActivity.class);
-          mPermissionRequestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-          mPermissionRequestIntent
-              .putExtra("KEY_PERMISSIONS", Manifest.permission.ACCESS_FINE_LOCATION);
-          //mPermissionRequestIntent.putExtra("KEY_PERMISSIONS", new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION});
-          startActivity(mPermissionRequestIntent);
+            "System.currentTimeMillis() - mPermissionRequestedTime: " + (System.currentTimeMillis()
+                - mPermissionRequestedTime));
+        if (mPermissionRequestedTime == 0
+            || System.currentTimeMillis() - mPermissionRequestedTime > TimeUnit.MINUTES
+            .toMillis(1)) {
+          Log.d("requestPermission",
+              "Actually requesting permission, more than one minute has passed");
+          mPermissionRequestedTime = System.currentTimeMillis();
+          if (ContextCompat
+              .checkSelfPermission(getApplication(), permission.ACCESS_FINE_LOCATION)
+              != PackageManager.PERMISSION_GRANTED) {
+            Intent mPermissionRequestIntent = new Intent(getBaseContext(),
+                WatchPermissionRequestActivity.class);
+            mPermissionRequestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (VERSION.SDK_INT >= VERSION_CODES.Q) {
+              mPermissionRequestIntent.putExtra("KEY_PERMISSIONS",
+                  new String[]{permission.ACCESS_COARSE_LOCATION,
+                      permission.ACCESS_FINE_LOCATION,
+                      permission.ACCESS_BACKGROUND_LOCATION});
+            } else {
+              mPermissionRequestIntent.putExtra("KEY_PERMISSIONS",
+                  new String[]{permission.ACCESS_COARSE_LOCATION,
+                      permission.ACCESS_FINE_LOCATION});
+            }
+            startActivity(mPermissionRequestIntent);
+          }
         }
-      }
     }
 
     /**

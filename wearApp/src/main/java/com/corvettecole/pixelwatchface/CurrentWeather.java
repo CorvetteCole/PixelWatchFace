@@ -1,30 +1,16 @@
 package com.corvettecole.pixelwatchface;
 
+import static com.corvettecole.pixelwatchface.Utils.convertToCelsius;
+import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
-
-import androidx.concurrent.futures.CallbackToFutureAdapter;
-import androidx.work.ListenableWorker;
-
-import com.squareup.okhttp.Call;
-import com.squareup.okhttp.Callback;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 import java.util.TimeZone;
-import java.util.concurrent.Future;
-
-import static com.corvettecole.pixelwatchface.Utils.convertToCelsius;
-import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class CurrentWeather {
 
@@ -39,11 +25,7 @@ public class CurrentWeather {
   private String mTimeZone;
   private Bitmap mIconBitmap;
   private String mWeatherProvider;
-
-  private String mOpenWeatherMapKey;
   private Settings mSettings;
-
-  OkHttpClient client;
 
   private CurrentWeather(Context context) {
     if (instance != null) {
@@ -51,8 +33,6 @@ public class CurrentWeather {
           "Use getInstance() method to get the single instance of this class");
     } else {
       mSettings = Settings.getInstance(context.getApplicationContext());
-      mOpenWeatherMapKey = context.getString(R.string.openstreetmap_api_key);
-      client = new OkHttpClient();
     }
   }
 
@@ -67,78 +47,10 @@ public class CurrentWeather {
     return instance;
   }
 
-  // TODO swtich from okhttp to volley
-  // TODO consider putting the weather update code in the WeatherUpdateWorker
-  public Future<ListenableWorker.Result> updateForecast(double latitude, double longitude) {
-    return CallbackToFutureAdapter.getFuture(completer -> {
-      final String TAG = "getForecast";
-      String forecastUrl;
-
-      if (mSettings.isUseDarkSky() && mSettings.getDarkSkyAPIKey() != null) {
-        forecastUrl = "https://api.forecast.io/forecast/" +
-            mSettings.getDarkSkyAPIKey() + "/" + latitude + "," + longitude + "?lang=" + Locale
-            .getDefault().getLanguage();
-        Log.d(TAG, "forecastURL: " + "https://api.forecast.io/forecast/" +
-            mSettings.getDarkSkyAPIKey() + "/" + latitude + "," + longitude + "?lang=" + Locale
-            .getDefault().getLanguage());
-      } else {
-        forecastUrl =
-            "https://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude
-                + "&units=imperial&appid=" + mOpenWeatherMapKey;
-      }
-
-      if (client == null) {
-        client = new OkHttpClient();
-      }
-
-      Request request = new Request.Builder()
-          .url(forecastUrl)
-          .build();
-
-      Call call = client.newCall(request);
-      call.enqueue(new Callback() {
-        @Override
-        public void onFailure(Request request, IOException e) {
-
-          Log.d(TAG, "Couldn't retrieve weather data");
-          // TODO switch to volley because seriously fuck okhttp
-          //return e;
-          completer.setException(e);
-        }
-
-        @Override
-        public void onResponse(Response response) throws IOException {
-          try {
-            String jsonData = response.body().string();
-            Log.v(TAG, jsonData);
-            if (response.isSuccessful()) {
-              try {
-                parseWeatherJSON(jsonData);
-                completer.set(ListenableWorker.Result.success());
-                //invalidate();
-              } catch (JSONException e) {
-                completer.set(ListenableWorker.Result.retry());
-                Log.e(TAG, e.toString());
-              }
-            } else {
-              Log.d(TAG, "Couldn't retrieve weather data: response not successful");
-              completer.set(ListenableWorker.Result.retry());
-            }
-          } catch (IOException e) {
-            Log.e(TAG, e.toString());
-            completer.set(ListenableWorker.Result.retry());
-          }
-        }
-      });
-      return completer;
-    });
-  }
-
-  private void parseWeatherJSON(String json) throws JSONException {
+  public void parseWeatherJSON(JSONObject forecast) throws JSONException {
     final String TAG = "parseWeatherJSON";
     final String lastIconName = mIconName;
 
-    JSONObject forecast = new JSONObject(json);
     if (mSettings.isUseDarkSky()) {
       setWeatherProvider("DarkSky");
       mTimeZone = forecast.getString("timezone");
@@ -189,9 +101,9 @@ public class CurrentWeather {
     }
   }
 
-    public boolean isWeatherDataPresent() {
-        return mTemperature != Double.MIN_VALUE;
-    }
+  public boolean isWeatherDataPresent() {
+    return mTemperature != Double.MIN_VALUE;
+  }
 
   public String getTimeZone() {
     return mTimeZone;
@@ -334,6 +246,4 @@ public class CurrentWeather {
   public void setWeatherProvider(String mWeatherProvider) {
     this.mWeatherProvider = mWeatherProvider;
   }
-
-
 }

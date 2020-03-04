@@ -15,8 +15,6 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.util.concurrent.ExecutionException;
-
 public class WeatherUpdateWorker extends ListenableWorker {
 
   /**
@@ -30,7 +28,8 @@ public class WeatherUpdateWorker extends ListenableWorker {
   @NonNull
   @Override
   public ListenableFuture<Result> startWork() {
-    String TAG = "WeatherUpdateWorker";
+    String TAG = "weather_update_worker";
+    Log.d(TAG, "starting work...");
     CurrentWeather currentWeather = CurrentWeather.getInstance(getApplicationContext());
     FusedLocationProviderClient mFusedLocationClient = LocationServices
         .getFusedLocationProviderClient(getApplicationContext());

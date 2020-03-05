@@ -17,7 +17,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault">
+      android:theme="@style/PixelWatchFace">
         <meta-data
             android:name="com.google.android.wearable.standalone"
             android:value="true"/>
@@ -46,7 +46,9 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version"/>
-        <activity android:name=".WatchPermissionRequestActivity" />
+        <activity
+          android:launchMode="singleInstance"
+          android:name=".WatchPermissionRequestActivity" />
     </application>
 
 </manifest>

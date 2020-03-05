@@ -90,6 +90,22 @@ public class Settings {
     return darkSkyAPIKey;
   }
 
+  public String getOpenWeatherMapKey() {
+    return openWeatherMapKey;
+  }
+
+  public boolean isWeatherDisabled() {
+    return !showWeatherIcon && !showTemperature;
+  }
+
+  public void setWeatherDisabled(boolean weatherDisabled) {
+    if (weatherDisabled) {
+      showWeatherIcon = false;
+      showTemperature = false;
+      savePreferences();
+    }
+  }
+
   public ArrayList<Constants.UPDATE_REQUIRED> updateSettings(
       DataMap dataMap) {  // returns if weather update required
     String TAG = "updateSettings";
@@ -170,7 +186,5 @@ public class Settings {
     editor.apply();
   }
 
-  public String getOpenWeatherMapKey() {
-    return openWeatherMapKey;
-  }
+
 }

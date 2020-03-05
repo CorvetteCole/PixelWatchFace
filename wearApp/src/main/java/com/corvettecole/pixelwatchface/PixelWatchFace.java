@@ -302,6 +302,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     }
 
 
+
     @Override
     public void onAmbientModeChanged(boolean inAmbientMode) {
       super.onAmbientModeChanged(inAmbientMode);
@@ -468,7 +469,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
     private void initWeatherUpdater(boolean forceUpdate) {
       String TAG = "initWeatherUpdater";
-      if (mSettings.isShowTemperature() || mSettings.isShowWeatherIcon()) {
+      if (!mSettings.isWeatherDisabled()) {
         if (ActivityCompat
             .checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED) {
@@ -590,9 +591,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         Log.d("requestPermission",
             "System.currentTimeMillis() - mPermissionRequestedTime: " + (System.currentTimeMillis()
                 - mPermissionRequestedTime));
-        if (mPermissionRequestedTime == 0
-            || System.currentTimeMillis() - mPermissionRequestedTime > TimeUnit.MINUTES
-            .toMillis(1)) {
+//        if (mPermissionRequestedTime == 0
+//            || System.currentTimeMillis() - mPermissionRequestedTime > TimeUnit.MINUTES
+//            .toMillis(1)) {
           Log.d("requestPermission",
               "Actually requesting permission, more than one minute has passed");
           mPermissionRequestedTime = System.currentTimeMillis();
@@ -613,7 +614,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                       permission.ACCESS_FINE_LOCATION});
             }
             startActivity(mPermissionRequestIntent);
-          }
+            //}
         }
     }
 

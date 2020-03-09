@@ -9,10 +9,8 @@ import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
-
 import com.anjlab.android.iab.v3.BillingProcessor;
 import com.anjlab.android.iab.v3.TransactionDetails;
 import com.google.android.gms.tasks.Task;
@@ -20,10 +18,8 @@ import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.material.snackbar.Snackbar;
-
 import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity implements
@@ -247,25 +243,22 @@ public class MainActivity extends AppCompatActivity implements
                 mShowWeather = dataMap.getBoolean("show_weather");
                 */
 
-    DataMap dataMap = new DataMap();
-    dataMap.putLong("timestamp", System.currentTimeMillis());
-    dataMap.putBoolean("use_24_hour_time", use24HourTime);
-    dataMap.putBoolean("show_temperature", showTemperature);
-    dataMap.putBoolean("use_celsius", useCelsius);
-    dataMap.putBoolean("show_weather", showWeather);
-    dataMap.putBoolean("use_european_date", useEuropeanDateFormat);
-    dataMap.putBoolean("show_temperature_decimal", showTemperatureDecimalPoint);
-    dataMap.putBoolean("use_thin_ambient", useThinAmbient);
-    dataMap.putBoolean("show_infobar_ambient", showInfoBarAmbient);
-    dataMap.putString("dark_sky_api_key", darkSkyAPIKey);
-    dataMap.putBoolean("use_dark_sky", useDarkSky);
-    dataMap.putBoolean("show_battery", showBattery);
-    dataMap.putBoolean("show_wear_icon", showWearIcon);
+    putDataMapReq.getDataMap().putLong("timestamp", System.currentTimeMillis());
+    putDataMapReq.getDataMap().putBoolean("use_24_hour_time", use24HourTime);
+    putDataMapReq.getDataMap().putBoolean("show_temperature", showTemperature);
+    putDataMapReq.getDataMap().putBoolean("use_celsius", useCelsius);
+    putDataMapReq.getDataMap().putBoolean("show_weather", showWeather);
+    putDataMapReq.getDataMap().putBoolean("use_european_date", useEuropeanDateFormat);
+    putDataMapReq.getDataMap().putBoolean("show_temperature_decimal", showTemperatureDecimalPoint);
+    putDataMapReq.getDataMap().putBoolean("use_thin_ambient", useThinAmbient);
+    putDataMapReq.getDataMap().putBoolean("show_infobar_ambient", showInfoBarAmbient);
+    putDataMapReq.getDataMap().putString("dark_sky_api_key", darkSkyAPIKey);
+    putDataMapReq.getDataMap().putBoolean("use_dark_sky", useDarkSky);
+    putDataMapReq.getDataMap().putBoolean("show_battery", showBattery);
+    putDataMapReq.getDataMap().putBoolean("show_wear_icon", showWearIcon);
 
-    putDataMapReq.getDataMap().putDataMap("com.corvettecole.pixelwatchface", dataMap);
-    PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-    putDataReq.setUrgent();
-    Task<DataItem> putDataTask = mDataClient.putDataItem(putDataReq);
+    putDataMapReq.setUrgent();
+    Task<DataItem> putDataTask = mDataClient.putDataItem(putDataMapReq.asPutDataRequest());
     if (putDataTask.isSuccessful()) {
       Log.d(TAG, "Settings synced to wearable");
     }

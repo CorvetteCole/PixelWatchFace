@@ -42,12 +42,14 @@ import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.tasks.Task;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
+import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.Wearable;
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
@@ -561,11 +563,17 @@ public class PixelWatchFace extends CanvasWatchFaceService {
           // DataItem changed
           DataItem item = event.getDataItem();
           Log.d(TAG, "DataItem uri: " + item.getUri());
+
           if (item.getUri().getPath().compareTo("/settings") == 0) {
             Log.d(TAG, "Companion app changed a setting!");
             dataMap = DataMapItem.fromDataItem(item).getDataMap();
             Log.d(TAG, dataMap.toString());
-            dataMap = dataMap.getDataMap("com.corvettecole.pixelwatchface");
+
+            // handle legacy nested data map
+            if (dataMap.containsKey("com.corvettecole.pixelwatchface")){
+              dataMap = dataMap.getDataMap("com.corvettecole.pixelwatchface");
+            }
+
             Log.d(TAG, dataMap.toString());
 
             for (Constants.UPDATE_REQUIRED updateRequired : mSettings.updateSettings(dataMap)) {
@@ -581,10 +589,35 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
             invalidate();// forces redraw
             //syncToPhone();
+          } else if (item.getUri().getPath().compareTo("/requests") == 0) {
+            if (dataMap.containsKey("settings-update")){
+
+            }
           }
+
+
+
         } else if (event.getType() == DataEvent.TYPE_DELETED) {
           // DataItem deleted
         }
+      }
+    }
+
+    // sync current settings to phone upon request
+    private void syncToPhone(){
+      String TAG = "syncToPhone";
+      DataClient mDataClient = Wearable.getDataClient(getApplicationContext());
+      PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/watch-settings");
+
+
+
+
+
+
+      putDataMapReq.setUrgent();
+      Task<DataItem> putDataTask = mDataClient.putDataItem(putDataMapReq.asPutDataRequest());
+      if (putDataTask.isSuccessful()){
+        Log.d(TAG, "Current stats synced to phone");
       }
     }
 
@@ -652,29 +685,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       }
     }
 
-    // Class for debugging
-        /*
-        private void syncToPhone(){
-            String TAG = "syncToPhone";
-            DataClient mDataClient = Wearable.getDataClient(getApplicationContext());
-            PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/watch_status");
 
-            DataMap dataMap = new DataMap();
-            dataMap.putLong("wear_timestamp", System.currentTimeMillis());
-            dataMap.putBoolean("use_24_hour_time", mUse24HourTime);
-            dataMap.putBoolean("show_temperature", mShowTemperature);
-            dataMap.putBoolean("use_celsius", mUseCelsius);
-            dataMap.putBoolean("show_weather", mShowWeather);
-
-            putDataMapReq.getDataMap().putDataMap("com.corvettecole.pixelwatchface", dataMap);
-            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-            putDataReq.setUrgent();
-            Task<DataItem> putDataTask = mDataClient.putDataItem(putDataReq);
-            if (putDataTask.isSuccessful()){
-                Log.d(TAG, "Current stats synced to phone");
-            }
-        }
-        */
 
   }
 }

@@ -9,10 +9,15 @@ import android.util.Log;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
-import com.anjlab.android.iab.v3.BillingProcessor;
-import com.anjlab.android.iab.v3.TransactionDetails;
+import com.android.billingclient.api.BillingClient;
+import com.android.billingclient.api.BillingClient.BillingResponseCode;
+import com.android.billingclient.api.BillingClientStateListener;
+import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataItem;
@@ -21,9 +26,11 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.material.snackbar.Snackbar;
 import java.util.Calendar;
+import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements
-    BillingProcessor.IBillingHandler/*DataClient.OnDataChangedListener*/ {
+public class MainActivity extends
+    AppCompatActivity implements BillingClientStateListener,
+    PurchasesUpdatedListener/*DataClient.OnDataChangedListener*/ {
 
   private SharedPreferences sharedPreferences;
   private Switch use24HourTimeSwitch;
@@ -52,7 +59,8 @@ public class MainActivity extends AppCompatActivity implements
   private boolean showInfoBarAmbient;
   private boolean showBattery;
   private boolean showWearIcon;
-  private BillingProcessor bp;
+
+  private BillingClient billingClient;
 
   String[] supportOptions = new String[]{"$1", "$3", "$5", "$10"};
 
@@ -61,6 +69,10 @@ public class MainActivity extends AppCompatActivity implements
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
+    billingClient = BillingClient.newBuilder(this).build();
+    billingClient.startConnection(this);
+
     //Wearable.getDataClient(getApplicationContext()).addListener(this);
 
     use24HourTimeSwitch = findViewById(R.id.timeFormatSwitch);
@@ -206,9 +218,7 @@ public class MainActivity extends AppCompatActivity implements
       }
     });
 
-    //TODO put actual Google Play license key here
-    bp = new BillingProcessor(this, "PLACEHOLDER", this);
-    bp.initialize();
+
   }
 
   private void loadPreferences() {
@@ -337,37 +347,33 @@ public class MainActivity extends AppCompatActivity implements
   @Override
   public void onDestroy() {
     //Wearable.getDataClient(getApplicationContext()).removeListener(this);
-    if (bp != null) {
-      bp.release();
-    }
 
     super.onDestroy();
   }
 
-  @Override
-  public void onProductPurchased(String productId, TransactionDetails details) {
-
-  }
-
-  @Override
-  public void onPurchaseHistoryRestored() {
-
-  }
-
-  @Override
-  public void onBillingError(int errorCode, Throwable error) {
-
-  }
-
-  @Override
-  public void onBillingInitialized() {
-
-  }
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (!bp.handleActivityResult(requestCode, resultCode, data)) {
-      super.onActivityResult(requestCode, resultCode, data);
+
+    super.onActivityResult(requestCode, resultCode, data);
+
+  }
+
+  @Override
+  public void onBillingSetupFinished(BillingResult billingResult) {
+    if (billingResult.getResponseCode() ==  BillingResponseCode.OK) {
+      // TODO query purchases
+      // The BillingClient is ready. You can query purchases here.
     }
+  }
+
+  @Override
+  public void onBillingServiceDisconnected() {
+    billingClient.startConnection(this);
+  }
+
+  @Override
+  public void onPurchasesUpdated(BillingResult billingResult, @Nullable List<Purchase> list) {
+
   }
 }

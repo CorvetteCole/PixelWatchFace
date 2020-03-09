@@ -531,6 +531,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       if (mSettings.isShowWearIcon()) {
         return watchBounds.exactCenterY() + (textBounds.height()
             / 4.0f); //-XX.Xf is the offset up from the center
+      } else if (!mSettings.isShowInfoBarAmbient() && mAmbient){
+        return watchBounds.exactCenterY() + (textBounds.height() / 2.0f);
       } else {
         return watchBounds.exactCenterY();
       }

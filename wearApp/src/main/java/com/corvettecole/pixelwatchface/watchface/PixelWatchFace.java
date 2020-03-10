@@ -1,6 +1,9 @@
 package com.corvettecole.pixelwatchface.watchface;
 
+import static com.corvettecole.pixelwatchface.util.Constants.INFO_BAR_Y_SPACING_RATIO;
 import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_BACKOFF_DELAY_ONETIME;
+import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_ICON_MARGIN_RATIO;
+import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_ICON_Y_OFFSET_RATIO;
 import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_UPDATE_INTERVAL;
 import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_UPDATE_WORKER;
 import static com.corvettecole.pixelwatchface.util.WatchFaceUtil.drawableToBitmap;
@@ -384,28 +387,26 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       float centerX = bounds.exactCenterX();
       float dateTextLength = mInfoPaint.measureText(dateText);
 
-      Log.d(TAG,
-          "bitmap width: " + mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth());
-      float bitmapMargin = mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth()
-          / 1.7f;  // TODO naked literal
+      float bitmapTotalMargin = mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth()
+          / WEATHER_ICON_MARGIN_RATIO;
 
       if (mSettings.isShowTemperature()) {
         temperatureText = mCurrentWeather.getFormattedTemperature();
         if (mSettings.isShowWeatherIcon()) {
           totalLength =
-              dateTextLength + bitmapMargin + mCurrentWeather.getIconBitmap(getApplicationContext())
+              dateTextLength + bitmapTotalMargin + mCurrentWeather.getIconBitmap(getApplicationContext())
                   .getWidth() + mInfoPaint.measureText(temperatureText);
         } else {
-          totalLength = dateTextLength + bitmapMargin + mInfoPaint.measureText(temperatureText);
+          totalLength = dateTextLength + bitmapTotalMargin + mInfoPaint.measureText(temperatureText);
         }
       } else if (mSettings.isShowWeatherIcon()) {
-        totalLength = dateTextLength + bitmapMargin / 2.0f + mCurrentWeather // TODO naked literal
+        totalLength = dateTextLength + bitmapTotalMargin / 2.0f + mCurrentWeather
             .getIconBitmap(getApplicationContext()).getWidth();
       } else {
         totalLength = dateTextLength;
       }
 
-      float infoBarXOffset = centerX - (totalLength / 2.0f); // TODO naked literal
+      float infoBarXOffset = centerX - (totalLength / 2.0f);
       float infoBarYOffset = computeInfoBarYOffset(dateText, mInfoPaint, timeTextBounds,
           timeYOffset);
 
@@ -415,16 +416,16 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         canvas.drawText(dateText, infoBarXOffset, infoBarYOffset, mInfoPaint);
         if (mSettings.isShowWeatherIcon() && mCurrentWeather != null) {
           canvas.drawBitmap(mCurrentWeather.getIconBitmap(getApplicationContext()),
-              infoBarXOffset + (dateTextLength + bitmapMargin / 2.0f), // TODO naked literal
+              infoBarXOffset + (dateTextLength + bitmapTotalMargin / 2.0f),
               infoBarYOffset
-                  - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight() / 1.4f, // TODO naked literal
+                  - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight() / WEATHER_ICON_Y_OFFSET_RATIO,
               null);
           canvas.drawText(temperatureText,
-              infoBarXOffset + (dateTextLength + bitmapMargin + mCurrentWeather
+              infoBarXOffset + (dateTextLength + bitmapTotalMargin + mCurrentWeather
                   .getIconBitmap(getApplicationContext()).getWidth()), infoBarYOffset, mInfoPaint);
         } else if (!mSettings.isShowWeatherIcon() && mSettings.isShowTemperature()
             && mCurrentWeather != null) {
-          canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapMargin),
+          canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapTotalMargin),
               infoBarYOffset, mInfoPaint);
         }
       }
@@ -441,12 +442,12 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       // draw wearOS icon
       if (mSettings.isShowWearIcon()) {
         if (mAmbient) {
-          float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmapAmbient.getWidth() / 2.0f); // TODO naked literal
-          float mIconYOffset = timeYOffset / 4.0f; // TODO naked literal
+          float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmapAmbient.getWidth() / 2.0f);
+          float mIconYOffset = timeYOffset / 4.0f;
           canvas.drawBitmap(mWearOSBitmapAmbient, mIconXOffset, mIconYOffset, null);
         } else {
-          float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmap.getWidth() / 2.0f); // TODO naked literal
-          float mIconYOffset = timeYOffset / 4.0f; // TODO naked literal
+          float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmap.getWidth() / 2.0f);
+          float mIconYOffset = timeYOffset / 4.0f;
           canvas.drawBitmap(mWearOSBitmap, mIconXOffset, mIconYOffset, null);
         }
       }
@@ -530,7 +531,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
 
     private float computeTimeYOffset(Rect textBounds, Rect watchBounds) {
-      // TODO replace constant offsets with ratio based offsets
       if (mSettings.isShowWearIcon()) {
         return watchBounds.exactCenterY() + (textBounds.height()
             / 4.0f);
@@ -545,7 +545,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         float timeTextYOffset) {
       Rect textBounds = new Rect();
       datePaint.getTextBounds(dateText, 0, dateText.length(), textBounds);
-      return textBounds.height() * 1.8f + timeTextYOffset;
+      return textBounds.height() * INFO_BAR_Y_SPACING_RATIO + timeTextYOffset;
     }
 
     private float computeBatteryYOffset(String batteryText, Paint batteryPaint, Rect watchBounds) {

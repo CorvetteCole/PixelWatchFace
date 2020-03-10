@@ -307,7 +307,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     }
 
 
-
     @Override
     public void onAmbientModeChanged(boolean inAmbientMode) {
       super.onAmbientModeChanged(inAmbientMode);
@@ -341,8 +340,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     @Override
     public void onDraw(Canvas canvas, Rect bounds) {
       final String TAG = "onDraw";
-
-      // TODO move most calculations to not the onDraw method, they don't need to be done every time
 
       // Draw the background.
       //canvas.drawColor(Color.BLACK);  // test not drawing background every render pass
@@ -387,7 +384,11 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       float centerX = bounds.exactCenterX();
       float dateTextLength = mInfoPaint.measureText(dateText);
 
-      float bitmapMargin = 20.0f;
+      Log.d(TAG,
+          "bitmap width: " + mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth());
+      float bitmapMargin = mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth()
+          / 1.7f;  // TODO naked literal
+
       if (mSettings.isShowTemperature()) {
         temperatureText = mCurrentWeather.getFormattedTemperature();
         if (mSettings.isShowWeatherIcon()) {
@@ -398,13 +399,13 @@ public class PixelWatchFace extends CanvasWatchFaceService {
           totalLength = dateTextLength + bitmapMargin + mInfoPaint.measureText(temperatureText);
         }
       } else if (mSettings.isShowWeatherIcon()) {
-        totalLength = dateTextLength + bitmapMargin / 2 + mCurrentWeather
+        totalLength = dateTextLength + bitmapMargin / 2.0f + mCurrentWeather // TODO naked literal
             .getIconBitmap(getApplicationContext()).getWidth();
       } else {
         totalLength = dateTextLength;
       }
 
-      float infoBarXOffset = centerX - (totalLength / 2.0f);
+      float infoBarXOffset = centerX - (totalLength / 2.0f); // TODO naked literal
       float infoBarYOffset = computeInfoBarYOffset(dateText, mInfoPaint, timeTextBounds,
           timeYOffset);
 
@@ -413,11 +414,10 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
         canvas.drawText(dateText, infoBarXOffset, infoBarYOffset, mInfoPaint);
         if (mSettings.isShowWeatherIcon() && mCurrentWeather != null) {
-          // TODO replace constant offsets with ratio based offsets
           canvas.drawBitmap(mCurrentWeather.getIconBitmap(getApplicationContext()),
-              infoBarXOffset + (dateTextLength + bitmapMargin / 2),
+              infoBarXOffset + (dateTextLength + bitmapMargin / 2.0f), // TODO naked literal
               infoBarYOffset
-                  - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight() / 1.4f,
+                  - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight() / 1.4f, // TODO naked literal
               null);
           canvas.drawText(temperatureText,
               infoBarXOffset + (dateTextLength + bitmapMargin + mCurrentWeather
@@ -440,15 +440,13 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
       // draw wearOS icon
       if (mSettings.isShowWearIcon()) {
-        // TODO replace constant offsets with ratio based offsets
         if (mAmbient) {
-          float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmapAmbient.getWidth() / 2.0f);
-          float mIconYOffset =
-              timeYOffset - timeYOffset / 2 - mWearOSBitmapAmbient.getHeight() - 16.0f;
+          float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmapAmbient.getWidth() / 2.0f); // TODO naked literal
+          float mIconYOffset = timeYOffset / 4.0f; // TODO naked literal
           canvas.drawBitmap(mWearOSBitmapAmbient, mIconXOffset, mIconYOffset, null);
         } else {
-          float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmap.getWidth() / 2.0f);
-          float mIconYOffset = timeYOffset - timeYOffset / 2 - mWearOSBitmap.getHeight() - 16.0f;
+          float mIconXOffset = bounds.exactCenterX() - (mWearOSBitmap.getWidth() / 2.0f); // TODO naked literal
+          float mIconYOffset = timeYOffset / 4.0f; // TODO naked literal
           canvas.drawBitmap(mWearOSBitmap, mIconXOffset, mIconYOffset, null);
         }
       }
@@ -535,8 +533,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       // TODO replace constant offsets with ratio based offsets
       if (mSettings.isShowWearIcon()) {
         return watchBounds.exactCenterY() + (textBounds.height()
-            / 4.0f); //-XX.Xf is the offset up from the center
-      } else if (!mSettings.isShowInfoBarAmbient() && mAmbient){
+            / 4.0f);
+      } else if (!mSettings.isShowInfoBarAmbient() && mAmbient) {
         return watchBounds.exactCenterY() + (textBounds.height() / 2.0f);
       } else {
         return watchBounds.exactCenterY();
@@ -573,7 +571,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             Log.d(TAG, dataMap.toString());
 
             // handle legacy nested data map
-            if (dataMap.containsKey("com.corvettecole.pixelwatchface")){
+            if (dataMap.containsKey("com.corvettecole.pixelwatchface")) {
               dataMap = dataMap.getDataMap("com.corvettecole.pixelwatchface");
             }
 
@@ -593,11 +591,10 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             invalidate();// forces redraw
             //syncToPhone();
           } else if (item.getUri().getPath().compareTo("/requests") == 0) {
-            if (dataMap.containsKey("settings-update")){
+            if (dataMap.containsKey("settings-update")) {
 
             }
           }
-
 
 
         } else if (event.getType() == DataEvent.TYPE_DELETED) {
@@ -607,53 +604,48 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     }
 
     // sync current settings to phone upon request
-    private void syncToPhone(){
+    private void syncToPhone() {
       String TAG = "syncToPhone";
       DataClient mDataClient = Wearable.getDataClient(getApplicationContext());
       PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/watch-settings");
 
-
-
-
-
-
       putDataMapReq.setUrgent();
       Task<DataItem> putDataTask = mDataClient.putDataItem(putDataMapReq.asPutDataRequest());
-      if (putDataTask.isSuccessful()){
+      if (putDataTask.isSuccessful()) {
         Log.d(TAG, "Current stats synced to phone");
       }
     }
 
     private void requestPermissions() {
-        Log.d("requestPermission", "mPermissionRequestTime: " + mPermissionRequestedTime);
-        Log.d("requestPermission",
-            "System.currentTimeMillis() - mPermissionRequestedTime: " + (System.currentTimeMillis()
-                - mPermissionRequestedTime));
+      Log.d("requestPermission", "mPermissionRequestTime: " + mPermissionRequestedTime);
+      Log.d("requestPermission",
+          "System.currentTimeMillis() - mPermissionRequestedTime: " + (System.currentTimeMillis()
+              - mPermissionRequestedTime));
 //        if (mPermissionRequestedTime == 0
 //            || System.currentTimeMillis() - mPermissionRequestedTime > TimeUnit.MINUTES
 //            .toMillis(1)) {
-          Log.d("requestPermission",
-              "Actually requesting permission, more than one minute has passed");
-          mPermissionRequestedTime = System.currentTimeMillis();
-          if (ContextCompat
-              .checkSelfPermission(getApplication(), permission.ACCESS_FINE_LOCATION)
-              != PackageManager.PERMISSION_GRANTED) {
-            Intent mPermissionRequestIntent = new Intent(getBaseContext(),
-                WatchPermissionRequestActivity.class);
-            mPermissionRequestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            if (VERSION.SDK_INT >= VERSION_CODES.Q) {
-              mPermissionRequestIntent.putExtra("KEY_PERMISSIONS",
-                  new String[]{permission.ACCESS_COARSE_LOCATION,
-                      permission.ACCESS_FINE_LOCATION,
-                      permission.ACCESS_BACKGROUND_LOCATION});
-            } else {
-              mPermissionRequestIntent.putExtra("KEY_PERMISSIONS",
-                  new String[]{permission.ACCESS_COARSE_LOCATION,
-                      permission.ACCESS_FINE_LOCATION});
-            }
-            startActivity(mPermissionRequestIntent);
-            //}
+      Log.d("requestPermission",
+          "Actually requesting permission, more than one minute has passed");
+      mPermissionRequestedTime = System.currentTimeMillis();
+      if (ContextCompat
+          .checkSelfPermission(getApplication(), permission.ACCESS_FINE_LOCATION)
+          != PackageManager.PERMISSION_GRANTED) {
+        Intent mPermissionRequestIntent = new Intent(getBaseContext(),
+            WatchPermissionRequestActivity.class);
+        mPermissionRequestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (VERSION.SDK_INT >= VERSION_CODES.Q) {
+          mPermissionRequestIntent.putExtra("KEY_PERMISSIONS",
+              new String[]{permission.ACCESS_COARSE_LOCATION,
+                  permission.ACCESS_FINE_LOCATION,
+                  permission.ACCESS_BACKGROUND_LOCATION});
+        } else {
+          mPermissionRequestIntent.putExtra("KEY_PERMISSIONS",
+              new String[]{permission.ACCESS_COARSE_LOCATION,
+                  permission.ACCESS_FINE_LOCATION});
         }
+        startActivity(mPermissionRequestIntent);
+        //}
+      }
     }
 
     /**
@@ -687,7 +679,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
       }
     }
-
 
 
   }

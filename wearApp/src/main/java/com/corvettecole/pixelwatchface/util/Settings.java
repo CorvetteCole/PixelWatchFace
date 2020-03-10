@@ -166,7 +166,7 @@ public class Settings {
     useDarkSky = sharedPreferences.getBoolean("use_dark_sky", false);
 
     showBattery = sharedPreferences.getBoolean("show_battery", true);
-    showWearIcon = sharedPreferences.getBoolean("show_wear_icon", false);
+    showWearIcon = sharedPreferences.getBoolean("show_wear_icon", true); // temp set true for debug
   }
 
   private void savePreferences() {

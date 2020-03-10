@@ -1,9 +1,10 @@
-package com.corvettecole.pixelwatchface;
+package com.corvettecole.pixelwatchface.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 import androidx.preference.PreferenceManager;
+import com.corvettecole.pixelwatchface.R;
 import com.google.android.gms.wearable.DataMap;
 import java.util.ArrayList;
 

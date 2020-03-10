@@ -6,8 +6,8 @@ android {
         applicationId "com.corvettecole.pixelwatchface"
         minSdkVersion 23
         targetSdkVersion 29
-        versionCode 1048
-        versionName "1.4.8.1-dev"
+        versionCode 1049
+        versionName "1.5.0"
         multiDexEnabled true
     }
     compileOptions {
@@ -16,7 +16,8 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

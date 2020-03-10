@@ -1,7 +1,7 @@
-package com.corvettecole.pixelwatchface;
+package com.corvettecole.pixelwatchface.weather;
 
-import static com.corvettecole.pixelwatchface.Constants.KEY_LATITUDE;
-import static com.corvettecole.pixelwatchface.Constants.KEY_LONGITUDE;
+import static com.corvettecole.pixelwatchface.util.Constants.KEY_LATITUDE;
+import static com.corvettecole.pixelwatchface.util.Constants.KEY_LONGITUDE;
 
 import android.content.Context;
 import android.util.Log;
@@ -13,6 +13,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.RequestFuture;
 import com.android.volley.toolbox.Volley;
+import com.corvettecole.pixelwatchface.util.Settings;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;

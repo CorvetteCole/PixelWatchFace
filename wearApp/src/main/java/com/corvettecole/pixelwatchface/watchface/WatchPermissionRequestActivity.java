@@ -1,4 +1,4 @@
-package com.corvettecole.pixelwatchface;
+package com.corvettecole.pixelwatchface.watchface;
 
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
@@ -9,6 +9,8 @@ import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
 import androidx.core.app.ActivityCompat;
 import androidx.wear.widget.CircularProgressLayout;
+import com.corvettecole.pixelwatchface.R;
+import com.corvettecole.pixelwatchface.util.Settings;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class WatchPermissionRequestActivity extends WearableActivity {

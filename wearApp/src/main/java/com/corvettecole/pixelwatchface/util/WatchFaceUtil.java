@@ -1,4 +1,4 @@
-package com.corvettecole.pixelwatchface;
+package com.corvettecole.pixelwatchface.util;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -6,7 +6,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import java.util.Calendar;
 
-public class Utils {
+public class WatchFaceUtil {
 
   public static final long ONE_MIN = 60000;
 

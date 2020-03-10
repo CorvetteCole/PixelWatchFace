@@ -1,11 +1,13 @@
-package com.corvettecole.pixelwatchface;
+package com.corvettecole.pixelwatchface.weather;
 
-import static com.corvettecole.pixelwatchface.Utils.convertToCelsius;
-import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
+import static com.corvettecole.pixelwatchface.util.WatchFaceUtil.convertToCelsius;
+import static com.corvettecole.pixelwatchface.util.WatchFaceUtil.drawableToBitmap;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
+import com.corvettecole.pixelwatchface.R;
+import com.corvettecole.pixelwatchface.util.Settings;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;

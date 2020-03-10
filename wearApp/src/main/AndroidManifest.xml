@@ -23,7 +23,7 @@
             android:value="true"/>
 
         <service
-            android:name=".PixelWatchFace"
+            android:name=".watchface.PixelWatchFace"
             android:label="@string/my_digital_name"
             android:permission="android.permission.BIND_WALLPAPER">
             <meta-data
@@ -48,7 +48,7 @@
             android:value="@integer/google_play_services_version"/>
         <activity
           android:launchMode="singleInstance"
-          android:name=".WatchPermissionRequestActivity" />
+          android:name=".watchface.WatchPermissionRequestActivity" />
     </application>
 
 </manifest>

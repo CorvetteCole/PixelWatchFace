@@ -1,7 +1,7 @@
-package com.corvettecole.pixelwatchface;
+package com.corvettecole.pixelwatchface.weather;
 
-import static com.corvettecole.pixelwatchface.Constants.KEY_LATITUDE;
-import static com.corvettecole.pixelwatchface.Constants.KEY_LONGITUDE;
+import static com.corvettecole.pixelwatchface.util.Constants.KEY_LATITUDE;
+import static com.corvettecole.pixelwatchface.util.Constants.KEY_LONGITUDE;
 
 import android.Manifest;
 import android.content.Context;

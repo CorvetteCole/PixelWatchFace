@@ -1,10 +1,10 @@
-package com.corvettecole.pixelwatchface;
+package com.corvettecole.pixelwatchface.watchface;
 
-import static com.corvettecole.pixelwatchface.Constants.WEATHER_BACKOFF_DELAY_ONETIME;
-import static com.corvettecole.pixelwatchface.Constants.WEATHER_UPDATE_INTERVAL;
-import static com.corvettecole.pixelwatchface.Constants.WEATHER_UPDATE_WORKER;
-import static com.corvettecole.pixelwatchface.Utils.drawableToBitmap;
-import static com.corvettecole.pixelwatchface.Utils.getHour;
+import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_BACKOFF_DELAY_ONETIME;
+import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_UPDATE_INTERVAL;
+import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_UPDATE_WORKER;
+import static com.corvettecole.pixelwatchface.util.WatchFaceUtil.drawableToBitmap;
+import static com.corvettecole.pixelwatchface.util.WatchFaceUtil.getHour;
 
 import android.Manifest;
 import android.Manifest.permission;
@@ -41,6 +41,12 @@ import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
+import com.corvettecole.pixelwatchface.R;
+import com.corvettecole.pixelwatchface.util.Constants;
+import com.corvettecole.pixelwatchface.util.Settings;
+import com.corvettecole.pixelwatchface.weather.CurrentWeather;
+import com.corvettecole.pixelwatchface.weather.LocationUpdateWorker;
+import com.corvettecole.pixelwatchface.weather.WeatherUpdateWorker;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.wearable.DataClient;
@@ -298,9 +304,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         initWeatherUpdater(false);
       }
 
-//      if (!mWeatherUpdaterInitialized) {
-//        initWeatherUpdater(false);
-//      }
     }
 
 

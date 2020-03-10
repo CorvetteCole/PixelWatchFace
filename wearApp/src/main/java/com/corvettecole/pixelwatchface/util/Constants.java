@@ -1,4 +1,4 @@
-package com.corvettecole.pixelwatchface;
+package com.corvettecole.pixelwatchface.util;
 
 public class Constants {
 

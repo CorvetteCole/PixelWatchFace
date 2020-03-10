@@ -11,8 +11,6 @@ import android.widget.EditText;
 import android.widget.Switch;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
-import com.anjlab.android.iab.v3.BillingProcessor;
-import com.anjlab.android.iab.v3.TransactionDetails;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataItem;
@@ -22,8 +20,8 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.material.snackbar.Snackbar;
 import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity implements
-    BillingProcessor.IBillingHandler/*DataClient.OnDataChangedListener*/ {
+public class MainActivity extends AppCompatActivity /*implements
+    DataClient.OnDataChangedListener*/ {
 
   private SharedPreferences sharedPreferences;
   private Switch use24HourTimeSwitch;
@@ -52,7 +50,6 @@ public class MainActivity extends AppCompatActivity implements
   private boolean showInfoBarAmbient;
   private boolean showBattery;
   private boolean showWearIcon;
-  private BillingProcessor bp;
 
   String[] supportOptions = new String[]{"$1", "$3", "$5", "$10"};
 
@@ -206,9 +203,6 @@ public class MainActivity extends AppCompatActivity implements
       }
     });
 
-    //TODO put actual Google Play license key here
-    bp = new BillingProcessor(this, "PLACEHOLDER", this);
-    bp.initialize();
   }
 
   private void loadPreferences() {
@@ -337,37 +331,15 @@ public class MainActivity extends AppCompatActivity implements
   @Override
   public void onDestroy() {
     //Wearable.getDataClient(getApplicationContext()).removeListener(this);
-    if (bp != null) {
-      bp.release();
-    }
 
     super.onDestroy();
   }
 
-  @Override
-  public void onProductPurchased(String productId, TransactionDetails details) {
 
-  }
-
-  @Override
-  public void onPurchaseHistoryRestored() {
-
-  }
-
-  @Override
-  public void onBillingError(int errorCode, Throwable error) {
-
-  }
-
-  @Override
-  public void onBillingInitialized() {
-
-  }
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (!bp.handleActivityResult(requestCode, resultCode, data)) {
-      super.onActivityResult(requestCode, resultCode, data);
-    }
+
+    super.onActivityResult(requestCode, resultCode, data);
   }
 }

@@ -1,37 +1,17 @@
 # PixelWatchFace
-A minimalistic and open-source watchface for WearOS
+A minimalistic and open-source watchface for WearOS.
+
+Have an idea for something you want to see implemented? Found a bug? Submit a new issue here: https://github.com/CorvetteCole/PixelWatchFace/issues/new. Be sure to describe it in detail!
 
 Play Store link: https://play.google.com/store/apps/details?id=com.corvettecole.pixelwatchface
 
 # Roadmap
-Below is mostly out of date, serves as reference right now. check out the milestones for a better picture of what is coming
-## In-Progress
-### Second Update
-- Add autoscaling so app looks consistent across all watches, keeps battery percentage from being off screen etc
-- Add option to allow users to support development with an in-app purchase on Android
-- Add all watch settings to the watch app for iOS users (https://developer.android.com/training/wearables/watch-faces/configuration)
-- Automatically set the default 12/24h time based on what the device is set to upon first install
-- Add setting to allow users to change the weather update attempt interval
-### Third Update
-- Add seconds display option to devices with the Snapdragon 3100, taking advantage of the low power mode
-- Full rehaul of mobile app so settings are easy to navigate
-- Dynamic stroke width based on ambient lighting
-- Replace weather icons with new ones that match the ones on Pixel phones
-- Add support for Dark Sky weather summary
-### Fourth Update
-- Add the "At A Glance" widget
-- Complication support
-- Something else, idk
+Check out the milestones (https://github.com/CorvetteCole/PixelWatchFace/milestones) for an idea of what is coming and how soon!
 
-## Completed
-### First Update (Refactor time woooo!)
-- Create standard interface for settings on both devices, allowing new features to be implemented easily
-- Move all constants to constants
-- Move all strings to a strings xml to allow for translation
-- Make the permissions dialog keep showing if the user doesn't accept and weather is still enabled
-- Add battery percent
-- Add setting to allow user to toggle outlined text in ambient mode
-- Make code more modular and independent
+# Contributing
+I LOVE contributions from the community. Your time means a lot to me and it is much appreciated. If you would like to contribute to this project, I try to maintain a few issues that are fairly self-contained and easy to implement under the "good first issue" label. Check out the issues tab to see these and others. If you'd like to do more major things, feel free to look around, fork this project etc. I am happy to discuss how to fit your ideas in to the main project here :)
+
+
   
 
 ## Misc (can ignore)

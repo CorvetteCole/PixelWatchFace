@@ -1,5 +1,6 @@
 package com.corvettecole.pixelwatchface.weather;
 
+import static com.corvettecole.pixelwatchface.util.Constants.KEY_ALTITUDE;
 import static com.corvettecole.pixelwatchface.util.Constants.KEY_LATITUDE;
 import static com.corvettecole.pixelwatchface.util.Constants.KEY_LONGITUDE;
 
@@ -41,17 +42,17 @@ public class WeatherUpdateWorker extends Worker {
     mCurrentWeather = CurrentWeather.getInstance(getApplicationContext());
     double latitude = getInputData().getDouble(KEY_LATITUDE, -1);
     double longitude = getInputData().getDouble(KEY_LONGITUDE, -1);
+    double altitude = getInputData().getDouble(KEY_ALTITUDE, -1);
     Log.d(TAG, "latitude: " + latitude + " longitude: " + longitude);
     if (latitude != -1 && longitude != -1) {
       return updateForecast(latitude, longitude);
     } else {
-      // return failure because location was never properly retrieved in chain
+      // return failure because location was never properly retrieved in chain (shouldn't ever happen)
       return Result.failure();
     }
-
   }
 
-  public Result updateForecast(double latitude, double longitude) {
+  private Result updateForecast(double latitude, double longitude) {
     final String TAG = "getForecast";
     String forecastUrl;
 
@@ -75,6 +76,7 @@ public class WeatherUpdateWorker extends Worker {
     mRequestQueue.add(jsonObjectRequest);
 
     try {
+      //TODO: change to returning JSON string of parsed current weather object
       // 20 seconds to retrieve weather because it should be fast
       mCurrentWeather.parseWeatherJSON(future.get(20, TimeUnit.SECONDS));
       return Result.success();

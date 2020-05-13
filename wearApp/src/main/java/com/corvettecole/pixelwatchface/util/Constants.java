@@ -11,6 +11,9 @@ public class Constants {
 
   public static final String KEY_LATITUDE = "latitude";
   public static final String KEY_LONGITUDE = "longitude";
+  public static final String KEY_ALTITUDE = "altitude";
+
+  public static final String KEY_WEATHER_JSON = "weather";
 
   // ratio values for watch face placement
   public static final float WEATHER_ICON_MARGIN_RATIO = 1.7f;

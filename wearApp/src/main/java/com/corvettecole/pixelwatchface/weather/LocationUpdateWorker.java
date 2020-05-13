@@ -1,5 +1,6 @@
 package com.corvettecole.pixelwatchface.weather;
 
+import static com.corvettecole.pixelwatchface.util.Constants.KEY_ALTITUDE;
 import static com.corvettecole.pixelwatchface.util.Constants.KEY_LATITUDE;
 import static com.corvettecole.pixelwatchface.util.Constants.KEY_LONGITUDE;
 
@@ -44,6 +45,7 @@ public class LocationUpdateWorker extends ListenableWorker {
           Data output = new Data.Builder()
               .putDouble(KEY_LATITUDE, location.getLatitude())
               .putDouble(KEY_LONGITUDE, location.getLongitude())
+              .putDouble(KEY_ALTITUDE, location.getAltitude())
               .build();
 
           completer.set(Result.success(output));

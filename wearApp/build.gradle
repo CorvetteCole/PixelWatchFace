@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 29
+    viewBinding.enabled = true
     defaultConfig {
         applicationId "com.corvettecole.pixelwatchface"
         minSdkVersion 23
@@ -29,11 +30,11 @@ dependencies {
 
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.preference:preference:1.1.0'
+    implementation 'androidx.preference:preference:1.1.1'
     implementation 'androidx.wear:wear:1.0.0'
     implementation 'androidx.work:work-runtime:2.3.4'
     implementation 'androidx.concurrent:concurrent-futures:1.1.0-alpha01'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta4'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta5'
 
 
     implementation 'com.google.android.gms:play-services-wearable:17.0.0'
@@ -41,8 +42,8 @@ dependencies {
 
     implementation 'com.android.volley:volley:1.1.1'
 
-    implementation 'com.google.android.support:wearable:2.5.0'
-    compileOnly 'com.google.android.wearable:wearable:2.5.0'
+    implementation 'com.google.android.support:wearable:2.6.0'
+    compileOnly 'com.google.android.wearable:wearable:2.6.0'
     implementation 'com.google.android.material:material:1.1.0'
 
 }

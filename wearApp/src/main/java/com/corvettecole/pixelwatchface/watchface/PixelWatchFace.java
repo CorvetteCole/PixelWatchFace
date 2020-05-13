@@ -1,6 +1,7 @@
 package com.corvettecole.pixelwatchface.watchface;
 
 import static com.corvettecole.pixelwatchface.util.Constants.INFO_BAR_Y_SPACING_RATIO;
+import static com.corvettecole.pixelwatchface.util.Constants.KEY_WEATHER_JSON;
 import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_BACKOFF_DELAY_ONETIME;
 import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_ICON_MARGIN_RATIO;
 import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_ICON_Y_OFFSET_RATIO;
@@ -38,15 +39,18 @@ import android.view.WindowInsets;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.lifecycle.Observer;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import com.corvettecole.pixelwatchface.R;
 import com.corvettecole.pixelwatchface.util.Constants;
 import com.corvettecole.pixelwatchface.util.Settings;
+import com.corvettecole.pixelwatchface.util.WatchFaceUtil;
 import com.corvettecole.pixelwatchface.weather.CurrentWeather;
 import com.corvettecole.pixelwatchface.weather.LocationUpdateWorker;
 import com.corvettecole.pixelwatchface.weather.WeatherUpdateWorker;
@@ -65,12 +69,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Important Note: Because watch face apps do not have a default Activity in their project, you will
- * need to set your Configurations to "Do not launch Activity" for both the Wear and/or Application
- * modules. If you are unsure how to do this, please review the "Run Starter project" section in the
- * Google Watch Face Code Lab: https://codelabs.developers.google.com/codelabs/watchface/index.html#0
- */
+
 public class PixelWatchFace extends CanvasWatchFaceService {
 
   /**
@@ -160,6 +159,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     private Typeface mProductSans;
     private Typeface mProductSansThin;
 
+    // TODO get rid of this singleton
     private CurrentWeather mCurrentWeather = CurrentWeather.getInstance(getApplicationContext());
     private Settings mSettings = Settings.getInstance(getApplicationContext());
 
@@ -394,10 +394,12 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         temperatureText = mCurrentWeather.getFormattedTemperature();
         if (mSettings.isShowWeatherIcon()) {
           totalLength =
-              dateTextLength + bitmapTotalMargin + mCurrentWeather.getIconBitmap(getApplicationContext())
+              dateTextLength + bitmapTotalMargin + mCurrentWeather
+                  .getIconBitmap(getApplicationContext())
                   .getWidth() + mInfoPaint.measureText(temperatureText);
         } else {
-          totalLength = dateTextLength + bitmapTotalMargin + mInfoPaint.measureText(temperatureText);
+          totalLength =
+              dateTextLength + bitmapTotalMargin + mInfoPaint.measureText(temperatureText);
         }
       } else if (mSettings.isShowWeatherIcon()) {
         totalLength = dateTextLength + bitmapTotalMargin / 2.0f + mCurrentWeather
@@ -418,7 +420,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
           canvas.drawBitmap(mCurrentWeather.getIconBitmap(getApplicationContext()),
               infoBarXOffset + (dateTextLength + bitmapTotalMargin / 2.0f),
               infoBarYOffset
-                  - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight() / WEATHER_ICON_Y_OFFSET_RATIO,
+                  - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight()
+                  / WEATHER_ICON_Y_OFFSET_RATIO,
               null);
           canvas.drawText(temperatureText,
               infoBarXOffset + (dateTextLength + bitmapTotalMargin + mCurrentWeather
@@ -504,9 +507,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             OneTimeWorkRequest weatherUpdate =
                 new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class)
                     .setConstraints(constraints)
-                    // forced weather update is expected to happen sooner, so
-                    // try again in (30 seconds * attempt count). After 3 failed
-                    // attempts, it would wait 1.5 minutes before retrying again
                     .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_ONETIME,
                         TimeUnit.SECONDS)
                     .build();
@@ -515,8 +515,21 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                 .beginUniqueWork(WEATHER_UPDATE_WORKER, ExistingWorkPolicy.REPLACE, locationUpdate)
                 .then(weatherUpdate)
                 .enqueue();
-
             mWeatherRequestedTime = System.currentTimeMillis();
+
+            Observer<WorkInfo> weatherObserver = new Observer<WorkInfo>() {
+              @Override
+              public void onChanged(WorkInfo workInfo) {
+                if (workInfo != null && workInfo.getState().isFinished()) {
+                  String currentWeatherJSON = workInfo.getOutputData().getString(KEY_WEATHER_JSON);
+                  // TODO do something with this
+                }
+              }
+            };
+            WatchFaceUtil.observeOnce(WorkManager.getInstance(getApplicationContext())
+                .getWorkInfoByIdLiveData(weatherUpdate.getId()), weatherObserver);
+
+
           }
         }
       }

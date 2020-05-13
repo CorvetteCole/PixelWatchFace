@@ -27,8 +27,9 @@ public class Settings {
           "Use getInstance() method to get the single instance of this class");
     } else {
       sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-      loadPreferences();
       openWeatherMapKey = context.getString(R.string.openstreetmap_api_key);
+      loadPreferences();
+
     }
   }
 

@@ -14,6 +14,8 @@ import java.util.TimeZone;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
+// TODO bye-bye, singletons are bad design. you must perish
 public class CurrentWeather {
 
   private static volatile CurrentWeather instance;

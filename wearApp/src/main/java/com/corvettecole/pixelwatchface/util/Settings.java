@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 import androidx.preference.PreferenceManager;
 import com.corvettecole.pixelwatchface.R;
+import com.corvettecole.pixelwatchface.util.Constants.UpdatesRequired;
 import com.google.android.gms.wearable.DataMap;
 import java.util.ArrayList;
 
@@ -21,6 +22,10 @@ public class Settings {
 
   private static volatile Settings instance;
 
+  // TODO consider the following
+  /* Singletons are generally bad design, although in this case I am using one to share memory on
+     a resource constrained device - a watch. Whether this is needed should be thought over.
+   */
   private Settings(Context context) {
     if (instance != null) {
       throw new RuntimeException(
@@ -108,7 +113,7 @@ public class Settings {
     }
   }
 
-  public ArrayList<Constants.UPDATE_REQUIRED> updateSettings(
+  public ArrayList<UpdatesRequired> updateSettings(
       DataMap dataMap) {  // returns if weather update required
     String TAG = "updateSettings";
     boolean tempShowTemperature = showTemperature;
@@ -117,7 +122,7 @@ public class Settings {
 
     boolean tempUseThinAmbient = useThinAmbient;
 
-    ArrayList<Constants.UPDATE_REQUIRED> updatesRequired = new ArrayList<>();
+    ArrayList<UpdatesRequired> updatesRequired = new ArrayList<>();
 
     Log.d(TAG, "timestamp: " + dataMap.getLong("timestamp"));
     use24HourTime = dataMap.getBoolean("use_24_hour_time");
@@ -141,10 +146,10 @@ public class Settings {
     savePreferences();
     if (tempUseDarkSky != useDarkSky || showTemperature != tempShowTemperature || showWeatherIcon
         != tempShowWeatherIcon) {  //detect if weather related settings has changed
-      updatesRequired.add(Constants.UPDATE_REQUIRED.WEATHER);
+      updatesRequired.add(UpdatesRequired.WEATHER);
     }
     if (tempUseThinAmbient != useThinAmbient) { // check if font needs update
-      updatesRequired.add(Constants.UPDATE_REQUIRED.FONT);
+      updatesRequired.add(UpdatesRequired.FONT);
     }
 
     return updatesRequired;

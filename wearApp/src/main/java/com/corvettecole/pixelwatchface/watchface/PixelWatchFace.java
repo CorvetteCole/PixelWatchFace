@@ -48,12 +48,11 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import com.corvettecole.pixelwatchface.R;
-import com.corvettecole.pixelwatchface.util.Constants;
+import com.corvettecole.pixelwatchface.util.Constants.UpdatesRequired;
 import com.corvettecole.pixelwatchface.util.Settings;
 import com.corvettecole.pixelwatchface.util.WatchFaceUtil;
-import com.corvettecole.pixelwatchface.weather.CurrentWeather;
-import com.corvettecole.pixelwatchface.weather.LocationUpdateWorker;
-import com.corvettecole.pixelwatchface.weather.WeatherUpdateWorker;
+import com.corvettecole.pixelwatchface.workers.CurrentWeather;
+import com.corvettecole.pixelwatchface.workers.LocationUpdateWorker;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.wearable.DataClient;
@@ -505,7 +504,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                     .build();
 
             OneTimeWorkRequest weatherUpdate =
-                new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class)
+                new OneTimeWorkRequest.Builder(WeatherUpdateWorkerOld.class)
                     .setConstraints(constraints)
                     .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_ONETIME,
                         TimeUnit.SECONDS)
@@ -590,7 +589,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
             Log.d(TAG, dataMap.toString());
 
-            for (Constants.UPDATE_REQUIRED updateRequired : mSettings.updateSettings(dataMap)) {
+            for (UpdatesRequired updateRequired : mSettings.updateSettings(dataMap)) {
               switch (updateRequired) {
                 case WEATHER:
                   initWeatherUpdater(true);

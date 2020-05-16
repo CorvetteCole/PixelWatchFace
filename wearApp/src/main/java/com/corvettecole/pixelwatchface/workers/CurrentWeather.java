@@ -1,4 +1,4 @@
-package com.corvettecole.pixelwatchface.weather;
+package com.corvettecole.pixelwatchface.workers;
 
 import static com.corvettecole.pixelwatchface.util.WatchFaceUtil.convertToCelsius;
 import static com.corvettecole.pixelwatchface.util.WatchFaceUtil.drawableToBitmap;

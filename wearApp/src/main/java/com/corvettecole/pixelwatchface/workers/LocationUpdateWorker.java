@@ -1,8 +1,6 @@
-package com.corvettecole.pixelwatchface.weather;
+package com.corvettecole.pixelwatchface.workers;
 
-import static com.corvettecole.pixelwatchface.util.Constants.KEY_ALTITUDE;
-import static com.corvettecole.pixelwatchface.util.Constants.KEY_LATITUDE;
-import static com.corvettecole.pixelwatchface.util.Constants.KEY_LONGITUDE;
+import static com.corvettecole.pixelwatchface.util.Constants.KEY_LOCATION;
 
 import android.Manifest;
 import android.content.Context;
@@ -17,6 +15,7 @@ import androidx.work.WorkerParameters;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
 
 public class LocationUpdateWorker extends ListenableWorker {
 
@@ -43,9 +42,7 @@ public class LocationUpdateWorker extends ListenableWorker {
               .getLongitude() + ")");
           //mCurrentWeather.setLocation(location);
           Data output = new Data.Builder()
-              .putDouble(KEY_LATITUDE, location.getLatitude())
-              .putDouble(KEY_LONGITUDE, location.getLongitude())
-              .putDouble(KEY_ALTITUDE, location.getAltitude())
+              .putString(KEY_LOCATION, new Gson().toJson(location))
               .build();
 
           completer.set(Result.success(output));

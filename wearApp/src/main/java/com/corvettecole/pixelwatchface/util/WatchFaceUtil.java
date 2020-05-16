@@ -12,6 +12,7 @@ public class WatchFaceUtil {
 
   public static final long ONE_MIN = 60000;
 
+  // TODO can this be replaced by this: Bitmap hourHand = BitmapFactory.decodeResource(context.getResources(), R.drawable.hour_hand);? Which is faster
   public static Bitmap drawableToBitmap(Drawable drawable) {
     Bitmap mBitmap = null;
 

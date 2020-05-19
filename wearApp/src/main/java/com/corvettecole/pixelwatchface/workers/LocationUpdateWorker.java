@@ -3,6 +3,7 @@ package com.corvettecole.pixelwatchface.workers;
 import static com.corvettecole.pixelwatchface.util.Constants.KEY_LOCATION;
 
 import android.Manifest;
+import android.Manifest.permission;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.util.Log;
@@ -36,27 +37,36 @@ public class LocationUpdateWorker extends ListenableWorker {
         .getFusedLocationProviderClient(getApplicationContext());
 
     return CallbackToFutureAdapter.getFuture(completer -> {
-      fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-        if (location != null) {
-          Log.d(TAG, "location: (" + location.getLatitude() + "," + location
-              .getLongitude() + ")");
-          //mCurrentWeather.setLocation(location);
-          Data output = new Data.Builder()
-              .putString(KEY_LOCATION, new Gson().toJson(location))
-              .build();
+      if (ActivityCompat
+          .checkSelfPermission(getApplicationContext(), permission.ACCESS_FINE_LOCATION)
+          != PackageManager.PERMISSION_GRANTED
+          && ActivityCompat
+          .checkSelfPermission(getApplicationContext(), permission.ACCESS_COARSE_LOCATION)
+          != PackageManager.PERMISSION_GRANTED) {
+        completer.set(Result.failure());
+      } else {
+        fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+          if (location != null) {
+            Log.d(TAG, "location: (" + location.getLatitude() + "," + location
+                .getLongitude() + ")");
+            //mCurrentWeather.setLocation(location);
+            Data output = new Data.Builder()
+                .putString(KEY_LOCATION, new Gson().toJson(location))
+                .build();
 
-          completer.set(Result.success(output));
-        } else {
-          if (ActivityCompat.checkSelfPermission(getApplicationContext(),
-              Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            completer.set(Result.failure());
+            completer.set(Result.success(output));
           } else {
-            // if no location, but permission exists, try again
-            Log.d(TAG, "error retrieving location");
-            completer.set(Result.retry());
+            if (ActivityCompat.checkSelfPermission(getApplicationContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+              completer.set(Result.failure());
+            } else {
+              // if no location, but permission exists, try again
+              Log.d(TAG, "error retrieving location");
+              completer.set(Result.retry());
+            }
           }
-        }
-      });
+        });
+      }
       return completer;
     });
   }

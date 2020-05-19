@@ -11,13 +11,13 @@ import com.corvettecole.pixelwatchface.R;
 import com.corvettecole.pixelwatchface.api.WeatherProvider;
 import com.corvettecole.pixelwatchface.api.awc.models.Feature;
 import com.corvettecole.pixelwatchface.api.awc.models.FeatureCollection;
-import com.corvettecole.pixelwatchface.api.awc.models.metar.CloudQuantity;
-import com.corvettecole.pixelwatchface.api.awc.models.metar.Descriptor;
-import com.corvettecole.pixelwatchface.api.awc.models.metar.Intensity;
-import com.corvettecole.pixelwatchface.api.awc.models.metar.Precipitation;
-import com.corvettecole.pixelwatchface.api.awc.models.metar.WeatherCondition;
 import com.corvettecole.pixelwatchface.models.Weather;
 import com.corvettecole.pixelwatchface.models.WeatherProviderType;
+import com.corvettecole.pixelwatchface.models.metar.CloudQuantity;
+import com.corvettecole.pixelwatchface.models.metar.Descriptor;
+import com.corvettecole.pixelwatchface.models.metar.Intensity;
+import com.corvettecole.pixelwatchface.models.metar.Precipitation;
+import com.corvettecole.pixelwatchface.models.metar.WeatherCondition;
 import com.google.gson.JsonParseException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -136,8 +136,10 @@ public class AviationWeatherCenter extends WeatherProvider {
                   iconID = R.drawable.flurries;
                   break;
                 case MODERATE:
-                case HEAVY:
                   iconID = R.drawable.snow_showers;
+                  break;
+                case HEAVY:
+                  iconID = R.drawable.blizzard;
                   break;
               }
               break;

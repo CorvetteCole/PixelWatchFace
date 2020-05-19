@@ -1,4 +1,4 @@
-package com.corvettecole.pixelwatchface.api.awc.models.metar;
+package com.corvettecole.pixelwatchface.models.metar;
 
 /**
  * Enumeration for phenomenon. The first attribute is the code used in the metar.

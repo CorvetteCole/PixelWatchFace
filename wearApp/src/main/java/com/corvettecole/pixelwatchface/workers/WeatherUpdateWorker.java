@@ -23,13 +23,13 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.RequestFuture;
 import com.android.volley.toolbox.Volley;
 import com.corvettecole.pixelwatchface.R;
+import com.corvettecole.pixelwatchface.api.WeatherProvider;
 import com.corvettecole.pixelwatchface.api.awc.AviationWeatherCenter;
 import com.corvettecole.pixelwatchface.api.darksky.DarkSky;
 import com.corvettecole.pixelwatchface.api.met.NorweigenMeteorologicalInstitute;
 import com.corvettecole.pixelwatchface.api.nws.NationalWeatherService;
 import com.corvettecole.pixelwatchface.api.owm.OpenWeatherMap;
-import com.corvettecole.pixelwatchface.models.WeatherProvider;
-import com.corvettecole.pixelwatchface.util.Constants.WeatherProviderType;
+import com.corvettecole.pixelwatchface.models.WeatherProviderType;
 import com.corvettecole.pixelwatchface.util.Settings;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
@@ -106,7 +106,6 @@ public class WeatherUpdateWorker extends Worker {
   }
 
   private WeatherProvider getWeatherProviderFromType(WeatherProviderType type, Location location) {
-    // TODO fill this out
     switch (type) {
       case NWS:
         return new NationalWeatherService(location);

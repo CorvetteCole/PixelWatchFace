@@ -12,6 +12,7 @@ android {
         multiDexEnabled true
     }
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -27,24 +28,27 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-
+   coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.0.5'
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.preference:preference:1.1.1'
     implementation 'androidx.wear:wear:1.0.0'
     implementation 'androidx.work:work-runtime:2.3.4'
     implementation 'androidx.concurrent:concurrent-futures:1.1.0-alpha01'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta5'
-
-    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta6'
 
     implementation 'com.google.android.gms:play-services-wearable:17.0.0'
     implementation 'com.google.android.gms:play-services-location:17.0.0'
 
     implementation 'com.android.volley:volley:1.1.1'
 
-    implementation 'com.google.android.support:wearable:2.6.0'
-    compileOnly 'com.google.android.wearable:wearable:2.6.0'
+    implementation 'com.google.android.support:wearable:2.7.0'
+    compileOnly 'com.google.android.wearable:wearable:2.7.0'
     implementation 'com.google.android.material:material:1.1.0'
+
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
+    // library for METAR parsing
+    implementation 'ca.braunit.weatherparser:WeatherParser:0.2.0'
 
 }

@@ -1,9 +1,9 @@
 package com.corvettecole.pixelwatchface.api.owm;
 
 import android.location.Location;
+import com.corvettecole.pixelwatchface.api.WeatherProvider;
 import com.corvettecole.pixelwatchface.models.Weather;
-import com.corvettecole.pixelwatchface.models.WeatherProvider;
-import com.corvettecole.pixelwatchface.util.Constants.WeatherProviderType;
+import com.corvettecole.pixelwatchface.models.WeatherProviderType;
 import com.google.gson.JsonParseException;
 import org.json.JSONObject;
 

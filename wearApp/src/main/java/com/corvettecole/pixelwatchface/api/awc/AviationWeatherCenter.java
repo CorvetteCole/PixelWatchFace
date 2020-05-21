@@ -39,21 +39,39 @@ public class AviationWeatherCenter extends WeatherProvider {
   @SuppressLint("DefaultLocale")
   @Override
   public String getWeatherURL() {
-    // roughly 20 mile radius as is. minlon, minlat, maxlon, maxlat
-    return String.format(
-        "https://aviationweather.gov/cgi-bin/json/MetarJSON.php?bbox=%f,%f,%f,%f&density=all&taf=1",
-        mLocation.getLongitude() - BOUNDING_BOX_OFFSET,
-        mLocation.getLatitude() - BOUNDING_BOX_OFFSET,
-        mLocation.getLongitude() + BOUNDING_BOX_OFFSET,
-        mLocation.getLatitude() + BOUNDING_BOX_OFFSET);
+    if (mRetry) {
+      // roughly 120 mile radius.
+      return String.format(
+          "https://aviationweather.gov/cgi-bin/json/MetarJSON.php?bbox=%f,%f,%f,%f&density=all&taf=1",
+          mLocation.getLongitude() - BOUNDING_BOX_OFFSET * 3,
+          mLocation.getLatitude() - BOUNDING_BOX_OFFSET * 3,
+          mLocation.getLongitude() + BOUNDING_BOX_OFFSET * 3,
+          mLocation.getLatitude() + BOUNDING_BOX_OFFSET * 3);
+    } else {
+      // roughly 40 mile radius as is. minlon, minlat, maxlon, maxlat
+      return String.format(
+          "https://aviationweather.gov/cgi-bin/json/MetarJSON.php?bbox=%f,%f,%f,%f&density=all&taf=1",
+          mLocation.getLongitude() - BOUNDING_BOX_OFFSET,
+          mLocation.getLatitude() - BOUNDING_BOX_OFFSET,
+          mLocation.getLongitude() + BOUNDING_BOX_OFFSET,
+          mLocation.getLatitude() + BOUNDING_BOX_OFFSET);
+    }
   }
 
   @Override
   public Weather parseWeatherResponse(JSONObject jsonObject)
-      throws JsonParseException {
+      throws JsonParseException, IllegalArgumentException {
     Weather weather = new Weather();
 
     FeatureCollection parsedResult = mGson.fromJson(jsonObject.toString(), FeatureCollection.class);
+
+    if (parsedResult.getFeatures().size() == 0) {
+      mRetry = true;
+      throw new IllegalArgumentException("METAR Station list empty!");
+    } else {
+      mRetry = false;
+    }
+
     float minDistance = Float.MAX_VALUE;
     Feature minFeature = parsedResult.getFeatures().get(0);
     // get closest airport

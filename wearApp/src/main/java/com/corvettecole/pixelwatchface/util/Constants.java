@@ -27,7 +27,7 @@ public class Constants {
 
   public static final float WEATHER_PROVIDER_DISTANCE_UPDATE_THRESHOLD = 15000; //15km
 
-  public static final double BOUNDING_BOX_OFFSET = 0.15;
+  public static final double BOUNDING_BOX_OFFSET = 0.3;
 
   public enum UpdatesRequired {
     WEATHER,

@@ -8,7 +8,7 @@ public class Weather {
 
     @SerializedName("id")
     @Expose
-    private Integer id;
+    private WeatherCondition id;
     @SerializedName("main")
     @Expose
     private String main;
@@ -19,11 +19,11 @@ public class Weather {
     @Expose
     private String icon;
 
-    public Integer getId() {
+    public WeatherCondition getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(WeatherCondition id) {
         this.id = id;
     }
 

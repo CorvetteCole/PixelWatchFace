@@ -16,6 +16,7 @@ public abstract class WeatherProvider {
 
   protected Location mLocation;
   protected Gson mGson;
+  protected boolean mRetry;
 
   protected WeatherProvider(Location location) {
     this.mLocation = location;
@@ -51,5 +52,14 @@ public abstract class WeatherProvider {
 
   public abstract Weather parseWeatherResponse(JSONObject jsonObject)
       throws JsonParseException, IllegalArgumentException;
+
+  public Location getLocation() {
+    return mLocation;
+  }
+
+  public boolean shouldRetry() {
+    return mRetry;
+  }
+
 }
 

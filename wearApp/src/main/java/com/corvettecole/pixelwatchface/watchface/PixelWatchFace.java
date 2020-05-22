@@ -2,6 +2,7 @@ package com.corvettecole.pixelwatchface.watchface;
 
 import static com.corvettecole.pixelwatchface.util.Constants.INFO_BAR_Y_SPACING_RATIO;
 import static com.corvettecole.pixelwatchface.util.Constants.KEY_WEATHER_JSON;
+import static com.corvettecole.pixelwatchface.util.Constants.NO_TEMPERATURE;
 import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_BACKOFF_DELAY_ONETIME;
 import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_ICON_MARGIN_RATIO;
 import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_ICON_Y_OFFSET_RATIO;
@@ -48,11 +49,12 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import com.corvettecole.pixelwatchface.R;
+import com.corvettecole.pixelwatchface.models.Weather;
 import com.corvettecole.pixelwatchface.util.Constants.UpdatesRequired;
 import com.corvettecole.pixelwatchface.util.Settings;
 import com.corvettecole.pixelwatchface.util.WatchFaceUtil;
-import com.corvettecole.pixelwatchface.workers.CurrentWeather;
 import com.corvettecole.pixelwatchface.workers.LocationUpdateWorker;
+import com.corvettecole.pixelwatchface.workers.WeatherUpdateWorker;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.wearable.DataClient;
@@ -63,6 +65,7 @@ import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.Wearable;
+import com.google.gson.Gson;
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -159,8 +162,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     private Typeface mProductSansThin;
 
     // TODO get rid of this singleton
-    private CurrentWeather mCurrentWeather = CurrentWeather.getInstance(getApplicationContext());
     private Settings mSettings = Settings.getInstance(getApplicationContext());
+    private Weather mCurrentWeather = new Weather();
 
     // offsets
     private float mBatteryYOffset;
@@ -390,7 +393,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
           / WEATHER_ICON_MARGIN_RATIO;
 
       if (mSettings.isShowTemperature()) {
-        temperatureText = mCurrentWeather.getFormattedTemperature();
+        temperatureText = mCurrentWeather.getFormattedTemperature(mSettings.isUseCelsius(),
+            mSettings.isShowTemperatureFractional(), mSettings.isUseEuropeanDateFormat());
         if (mSettings.isShowWeatherIcon()) {
           totalLength =
               dateTextLength + bitmapTotalMargin + mCurrentWeather
@@ -504,7 +508,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
                     .build();
 
             OneTimeWorkRequest weatherUpdate =
-                new OneTimeWorkRequest.Builder(WeatherUpdateWorkerOld.class)
+                new OneTimeWorkRequest.Builder(WeatherUpdateWorker.class)
                     .setConstraints(constraints)
                     .setBackoffCriteria(BackoffPolicy.LINEAR, WEATHER_BACKOFF_DELAY_ONETIME,
                         TimeUnit.SECONDS)
@@ -519,16 +523,33 @@ public class PixelWatchFace extends CanvasWatchFaceService {
             Observer<WorkInfo> weatherObserver = new Observer<WorkInfo>() {
               @Override
               public void onChanged(WorkInfo workInfo) {
-                if (workInfo != null && workInfo.getState().isFinished()) {
-                  String currentWeatherJSON = workInfo.getOutputData().getString(KEY_WEATHER_JSON);
-                  // TODO do something with this
+                if (workInfo != null) {
+                  Log.d(TAG, "weatherObserver onChanged : " + workInfo.toString());
+                  if (workInfo.getState().isFinished()) {
+                    String currentWeatherJSON = workInfo.getOutputData()
+                        .getString(KEY_WEATHER_JSON);
+                    Log.d(TAG, "outputWeather: " + currentWeatherJSON);
+                    Weather newCurrentWeather = new Gson()
+                        .fromJson(currentWeatherJSON, Weather.class);
+
+                    // check if newCurrentWeather is actually valid
+                    if (newCurrentWeather != null
+                        && newCurrentWeather.getTemperature() != NO_TEMPERATURE) {
+                      // copy bitmap over so we don't have to regenerate it
+                      if (newCurrentWeather.getIconID() == mCurrentWeather.getIconID()) {
+                        newCurrentWeather
+                            .setIconBitmap(mCurrentWeather.getIconBitmap(getApplicationContext()));
+                      }
+                      mCurrentWeather = newCurrentWeather;
+                      invalidate(); // redraw to update the displayed weather
+                    }
+                  }
                 }
               }
             };
-            WatchFaceUtil.observeOnce(WorkManager.getInstance(getApplicationContext())
+
+            WatchFaceUtil.observeUntilFinished(WorkManager.getInstance(getApplicationContext())
                 .getWorkInfoByIdLiveData(weatherUpdate.getId()), weatherObserver);
-
-
           }
         }
       }

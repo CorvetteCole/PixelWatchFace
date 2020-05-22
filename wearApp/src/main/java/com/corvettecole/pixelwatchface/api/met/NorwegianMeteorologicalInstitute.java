@@ -3,9 +3,9 @@ package com.corvettecole.pixelwatchface.api.met;
 import android.location.Location;
 import com.corvettecole.pixelwatchface.R;
 import com.corvettecole.pixelwatchface.api.WeatherProvider;
-import com.corvettecole.pixelwatchface.api.met.models.Forecast;
 import com.corvettecole.pixelwatchface.api.met.models.ForecastTimeInstant;
 import com.corvettecole.pixelwatchface.api.met.models.ForecastTimeStepDataNext1Hours;
+import com.corvettecole.pixelwatchface.api.met.models.METJSONForecast;
 import com.corvettecole.pixelwatchface.models.Weather;
 import com.corvettecole.pixelwatchface.models.WeatherProviderType;
 import com.corvettecole.pixelwatchface.models.metar.CloudQuantity;
@@ -30,7 +30,7 @@ public class NorwegianMeteorologicalInstitute extends WeatherProvider {
         "https://api.met.no/weatherapi/locationforecast/2.0/?lat=" + mLocation.getLatitude()
             + "&lon=" + mLocation.getLongitude();
     if (mLocation.hasAltitude()) {
-      url += "&altitude=" + mLocation.getAltitude();
+      url += "&altitude=" + Math.round(mLocation.getAltitude());
     }
     return url;
   }
@@ -39,17 +39,20 @@ public class NorwegianMeteorologicalInstitute extends WeatherProvider {
   public Weather parseWeatherResponse(JSONObject jsonObject) throws JsonParseException {
     Weather weather = new Weather();
 
-    Forecast forecast = mGson.fromJson(jsonObject.toString(), Forecast.class);
+    METJSONForecast forecast = mGson.fromJson(jsonObject.toString(), METJSONForecast.class);
 
-    ZonedDateTime zonedDateTime = ZonedDateTime.parse(forecast.getTimeseries().get(0).getTime());
+    ZonedDateTime zonedDateTime = ZonedDateTime
+        .parse(forecast.getProperties().getTimeseries().get(0).getTime());
 
-    ForecastTimeInstant forecastTimeInstant = forecast.getTimeseries().get(0).getData().getInstant()
+    ForecastTimeInstant forecastTimeInstant = forecast.getProperties().getTimeseries().get(0)
+        .getData().getInstant()
         .getDetails();
     weather.setTemperature(forecastTimeInstant.getAirTemperature().doubleValue());
     weather.setHumidity(forecastTimeInstant.getRelativeHumidity().doubleValue());
     weather.setTime(zonedDateTime.toEpochSecond());
-    weather.setIconID(getWeatherIcon(forecast.getTimeseries().get(0).getData().getNext1Hours(),
-        getCloudQuantity(forecastTimeInstant.getCloudAreaFraction().doubleValue())));
+    weather.setIconID(
+        getWeatherIcon(forecast.getProperties().getTimeseries().get(0).getData().getNext1Hours(),
+            getCloudQuantity(forecastTimeInstant.getCloudAreaFraction().doubleValue())));
     return weather;
   }
 

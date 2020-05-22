@@ -38,7 +38,7 @@ public class Currently {
   private Double dewPoint;
   @SerializedName("humidity")
   @Expose
-  private Integer humidity;
+  private Double humidity;
   @SerializedName("pressure")
   @Expose
   private Double pressure;
@@ -62,7 +62,7 @@ public class Currently {
   private Double visibility;
   @SerializedName("ozone")
   @Expose
-  private Integer ozone;
+  private Double ozone;
 
   public Integer getTime() {
     return time;
@@ -144,11 +144,11 @@ public class Currently {
     this.dewPoint = dewPoint;
   }
 
-  public Integer getHumidity() {
+  public Double getHumidity() {
     return humidity;
   }
 
-  public void setHumidity(Integer humidity) {
+  public void setHumidity(Double humidity) {
     this.humidity = humidity;
   }
 
@@ -208,11 +208,11 @@ public class Currently {
     this.visibility = visibility;
   }
 
-  public Integer getOzone() {
+  public Double getOzone() {
     return ozone;
   }
 
-  public void setOzone(Integer ozone) {
+  public void setOzone(Double ozone) {
     this.ozone = ozone;
   }
 

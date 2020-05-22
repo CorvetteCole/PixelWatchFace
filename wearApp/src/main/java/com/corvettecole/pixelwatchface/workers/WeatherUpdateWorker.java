@@ -1,8 +1,11 @@
 package com.corvettecole.pixelwatchface.workers;
 
+import static com.corvettecole.pixelwatchface.util.Constants.KEY_ALTITUDE;
 import static com.corvettecole.pixelwatchface.util.Constants.KEY_LAST_LOCATION;
 import static com.corvettecole.pixelwatchface.util.Constants.KEY_LAST_WEATHER_PROVIDER;
-import static com.corvettecole.pixelwatchface.util.Constants.KEY_LOCATION;
+import static com.corvettecole.pixelwatchface.util.Constants.KEY_LATITUDE;
+import static com.corvettecole.pixelwatchface.util.Constants.KEY_LOCATION_PROVIDER;
+import static com.corvettecole.pixelwatchface.util.Constants.KEY_LONGITUDE;
 import static com.corvettecole.pixelwatchface.util.Constants.KEY_WEATHER_JSON;
 import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_PROVIDER_DISTANCE_UPDATE_THRESHOLD;
 
@@ -27,6 +30,7 @@ import com.corvettecole.pixelwatchface.api.darksky.DarkSky;
 import com.corvettecole.pixelwatchface.api.met.NorwegianMeteorologicalInstitute;
 import com.corvettecole.pixelwatchface.api.nws.NationalWeatherService;
 import com.corvettecole.pixelwatchface.api.owm.OpenWeatherMap;
+import com.corvettecole.pixelwatchface.models.Weather;
 import com.corvettecole.pixelwatchface.models.WeatherProviderType;
 import com.corvettecole.pixelwatchface.util.Settings;
 import com.google.gson.Gson;
@@ -46,6 +50,7 @@ public class WeatherUpdateWorker extends Worker {
   private Gson mGson;
   private SharedPreferences mSharedPreferences;
   private boolean mLegacyUseDarkSky;
+  private String TAG = "weather_update_worker";
 
   public WeatherUpdateWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
     super(context, workerParams);
@@ -54,14 +59,19 @@ public class WeatherUpdateWorker extends Worker {
   @NonNull
   @Override
   public Result doWork() {
-    String TAG = "weather_update_worker";
+
     Log.d(TAG, "starting weather work...");
     mGson = new Gson();
     mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
     mLegacyUseDarkSky = mSharedPreferences.getBoolean("use_dark_sky", false);
     mRequestQueue = Volley.newRequestQueue(getApplicationContext());
-    Location location = mGson.fromJson(getInputData().getString(KEY_LOCATION), Location.class);
-    if (location != null) {
+
+    Location location = new Location(getInputData().getString(KEY_LOCATION_PROVIDER));
+    location.setLongitude(getInputData().getDouble(KEY_LONGITUDE, -1));
+    location.setLatitude(getInputData().getDouble(KEY_LATITUDE, -1));
+    location.setAltitude(getInputData().getDouble(KEY_ALTITUDE, 0));
+
+    if (location.getLongitude() != -1 && location.getLatitude() != -1) {
       return updateWeather(location);
     } else {
       // return failure because location was never properly retrieved in chain (shouldn't ever happen)
@@ -72,7 +82,12 @@ public class WeatherUpdateWorker extends Worker {
   private Result updateWeather(Location location) {
     // if weather provider should be updated, start with using METAR data (AWC). Otherwise, use the one we know works.
     if (shouldUpdateWeatherProvider(location)) {
-      return getWeather(getWeatherProviderFromType(WeatherProviderType.AWC, location), false);
+      Log.d(TAG, "shouldUpdateWeatherProvider, using AWC or DS initially");
+      if (!mLegacyUseDarkSky) {
+        return getWeather(getWeatherProviderFromType(WeatherProviderType.AWC, location), false);
+      } else {
+        return getWeather(getWeatherProviderFromType(WeatherProviderType.DS, location), false);
+      }
     } else {
       WeatherProviderType lastWeatherProviderType = mGson
           .fromJson(mSharedPreferences.getString(KEY_LAST_WEATHER_PROVIDER, null),
@@ -82,11 +97,11 @@ public class WeatherUpdateWorker extends Worker {
   }
 
   private boolean shouldUpdateWeatherProvider(Location currentLocation) {
-    String lastLocationJSON = mSharedPreferences.getString(KEY_LAST_LOCATION, null);
+    String lastLocationJSON = mSharedPreferences.getString(KEY_LAST_LOCATION, "");
     String lastWeatherProviderTypeJSON = mSharedPreferences
-        .getString(KEY_LAST_WEATHER_PROVIDER, null);
+        .getString(KEY_LAST_WEATHER_PROVIDER, "");
 
-    if (lastLocationJSON == null || lastWeatherProviderTypeJSON == null) {
+    if (lastLocationJSON.isEmpty() || lastWeatherProviderTypeJSON.isEmpty()) {
       return true;
     } else {
       Location lastLocation = mGson.fromJson(lastLocationJSON, Location.class);
@@ -115,6 +130,7 @@ public class WeatherUpdateWorker extends Worker {
   }
 
   private WeatherProvider getWeatherProviderFromType(WeatherProviderType type, Location location) {
+    Log.d(TAG, "location longitude: " + location.getLongitude());
     switch (type) {
       case NWS:
         return new NationalWeatherService(location);
@@ -124,6 +140,7 @@ public class WeatherUpdateWorker extends Worker {
         return new OpenWeatherMap(location,
             getApplicationContext().getString(R.string.openstreetmap_api_key));
       case DS:
+        //return new DarkSky(location, "39d38087bcdfab798f021b77ff9a0d8f");
         return new DarkSky(location, mSharedPreferences.getString("dark_sky_api_key", ""));
       case MET: // MET is the fallback API
       default:
@@ -132,6 +149,7 @@ public class WeatherUpdateWorker extends Worker {
   }
 
   private Result getWeather(WeatherProvider weatherProvider, boolean failed) {
+    Log.d(TAG, "attempting to get weather from " + weatherProvider.getType().toString());
     boolean hasRequestedRetry = weatherProvider.shouldRetry();
     if (failed) {
       weatherProvider = getNextWeatherProvider(weatherProvider);
@@ -165,7 +183,7 @@ public class WeatherUpdateWorker extends Worker {
         @Override
         public Map<String, String> getHeaders() {
           Map<String, String> headers = new HashMap<String, String>();
-          headers.put("com.corvettecole.pixelwatchface", "weather@corvettecole.com");
+          headers.put("User-Agent", "weather@corvettecole.com");
           return headers;
         }
       };
@@ -177,6 +195,8 @@ public class WeatherUpdateWorker extends Worker {
         return Result.failure();
       }
     }
+    // TODO remove before release so we don't leak API keys
+    //Log.d(TAG, "request URL: " + weatherProvider.getWeatherURL());
     RequestFuture<JSONObject> weatherFuture = RequestFuture.newFuture();
     JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,
         weatherProvider.getWeatherURL(),
@@ -184,21 +204,38 @@ public class WeatherUpdateWorker extends Worker {
       @Override
       public Map<String, String> getHeaders() {
         Map<String, String> headers = new HashMap<String, String>();
-        headers.put("User-Agent", "(Pixel Watch Face, weather@corvettecole.com)");
+        headers.put("User-Agent", "weather@corvettecole.com");
         return headers;
       }
     };
     mRequestQueue.add(jsonObjectRequest);
 
+    JSONObject weatherJSON = new JSONObject();
+
     try {
-      return Result.success(new Data.Builder().putString(KEY_WEATHER_JSON, mGson
-          .toJson(weatherProvider.parseWeatherResponse(weatherFuture.get(20, TimeUnit.SECONDS))))
-          .build());
-    } catch (IllegalArgumentException e) {
-      return weatherProvider.shouldRetry() ? Result.retry() : Result.failure();
+      weatherJSON = weatherFuture.get(20, TimeUnit.SECONDS);
     } catch (JsonParseException | InterruptedException | ExecutionException | TimeoutException e) {
+      e.printStackTrace();
       return Result.failure();
     }
+
+    if (weatherJSON.length() > 0) {
+      try {
+        Weather weather = weatherProvider.parseWeatherResponse(weatherJSON);
+        return Result.success(new Data.Builder().putString(KEY_WEATHER_JSON, mGson
+            .toJson(weather))
+            .build());
+      } catch (IllegalArgumentException e) {
+        e.printStackTrace();
+        return weatherProvider.shouldRetry() ? Result.retry() : Result.failure();
+      }
+
+
+    } else {
+      Log.d(TAG, "weatherJSON too small, failing");
+      return Result.failure();
+    }
+
   }
 
 }

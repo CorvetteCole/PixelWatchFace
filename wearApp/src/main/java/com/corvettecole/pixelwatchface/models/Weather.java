@@ -1,12 +1,19 @@
 package com.corvettecole.pixelwatchface.models;
 
+import static com.corvettecole.pixelwatchface.util.WatchFaceUtil.convertToFahrenheit;
+import static com.corvettecole.pixelwatchface.util.WatchFaceUtil.drawableToBitmap;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.graphics.Bitmap;
+import com.corvettecole.pixelwatchface.R;
+import com.corvettecole.pixelwatchface.util.Constants;
 
 public class Weather {
 
   private long mTime;
-  private double mTemperature, mHumidity, mPrecipitationChance;
-  private int mIconID;
+  private double mTemperature = Constants.NO_TEMPERATURE, mHumidity, mPrecipitationChance;
+  private int mIconID = R.drawable.ic_error;
   // TODO figure out if we REALLY need to dynamically generate bitmaps... Can't they be bundled like that?
   private transient Bitmap mIconBitmap; // don't serialize bitmap since that increases file size. We can do that dynamically
 
@@ -60,8 +67,39 @@ public class Weather {
     this.mIconID = mIconID;
   }
 
-  public Bitmap getIconBitmap() {
-    // TODO implement this
+  public void setIconBitmap(Bitmap bitmap) {
+    mIconBitmap = bitmap;
+  }
+
+  public Bitmap getIconBitmap(Context context) {
+    if (mIconBitmap == null) {
+      mIconBitmap = Bitmap
+          .createScaledBitmap(drawableToBitmap(context.getDrawable(mIconID)), 30, 30, false);
+    }
     return mIconBitmap;
+  }
+
+  @SuppressLint("DefaultLocale")
+  public String getFormattedTemperature(boolean useCelsius, boolean showTemperatureFractional,
+      boolean useEuropeanDateFormat) {
+    String unit = useCelsius ? "°C" : "°F";
+    if (mTemperature == Double.MIN_VALUE) {
+      if (showTemperatureFractional) {
+        if (useEuropeanDateFormat) {
+          return "--,-" + unit;
+        } else {
+          return "--.- " + unit;
+        }
+      } else {
+        return "-- " + unit;
+      }
+    } else {
+      double temperature = useCelsius ? mTemperature : convertToFahrenheit(mTemperature);
+      if (showTemperatureFractional) {
+        return String.format("%.1f %s", temperature, unit);
+      } else {
+        return String.format("%d %s", Math.round(temperature), unit);
+      }
+    }
   }
 }

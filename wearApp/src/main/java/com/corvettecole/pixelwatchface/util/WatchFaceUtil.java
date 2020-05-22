@@ -4,8 +4,10 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
+import androidx.work.WorkInfo;
 import java.util.Calendar;
 
 public class WatchFaceUtil {
@@ -56,12 +58,20 @@ public class WatchFaceUtil {
     return (fahrenheit - 32) / 1.8;
   }
 
-  public static <T> void observeOnce(final LiveData<T> liveData, final Observer<T> observer) {
-    liveData.observeForever(new Observer<T>() {
+  public static double convertToFahrenheit(double celsius) {
+    return (celsius * (9.0 / 5.0)) + 32;
+  }
+
+  public static <T> void observeUntilFinished(final LiveData<WorkInfo> liveData,
+      final Observer<WorkInfo> observer) {
+    liveData.observeForever(new Observer<WorkInfo>() {
       @Override
-      public void onChanged(T t) {
-        liveData.removeObserver(this);
-        observer.onChanged(t);
+      public void onChanged(WorkInfo workInfo) {
+        if (workInfo != null && workInfo.getState().isFinished()) {
+          Log.d("observeOnce", "Removing observer, work finished.");
+          liveData.removeObserver(this);
+        }
+        observer.onChanged(workInfo);
       }
     });
   }

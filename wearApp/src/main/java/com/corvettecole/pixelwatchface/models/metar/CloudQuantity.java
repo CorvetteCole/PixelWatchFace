@@ -30,7 +30,11 @@ public enum CloudQuantity {
   /**
    * No significant cloud.
    */
-  NSC("NSC");
+  NSC("NSC"),
+  /**
+   * Clear?
+   */
+  CLR("CLR");
 
   /**
    * Shortcut of the cloud quanity.

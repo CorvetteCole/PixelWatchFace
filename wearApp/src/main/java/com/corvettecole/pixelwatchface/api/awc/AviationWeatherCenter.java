@@ -4,6 +4,7 @@ import static com.corvettecole.pixelwatchface.util.Constants.BOUNDING_BOX_OFFSET
 
 import android.annotation.SuppressLint;
 import android.location.Location;
+import android.util.Log;
 import ca.braunit.weatherparser.exception.DecoderException;
 import ca.braunit.weatherparser.metar.MetarDecoder;
 import ca.braunit.weatherparser.metar.domain.Metar;
@@ -22,6 +23,8 @@ import com.google.gson.JsonParseException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import org.json.JSONObject;
 
 public class AviationWeatherCenter extends WeatherProvider {
@@ -42,7 +45,7 @@ public class AviationWeatherCenter extends WeatherProvider {
     if (mRetry) {
       // roughly 120 mile radius.
       return String.format(
-          "https://aviationweather.gov/cgi-bin/json/MetarJSON.php?bbox=%f,%f,%f,%f&density=all&taf=1",
+          "https://aviationweather.gov/cgi-bin/json/MetarJSON.php?bbox=%f,%f,%f,%f&density=all",
           mLocation.getLongitude() - BOUNDING_BOX_OFFSET * 3,
           mLocation.getLatitude() - BOUNDING_BOX_OFFSET * 3,
           mLocation.getLongitude() + BOUNDING_BOX_OFFSET * 3,
@@ -50,7 +53,7 @@ public class AviationWeatherCenter extends WeatherProvider {
     } else {
       // roughly 40 mile radius as is. minlon, minlat, maxlon, maxlat
       return String.format(
-          "https://aviationweather.gov/cgi-bin/json/MetarJSON.php?bbox=%f,%f,%f,%f&density=all&taf=1",
+          "https://aviationweather.gov/cgi-bin/json/MetarJSON.php?bbox=%f,%f,%f,%f&density=all",
           mLocation.getLongitude() - BOUNDING_BOX_OFFSET,
           mLocation.getLatitude() - BOUNDING_BOX_OFFSET,
           mLocation.getLongitude() + BOUNDING_BOX_OFFSET,
@@ -74,10 +77,13 @@ public class AviationWeatherCenter extends WeatherProvider {
 
     float minDistance = Float.MAX_VALUE;
     Feature minFeature = parsedResult.getFeatures().get(0);
+
+    List<CloudQuantity> cloudQuantities = new ArrayList<>();
     // get closest airport
     for (Feature feature : parsedResult.getFeatures()) {
       List<Double> coordinates = feature.getGeometry().getCoordinates();
       Location airportLocation = new Location(mLocation);
+      cloudQuantities.add(CloudQuantity.getEnum(feature.getProperties().getCover()));
       airportLocation.setLongitude(coordinates.get(0));
       airportLocation.setLatitude(coordinates.get(1));
       float distance = mLocation.distanceTo(airportLocation);
@@ -87,16 +93,26 @@ public class AviationWeatherCenter extends WeatherProvider {
       }
     }
 
+    CloudQuantity cloudQuantityMode = cloudQuantities.stream().collect(
+        Collectors.groupingBy(w -> w, Collectors.counting()))
+        .entrySet()
+        .stream()
+        .max(Entry.comparingByValue())
+        .get()
+        .getKey();
+
     weather.setTemperature(minFeature.getProperties().getTemp());
-    weather.setIconID(getWeatherIconID(minFeature));
+    weather.setIconID(getWeatherIconID(minFeature, cloudQuantityMode));
     ZonedDateTime zonedDateTime = ZonedDateTime.parse(minFeature.getProperties().getObsTime());
     weather.setTime(zonedDateTime.toEpochSecond());
     return weather;
   }
 
 
-  private int getWeatherIconID(Feature feature) throws IllegalArgumentException {
-    CloudQuantity cloudQuantity = CloudQuantity.getEnum(feature.getProperties().getCover());
+  private int getWeatherIconID(Feature feature, CloudQuantity cloudQuantity)
+      throws IllegalArgumentException {
+    Log.d("AWC Parsing", feature.getProperties().getCover());
+
     List<WeatherCondition> weatherConditions = null;
     try {
       Metar metar = MetarDecoder.decodeMetar(feature.getProperties().getRawOb()).getMetar();
@@ -237,6 +253,7 @@ public class AviationWeatherCenter extends WeatherProvider {
   private int getCloudIcon(CloudQuantity cloudQuantity) {
     switch (cloudQuantity) {
       default:
+      case CLR:
       case SKC:
       case NSC:
         return isDay() ? R.drawable.sunny : R.drawable.clear_night;  // sunny/clear night

@@ -159,7 +159,7 @@ public class Settings {
   private void loadPreferences() {
     use24HourTime = sharedPreferences.getBoolean("use_24_hour_time", false);
     showTemperature = sharedPreferences.getBoolean("show_temperature", true);
-    useCelsius = sharedPreferences.getBoolean("use_celsius", false);
+    useCelsius = sharedPreferences.getBoolean("use_celsius", true);
     showWeatherIcon = sharedPreferences.getBoolean("show_weather", true);
 
     useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
@@ -168,6 +168,7 @@ public class Settings {
     useEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
     showTemperatureFractional = sharedPreferences.getBoolean("show_temperature_decimal", false);
 
+    // TODO change this for release
     darkSkyAPIKey = sharedPreferences.getString("dark_sky_api_key", "");
     useDarkSky = sharedPreferences.getBoolean("use_dark_sky", false);
 

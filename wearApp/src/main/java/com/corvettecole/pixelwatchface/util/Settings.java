@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 import androidx.preference.PreferenceManager;
-import com.corvettecole.pixelwatchface.R;
 import com.corvettecole.pixelwatchface.util.Constants.UpdatesRequired;
 import com.google.android.gms.wearable.DataMap;
 import java.util.ArrayList;
@@ -12,15 +11,12 @@ import java.util.ArrayList;
 public class Settings {
 
 
+  private static volatile Settings instance;
   private boolean use24HourTime, showTemperature, showWeatherIcon, useCelsius,
       useEuropeanDateFormat, useThinAmbient, showInfoBarAmbient, showTemperatureFractional,
-      showBattery, showWearIcon, useDarkSky;
-
-  private String darkSkyAPIKey, openWeatherMapKey;
-
+      showBattery, showWearIcon, useDarkSky, weatherChangeNotified, companionAppNotified;
+  private String darkSkyAPIKey;
   private SharedPreferences sharedPreferences;
-
-  private static volatile Settings instance;
 
   // TODO consider the following
   /* Singletons are generally bad design, although in this case I am using one to share memory on
@@ -32,7 +28,6 @@ public class Settings {
           "Use getInstance() method to get the single instance of this class");
     } else {
       sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-      openWeatherMapKey = context.getString(R.string.openstreetmap_api_key);
       loadPreferences();
 
     }
@@ -93,12 +88,22 @@ public class Settings {
     return useDarkSky;
   }
 
-  public String getDarkSkyAPIKey() {
-    return darkSkyAPIKey;
+  public boolean isWeatherChangeNotified() {
+    return weatherChangeNotified;
   }
 
-  public String getOpenWeatherMapKey() {
-    return openWeatherMapKey;
+  public void setWeatherChangeNotified(boolean weatherChangeNotified) {
+    this.weatherChangeNotified = weatherChangeNotified;
+    savePreferences();
+  }
+
+  public boolean isCompanionAppNotified() {
+    return companionAppNotified;
+  }
+
+  public void setCompanionAppNotified(boolean companionAppNotified) {
+    this.companionAppNotified = companionAppNotified;
+    savePreferences();
   }
 
   public boolean isWeatherDisabled() {
@@ -168,12 +173,14 @@ public class Settings {
     useEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
     showTemperatureFractional = sharedPreferences.getBoolean("show_temperature_decimal", false);
 
-    // TODO change this for release
     darkSkyAPIKey = sharedPreferences.getString("dark_sky_api_key", "");
     useDarkSky = sharedPreferences.getBoolean("use_dark_sky", false);
 
     showBattery = sharedPreferences.getBoolean("show_battery", true);
     showWearIcon = sharedPreferences.getBoolean("show_wear_icon", false);
+
+    weatherChangeNotified = sharedPreferences.getBoolean("weather_change_notified", false);
+    companionAppNotified = sharedPreferences.getBoolean("companion_app_notified", false);
   }
 
   private void savePreferences() {
@@ -191,6 +198,9 @@ public class Settings {
 
     editor.putString("dark_sky_api_key", darkSkyAPIKey);
     editor.putBoolean("use_dark_sky", useDarkSky);
+
+    editor.putBoolean("weather_change_notified", weatherChangeNotified);
+    editor.putBoolean("companion_app_notified", companionAppNotified);
     editor.apply();
   }
 

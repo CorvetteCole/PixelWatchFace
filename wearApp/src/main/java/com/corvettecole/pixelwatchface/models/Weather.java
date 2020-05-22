@@ -74,7 +74,7 @@ public class Weather {
   public Bitmap getIconBitmap(Context context) {
     if (mIconBitmap == null) {
       mIconBitmap = Bitmap
-          .createScaledBitmap(drawableToBitmap(context.getDrawable(mIconID)), 30, 30, false);
+          .createScaledBitmap(drawableToBitmap(context.getDrawable(mIconID)), 34, 34, false);
     }
     return mIconBitmap;
   }
@@ -88,17 +88,17 @@ public class Weather {
         if (useEuropeanDateFormat) {
           return "--,-" + unit;
         } else {
-          return "--.- " + unit;
+          return "--.-" + unit;
         }
       } else {
-        return "-- " + unit;
+        return "--" + unit;
       }
     } else {
       double temperature = useCelsius ? mTemperature : convertToFahrenheit(mTemperature);
       if (showTemperatureFractional) {
-        return String.format("%.1f %s", temperature, unit);
+        return String.format("%.1f%s", temperature, unit);
       } else {
-        return String.format("%d %s", Math.round(temperature), unit);
+        return String.format("%d%s", Math.round(temperature), unit);
       }
     }
   }

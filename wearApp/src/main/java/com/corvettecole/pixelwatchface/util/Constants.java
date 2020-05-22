@@ -24,7 +24,7 @@ public class Constants {
 
 
   // ratio values for watch face placement
-  public static final float WEATHER_ICON_MARGIN_RATIO = 1.7f;
+  public static final float WEATHER_ICON_MARGIN_RATIO = 2.1f;
   public static final float WEATHER_ICON_Y_OFFSET_RATIO = 1.2f;
   public static final float INFO_BAR_Y_SPACING_RATIO = 1.8f;
 

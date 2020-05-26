@@ -11,6 +11,7 @@ import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_PROVIDER_DI
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.location.Geocoder;
 import android.location.Location;
 import android.util.Log;
 import androidx.annotation.NonNull;
@@ -32,19 +33,19 @@ import com.corvettecole.pixelwatchface.api.nws.NationalWeatherService;
 import com.corvettecole.pixelwatchface.api.owm.OpenWeatherMap;
 import com.corvettecole.pixelwatchface.models.Weather;
 import com.corvettecole.pixelwatchface.models.WeatherProviderType;
-import com.corvettecole.pixelwatchface.util.Settings;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.json.JSONObject;
 
 public class WeatherUpdateWorker extends Worker {
-
-  private Settings mSettings;
 
   private RequestQueue mRequestQueue;
   private Gson mGson;
@@ -67,11 +68,11 @@ public class WeatherUpdateWorker extends Worker {
     mRequestQueue = Volley.newRequestQueue(getApplicationContext());
 
     Location location = new Location(getInputData().getString(KEY_LOCATION_PROVIDER));
-    location.setLongitude(getInputData().getDouble(KEY_LONGITUDE, -1));
-    location.setLatitude(getInputData().getDouble(KEY_LATITUDE, -1));
+    location.setLongitude(getInputData().getDouble(KEY_LONGITUDE, Double.MIN_VALUE));
+    location.setLatitude(getInputData().getDouble(KEY_LATITUDE, Double.MIN_VALUE));
     location.setAltitude(getInputData().getDouble(KEY_ALTITUDE, 0));
 
-    if (location.getLongitude() != -1 && location.getLatitude() != -1) {
+    if (isLocationValid(location)) {
       return updateWeather(location);
     } else {
       // return failure because location was never properly retrieved in chain (shouldn't ever happen)
@@ -79,33 +80,59 @@ public class WeatherUpdateWorker extends Worker {
     }
   }
 
+  private boolean isLocationValid(Location location) {
+    return !location.getProvider().isEmpty() && location.getLongitude() != Double.MIN_VALUE
+        && location.getLatitude() != Double.MIN_VALUE;
+  }
+
   private Result updateWeather(Location location) {
-    // if weather provider should be updated, start with using METAR data (AWC). Otherwise, use the one we know works.
+    // if weather provider should be updated, start with using METAR data (AWC), or NWS if the user is in the US. Otherwise, use the one we know works.
     if (shouldUpdateWeatherProvider(location)) {
       Log.d(TAG, "shouldUpdateWeatherProvider, using AWC or DS initially");
       if (!mLegacyUseDarkSky) {
-        return getWeather(getWeatherProviderFromType(WeatherProviderType.AWC, location), false);
+        return isUserInUnitedStates(location) ? getWeather(
+            getWeatherProviderFromType(WeatherProviderType.NWS, location), false)
+            : getWeather(getWeatherProviderFromType(WeatherProviderType.AWC, location), false);
       } else {
         return getWeather(getWeatherProviderFromType(WeatherProviderType.DS, location), false);
       }
     } else {
       WeatherProviderType lastWeatherProviderType = mGson
-          .fromJson(mSharedPreferences.getString(KEY_LAST_WEATHER_PROVIDER, null),
+          .fromJson(mSharedPreferences.getString(KEY_LAST_WEATHER_PROVIDER, ""),
               WeatherProviderType.class);
       return getWeather(getWeatherProviderFromType(lastWeatherProviderType, location), false);
     }
   }
 
   private boolean shouldUpdateWeatherProvider(Location currentLocation) {
-    String lastLocationJSON = mSharedPreferences.getString(KEY_LAST_LOCATION, "");
+    Location lastLocation = new Location(
+        mSharedPreferences.getString(KEY_LAST_LOCATION + KEY_LOCATION_PROVIDER, ""));
+    lastLocation.setLongitude(
+        mSharedPreferences.getFloat(KEY_LAST_LOCATION + KEY_LONGITUDE, Float.MIN_VALUE));
+    lastLocation.setLatitude(
+        mSharedPreferences.getFloat(KEY_LAST_LOCATION + KEY_LATITUDE, Float.MIN_VALUE));
+    lastLocation.setAltitude(mSharedPreferences.getFloat(KEY_LAST_LOCATION + KEY_ALTITUDE, 0));
+
     String lastWeatherProviderTypeJSON = mSharedPreferences
         .getString(KEY_LAST_WEATHER_PROVIDER, "");
 
-    if (lastLocationJSON.isEmpty() || lastWeatherProviderTypeJSON.isEmpty()) {
+    if (lastWeatherProviderTypeJSON.isEmpty() || !isLocationValid(lastLocation)) {
       return true;
     } else {
-      Location lastLocation = mGson.fromJson(lastLocationJSON, Location.class);
       return currentLocation.distanceTo(lastLocation) >= WEATHER_PROVIDER_DISTANCE_UPDATE_THRESHOLD;
+    }
+  }
+
+  private boolean isUserInUnitedStates(Location location) {
+    Geocoder gcd = new Geocoder(getApplicationContext(), Locale.getDefault());
+    try {
+      return Objects.equals(
+          gcd.getFromLocation(location.getLatitude(), location.getLongitude(), 1).get(0)
+              .getCountryCode(), "US");
+    } catch (IOException e) {
+      Log.e("getWeatherProvider", "Geocoder failure, nonfatal");
+      e.printStackTrace();
+      return false;
     }
   }
 
@@ -114,6 +141,10 @@ public class WeatherUpdateWorker extends Worker {
     switch (lastWeatherProvider.getType()) {
       default:
       case DS:
+        if (isUserInUnitedStates(lastWeatherProvider.getLocation())) {
+          return getWeatherProviderFromType(WeatherProviderType.NWS,
+              lastWeatherProvider.getLocation());
+        }
       case NWS:
         return getWeatherProviderFromType(WeatherProviderType.AWC,
             lastWeatherProvider.getLocation());
@@ -148,13 +179,23 @@ public class WeatherUpdateWorker extends Worker {
     }
   }
 
+  private void saveLastLocation(Location location) {
+    SharedPreferences.Editor editor = mSharedPreferences.edit();
+    editor.putFloat(KEY_LAST_LOCATION + KEY_ALTITUDE, ((float) location.getAltitude()));
+    editor.putFloat(KEY_LAST_LOCATION + KEY_LONGITUDE, (float) location.getLongitude());
+    editor.putFloat(KEY_LAST_LOCATION + KEY_LATITUDE, (float) location.getLatitude());
+    editor.putString(KEY_LAST_LOCATION + KEY_LOCATION_PROVIDER, location.getProvider());
+    editor.apply();
+  }
+
   private Result getWeather(WeatherProvider weatherProvider, boolean failed) {
     Log.d(TAG, "attempting to get weather from " + weatherProvider.getType().toString());
     boolean hasRequestedRetry = weatherProvider.shouldRetry();
     if (failed) {
       weatherProvider = getNextWeatherProvider(weatherProvider);
       if (weatherProvider == null) {
-        mSharedPreferences.edit().putString(KEY_LAST_WEATHER_PROVIDER, null)
+        Log.d(TAG, "attempted to use all weather providers, all failed. Weather retrieval failed");
+        mSharedPreferences.edit().putString(KEY_LAST_WEATHER_PROVIDER, "")
             .apply();
         return Result.failure();
       }
@@ -168,8 +209,10 @@ public class WeatherUpdateWorker extends Worker {
     } else if (weatherResult.equals(Result.retry())) {
       return getWeather(weatherProvider, false);
     } else {
-      mSharedPreferences.edit().putString(KEY_LAST_WEATHER_PROVIDER, mGson.toJson(weatherProvider))
+      mSharedPreferences.edit()
+          .putString(KEY_LAST_WEATHER_PROVIDER, mGson.toJson(weatherProvider.getType()))
           .apply();
+      saveLastLocation(weatherProvider.getLocation());
       return weatherResult;
     }
   }
@@ -188,14 +231,17 @@ public class WeatherUpdateWorker extends Worker {
         }
       };
       mRequestQueue.add(jsonObjectRequest);
+      JSONObject multistepJSON = new JSONObject();
+
       try {
-        weatherProvider.parseMultistepResponse(multistepFuture.get(20, TimeUnit.SECONDS));
+        multistepJSON = multistepFuture.get(20, TimeUnit.SECONDS);
+        weatherProvider.parseMultistepResponse(multistepJSON);
       } catch (InterruptedException | ExecutionException | TimeoutException e) {
         e.printStackTrace();
         return Result.failure();
       }
     }
-    // TODO remove before release so we don't leak API keys
+
     //Log.d(TAG, "request URL: " + weatherProvider.getWeatherURL());
     RequestFuture<JSONObject> weatherFuture = RequestFuture.newFuture();
     JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,

@@ -8,6 +8,10 @@ package com.corvettecole.pixelwatchface.models.metar;
  */
 public enum Descriptor {
   /**
+   * Thunderstorm.
+   */
+  THUNDERSTORM("TS"),
+  /**
    * Showers.
    */
   SHOWERS("SH"),
@@ -27,10 +31,6 @@ public enum Descriptor {
    * Low drifting.
    */
   DRIFTING("DR"),
-  /**
-   * Thunderstorm.
-   */
-  THUNDERSTORM("TS"),
   /**
    * blowing.
    */

@@ -31,6 +31,8 @@ import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.wearable.complications.ComplicationData;
+import android.support.wearable.complications.SystemProviders;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.util.Log;
@@ -135,7 +137,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     private final Bitmap mWearOSBitmapAmbient = drawableToBitmap(
         getDrawable(R.drawable.ic_wear_os_logo_ambient));
     private boolean mRegisteredTimeZoneReceiver = false;
-    private boolean mRegisteredBatteryReceiver = false;
     private Paint mBackgroundPaint;
     private Paint mTimePaint;
     private Paint mInfoPaint;
@@ -165,15 +166,20 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     private Settings mSettings = Settings.getInstance(getApplicationContext());
     private Weather mCurrentWeather = new Weather();
 
-    // offsets
-    private float mBatteryYOffset;
+    private final int BATTERY_COMPLICATION_ID = 20;
+    private final int STEP_COUNT_COMPLICATION_ID = 21;
 
     @Override
     public void onCreate(SurfaceHolder holder) {
       super.onCreate(holder);
 
+      setDefaultSystemComplicationProvider(BATTERY_COMPLICATION_ID, SystemProviders.WATCH_BATTERY,
+          ComplicationData.TYPE_RANGED_VALUE);
+      //setDefaultSystemComplicationProvider(STEP_COUNT_COMPLICATION_ID, SystemProviders.STEP_COUNT, ComplicationData.TYPE_SHORT_TEXT);
+      setActiveComplications(BATTERY_COMPLICATION_ID);
+
       setWatchFaceStyle(new WatchFaceStyle.Builder(PixelWatchFace.this)
-          .setShowUnreadCountIndicator(true)
+          .setShowUnreadCountIndicator(false)
           .setStatusBarGravity(Gravity.CENTER_HORIZONTAL)
           .setStatusBarGravity(Gravity.TOP)
           .build());
@@ -219,6 +225,29 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     }
 
     @Override
+    public void onComplicationDataUpdate(int watchFaceComplicationId, ComplicationData data) {
+//      String TAG = "comp test";
+      //Log.d(TAG, watchFaceComplicationId + ", type: " + data.getType());
+      if (watchFaceComplicationId == BATTERY_COMPLICATION_ID) {
+        mBatteryLevel = (int) data.getValue();
+        invalidate();
+      }
+
+//      switch (data.getType()){
+//        case ComplicationData.TYPE_RANGED_VALUE:
+//          Log.d(TAG, "max " + data.getMaxValue() + " current " + data.getValue());
+//          break;
+//        case ComplicationData.TYPE_SHORT_TEXT:
+//          Log.d(TAG, "date: " + data.getShortText().getText(getApplicationContext(), System.currentTimeMillis()).toString());
+//          break;
+//        case ComplicationData.TYPE_LONG_TEXT:
+//          Log.d(TAG, data.getLongText().getText(getApplicationContext(), System.currentTimeMillis()).toString());
+//          break;
+//      }
+
+    }
+
+    @Override
     public void onVisibilityChanged(boolean visible) {
       super.onVisibilityChanged(visible);
 
@@ -238,33 +267,21 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     }
 
     private void registerReceivers() {
-      if (mRegisteredBatteryReceiver && mRegisteredTimeZoneReceiver) {
+      if (mRegisteredTimeZoneReceiver) {
         return;
       }
-      if (!mRegisteredBatteryReceiver) {
-        mRegisteredBatteryReceiver = true;
-        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-        PixelWatchFace.this.registerReceiver(mBatteryReceiver, filter);
-      }
-      if (!mRegisteredTimeZoneReceiver) {
-        mRegisteredTimeZoneReceiver = true;
-        IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
-        PixelWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
-      }
+      mRegisteredTimeZoneReceiver = true;
+      IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
+      PixelWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
     }
 
     private void unregisterReceivers() {
-      if (!mRegisteredBatteryReceiver && !mRegisteredTimeZoneReceiver) {
+      if (!mRegisteredTimeZoneReceiver) {
         return;
       }
-      if (mRegisteredTimeZoneReceiver) {
-        mRegisteredTimeZoneReceiver = false;
-        PixelWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
-      }
-      if (mRegisteredBatteryReceiver) {
-        mRegisteredBatteryReceiver = false;
-        PixelWatchFace.this.unregisterReceiver(mBatteryReceiver);
-      }
+      mRegisteredTimeZoneReceiver = false;
+      PixelWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
+
     }
 
     @Override

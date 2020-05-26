@@ -72,25 +72,6 @@ public class NorwegianMeteorologicalInstitute extends WeatherProvider {
     }
   }
 
-  private int getCloudIcon(CloudQuantity cloudQuantity) {
-    switch (cloudQuantity) {
-      default:
-      case SKC:
-      case NSC:
-        return isDay() ? R.drawable.sunny : R.drawable.clear_night;  // sunny/clear night
-      case FEW:
-        return isDay() ? R.drawable.mostly_sunny : R.drawable.mostly_clear_night; // mostly sunny
-      case SCT:
-        return isDay() ? R.drawable.partly_cloudy : R.drawable.partly_cloudy_night; // partly cloudy
-      case BKN:
-      case OVC:
-        return isDay() ? R.drawable.mostly_cloudy_day
-            : R.drawable.mostly_cloudy_night; // mostly cloudy
-
-    }
-  }
-
-
   private int getWeatherIcon(ForecastTimeStepDataNext1Hours forecast, CloudQuantity cloudQuantity) {
     switch (forecast.getSummary().getSymbolCode()) {
       case CLEARSKY_DAY:

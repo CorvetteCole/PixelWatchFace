@@ -43,13 +43,13 @@ public class AviationWeatherCenter extends WeatherProvider {
   @Override
   public String getWeatherURL() {
     if (mRetry) {
-      // roughly 120 mile radius.
+      // roughly 60 mile radius.
       return String.format(
           "https://aviationweather.gov/cgi-bin/json/MetarJSON.php?bbox=%f,%f,%f,%f&density=all",
-          mLocation.getLongitude() - BOUNDING_BOX_OFFSET * 3,
-          mLocation.getLatitude() - BOUNDING_BOX_OFFSET * 3,
-          mLocation.getLongitude() + BOUNDING_BOX_OFFSET * 3,
-          mLocation.getLatitude() + BOUNDING_BOX_OFFSET * 3);
+          mLocation.getLongitude() - BOUNDING_BOX_OFFSET * 1.5,
+          mLocation.getLatitude() - BOUNDING_BOX_OFFSET * 1.5,
+          mLocation.getLongitude() + BOUNDING_BOX_OFFSET * 1.5,
+          mLocation.getLatitude() + BOUNDING_BOX_OFFSET * 1.5);
     } else {
       // roughly 40 mile radius as is. minlon, minlat, maxlon, maxlat
       return String.format(
@@ -68,29 +68,38 @@ public class AviationWeatherCenter extends WeatherProvider {
 
     FeatureCollection parsedResult = mGson.fromJson(jsonObject.toString(), FeatureCollection.class);
 
+
     if (parsedResult.getFeatures().size() == 0) {
       mRetry = true;
-      throw new IllegalArgumentException("METAR Station list empty!");
+      throw new IllegalArgumentException("METAR station list empty!");
     } else {
       mRetry = false;
     }
 
     float minDistance = Float.MAX_VALUE;
     Feature minFeature = parsedResult.getFeatures().get(0);
+    boolean hasValidWeatherStation = false;
 
     List<CloudQuantity> cloudQuantities = new ArrayList<>();
     // get closest airport
     for (Feature feature : parsedResult.getFeatures()) {
-      List<Double> coordinates = feature.getGeometry().getCoordinates();
-      Location airportLocation = new Location(mLocation);
-      cloudQuantities.add(CloudQuantity.getEnum(feature.getProperties().getCover()));
-      airportLocation.setLongitude(coordinates.get(0));
-      airportLocation.setLatitude(coordinates.get(1));
-      float distance = mLocation.distanceTo(airportLocation);
-      if (distance < minDistance) {
-        minDistance = distance;
-        minFeature = feature;
+      if (isWeatherStationValid(feature.getProperties().getRawOb())) {
+        hasValidWeatherStation = true;
+        List<Double> coordinates = feature.getGeometry().getCoordinates();
+        Location airportLocation = new Location(mLocation);
+        cloudQuantities.add(CloudQuantity.getEnum(feature.getProperties().getCover()));
+        airportLocation.setLongitude(coordinates.get(0));
+        airportLocation.setLatitude(coordinates.get(1));
+        float distance = mLocation.distanceTo(airportLocation);
+        if (distance < minDistance) {
+          minDistance = distance;
+          minFeature = feature;
+        }
       }
+    }
+
+    if (!hasValidWeatherStation) {
+      throw new IllegalArgumentException("No METAR station with precipitation sensors in range!");
     }
 
     CloudQuantity cloudQuantityMode = cloudQuantities.stream().collect(
@@ -106,6 +115,10 @@ public class AviationWeatherCenter extends WeatherProvider {
     ZonedDateTime zonedDateTime = ZonedDateTime.parse(minFeature.getProperties().getObsTime());
     weather.setTime(zonedDateTime.toEpochSecond());
     return weather;
+  }
+
+  private boolean isWeatherStationValid(String rawMETAR) {
+    return !(rawMETAR.toUpperCase().contains("AO1") || rawMETAR.toUpperCase().contains("PWINO"));
   }
 
 
@@ -150,66 +163,86 @@ public class AviationWeatherCenter extends WeatherProvider {
         }
       }
 
-      int iconID = R.drawable.sunny;
-      Precipitation iconPrecipitation = Precipitation.UNKNOWN_PRECIPITATION;
+      int iconID = R.drawable.ic_error;
+      WeatherCondition iconWeatherCondition = new WeatherCondition(
+          Precipitation.UNKNOWN_PRECIPITATION, Intensity.MODERATE, null);
+      //Precipitation iconPrecipitation = Precipitation.UNKNOWN_PRECIPITATION;
 
       for (WeatherCondition weatherCondition : weatherConditions) {
         // if the weather condition is of a higher priority than the one that dictated the icon, run through the switch statement
-        if (weatherCondition.getPrecipitation().compareTo(iconPrecipitation) > 0) {
-          iconPrecipitation = weatherCondition.getPrecipitation();
-          switch (weatherCondition.getPrecipitation()) {
-            case RAIN:
-              iconID = getRainIcon(weatherCondition, cloudQuantity);
-              break;
-            case DRIZZLE:
-              iconID = R.drawable.drizzle;
-              break;
-            case SNOW:
-              switch (weatherCondition.getIntensity()) {
-                case LIGHT:
-                  iconID = R.drawable.flurries;
-                  break;
-                case MODERATE:
-                  iconID = R.drawable.snow_showers;
-                  break;
-                case HEAVY:
-                  iconID = R.drawable.blizzard;
-                  break;
-              }
-              break;
-            case SNOW_GRAINS:
-              iconID = R.drawable.flurries;
-              break;
-            case ICE_PELLETS:
-            case ICE_CRYSTALS:
-            case HAIL:
-            case SMALL_HAIL:
-              iconID = R.drawable.wintry_mix; // wintry_mix_rain
-              break;
-
-            case FOG:
-            case VOLCANIC_ASH:
-            case MIST:
-            case HAZE:
-            case WIDESPREAD_DUST:
-            case SMOKE:
-            case SAND:
-            case SPRAY:
-            case SQUALL:
-            case SAND_WHIRLS:
-            case DUSTSTORM:
-            case SANDSTORM:
-            case FUNNEL_CLOUD:
-              iconID = R.drawable.haze_fog_dust_smoke; // haze_fog_dust_smoke
-              break;
-            case UNKNOWN_PRECIPITATION:
-              iconID = getCloudIcon(cloudQuantity);
-              break;
+        if (weatherCondition.getPrecipitation().compareTo(iconWeatherCondition.getPrecipitation())
+            <= 0) {
+          if (weatherCondition.getPrecipitation().equals(iconWeatherCondition.getPrecipitation())
+              && weatherCondition.getDescriptor() != null) {
+            if (iconWeatherCondition.getDescriptor() == null || (
+                weatherCondition.getDescriptor().compareTo(iconWeatherCondition.getDescriptor())
+                    < 0)) {
+              iconID = getIconID(weatherCondition, cloudQuantity);
+              iconWeatherCondition = weatherCondition;
+            }
+          } else {
+            iconID = getIconID(weatherCondition, cloudQuantity);
+            iconWeatherCondition = weatherCondition;
           }
         }
       }
       return iconID;
     }
+  }
+
+  private int getIconID(WeatherCondition weatherCondition, CloudQuantity cloudQuantity) {
+    int iconID = R.drawable.ic_error;
+    switch (weatherCondition.getPrecipitation()) {
+      case RAIN:
+        iconID = getRainIcon(weatherCondition, cloudQuantity);
+        break;
+      case DRIZZLE:
+        iconID = R.drawable.drizzle;
+        break;
+      case SNOW:
+        switch (weatherCondition.getIntensity()) {
+          case LIGHT:
+            iconID = R.drawable.flurries;
+            break;
+          case MODERATE:
+            iconID = R.drawable.snow_showers;
+            break;
+          case HEAVY:
+            iconID = R.drawable.blizzard;
+            break;
+        }
+        break;
+      case SNOW_GRAINS:
+        iconID = R.drawable.flurries;
+        break;
+      case ICE_PELLETS:
+      case ICE_CRYSTALS:
+      case HAIL:
+      case SMALL_HAIL:
+        iconID = R.drawable.wintry_mix; // wintry_mix_rain
+        break;
+
+      case FOG:
+      case VOLCANIC_ASH:
+      case MIST:
+      case HAZE:
+      case WIDESPREAD_DUST:
+      case SMOKE:
+      case SAND:
+      case SPRAY:
+      case SQUALL:
+      case SAND_WHIRLS:
+      case DUSTSTORM:
+      case SANDSTORM:
+      case FUNNEL_CLOUD:
+        iconID = R.drawable.haze_fog_dust_smoke; // haze_fog_dust_smoke
+        break;
+      default:
+      case UNKNOWN_PRECIPITATION:
+        iconID = getCloudIcon(cloudQuantity);
+        break;
+    }
+    return iconID;
   }
 
 
@@ -247,25 +280,6 @@ public class AviationWeatherCenter extends WeatherProvider {
         case OVC:
           return R.drawable.showers_rain; // showers rain
       }
-    }
-  }
-
-  private int getCloudIcon(CloudQuantity cloudQuantity) {
-    switch (cloudQuantity) {
-      default:
-      case CLR:
-      case SKC:
-      case NSC:
-        return isDay() ? R.drawable.sunny : R.drawable.clear_night;  // sunny/clear night
-      case FEW:
-        return isDay() ? R.drawable.mostly_sunny : R.drawable.mostly_clear_night; // mostly sunny
-      case SCT:
-        return isDay() ? R.drawable.partly_cloudy : R.drawable.partly_cloudy_night; // partly cloudy
-      case BKN:
-      case OVC:
-        return isDay() ? R.drawable.mostly_cloudy_day
-            : R.drawable.mostly_cloudy_night; // mostly cloudy
-
     }
   }
 

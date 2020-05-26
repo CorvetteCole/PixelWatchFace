@@ -1,7 +1,8 @@
 package com.corvettecole.pixelwatchface.models.metar;
 
 /**
- * Enumeration for phenomenon. The first attribute is the code used in the metar.
+ * Enumeration for phenomenon. The first attribute is the code used in the METAR. These are in the
+ * order of their priority, or which should be shown over the other if both are present
  */
 public enum Precipitation {
   /**
@@ -9,25 +10,9 @@ public enum Precipitation {
    */
   RAIN("RA"),
   /**
-   * Drizzle.
-   */
-  DRIZZLE("DZ"),
-  /**
    * Snow.
    */
   SNOW("SN"),
-  /**
-   * Snow grains.
-   */
-  SNOW_GRAINS("SG"),
-  /**
-   * Ice pellets.
-   */
-  ICE_PELLETS("PL"),
-  /**
-   * Ice crystals.
-   */
-  ICE_CRYSTALS("IC"),
   /**
    * Hail.
    */
@@ -37,9 +22,21 @@ public enum Precipitation {
    */
   SMALL_HAIL("GS"),
   /**
-   * Unknown precipitation.
+   * Ice pellets.
    */
-  UNKNOWN_PRECIPITATION("UP"),
+  ICE_PELLETS("PL"),
+  /**
+   * Ice crystals.
+   */
+  ICE_CRYSTALS("IC"),
+  /**
+   * Snow grains.
+   */
+  SNOW_GRAINS("SG"),
+  /**
+   * Drizzle.
+   */
+  DRIZZLE("DZ"),
   /**
    * Fog.
    */
@@ -91,7 +88,11 @@ public enum Precipitation {
   /**
    * Funnel cloud.
    */
-  FUNNEL_CLOUD("FC");
+  FUNNEL_CLOUD("FC"),
+  /**
+   * Unknown precipitation.
+   */
+  UNKNOWN_PRECIPITATION("UP");
 
   /**
    * Shortcut of the phenomenon.

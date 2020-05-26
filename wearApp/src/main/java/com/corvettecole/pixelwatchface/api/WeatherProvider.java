@@ -1,8 +1,10 @@
 package com.corvettecole.pixelwatchface.api;
 
 import android.location.Location;
+import com.corvettecole.pixelwatchface.R;
 import com.corvettecole.pixelwatchface.models.Weather;
 import com.corvettecole.pixelwatchface.models.WeatherProviderType;
+import com.corvettecole.pixelwatchface.models.metar.CloudQuantity;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.luckycatlabs.sunrisesunset.SunriseSunsetCalculator;
@@ -59,6 +61,25 @@ public abstract class WeatherProvider {
 
   public boolean shouldRetry() {
     return mRetry;
+  }
+
+  protected int getCloudIcon(CloudQuantity cloudQuantity) {
+    switch (cloudQuantity) {
+      default:
+      case CLR:
+      case SKC:
+      case NSC:
+        return isDay() ? R.drawable.sunny : R.drawable.clear_night;  // sunny/clear night
+      case FEW:
+      case SCT:
+        return isDay() ? R.drawable.mostly_sunny : R.drawable.mostly_clear_night; // mostly sunny
+      case BKN:
+        return isDay() ? R.drawable.partly_cloudy : R.drawable.partly_cloudy_night; // partly cloudy
+      case OVC:
+        return isDay() ? R.drawable.mostly_cloudy_day
+            : R.drawable.mostly_cloudy_night; // mostly cloudy
+
+    }
   }
 
 }

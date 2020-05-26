@@ -4,7 +4,7 @@ public class Constants {
 
   public static final String LOCATION_UPDATE_WORKER = "location_update_worker";
   public static final String WEATHER_UPDATE_WORKER = "weather_update_worker";
-  public static final int WEATHER_UPDATE_INTERVAL = 60; // minutes
+  public static final int WEATHER_UPDATE_INTERVAL = 10; // minutes  // TODO change this back to a reasonable period, like 45 min
   public static final int WEATHER_BACKOFF_DELAY_ONETIME = 30; // seconds
   public static final int WEATHER_BACKOFF_DELAY_PERIODIC = 5; // minutes
   public static final int WEATHER_FLEX_PERIOD = 15; // minutes, run within 15 minutes of the 30 minute period
@@ -13,11 +13,8 @@ public class Constants {
   public static final String KEY_LATITUDE = "latitude";
   public static final String KEY_LONGITUDE = "longitude";
   public static final String KEY_ALTITUDE = "altitude";
-  public static final String KEY_LOCATION_PROVIDER = "location_provider";
-
-  public static final String KEY_LOCATION = "location_object";
-
-  public static final String KEY_LAST_LOCATION = "last_location_object";
+  public static final String KEY_LOCATION_PROVIDER = "provider";
+  public static final String KEY_LAST_LOCATION = "last_location_";
   public static final String KEY_LAST_WEATHER_PROVIDER = "last_weather_provider";
 
   public static final String KEY_WEATHER_JSON = "weather";

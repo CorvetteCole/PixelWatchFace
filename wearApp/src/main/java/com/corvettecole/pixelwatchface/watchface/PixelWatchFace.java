@@ -25,7 +25,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.os.BatteryManager;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
@@ -116,7 +115,20 @@ public class PixelWatchFace extends CanvasWatchFaceService {
   private class Engine extends CanvasWatchFaceService.Engine implements
       DataClient.OnDataChangedListener {
 
+    private final Bitmap mWearOSBitmap = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo));
+
     private final Handler mUpdateTimeHandler = new EngineHandler(this);
+    private final Bitmap mWearOSBitmapAmbient = drawableToBitmap(
+        getDrawable(R.drawable.ic_wear_os_logo_ambient));
+    private final int BATTERY_COMPLICATION_ID = 20;
+    private final int STEP_COUNT_COMPLICATION_ID = 21;
+    private final int WEATHER_COMPLICATION_ID = 22;
+    private final String WEATHER_PROVIDER_SERVICE = "com.google.android.clockwork.home.weather.WeatherProviderService";
+
+    Engine() {
+      super(true); // hardware acceleration
+    }
+
     private Calendar mCalendar;
     private final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
       @Override
@@ -125,17 +137,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         invalidate();
       }
     };
-    private final BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, Intent intent) {
-        mBatteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
-      }
-    };
-
     private FusedLocationProviderClient mFusedLocationClient;
-    private final Bitmap mWearOSBitmap = drawableToBitmap(getDrawable(R.drawable.ic_wear_os_logo));
-    private final Bitmap mWearOSBitmapAmbient = drawableToBitmap(
-        getDrawable(R.drawable.ic_wear_os_logo_ambient));
     private boolean mRegisteredTimeZoneReceiver = false;
     private Paint mBackgroundPaint;
     private Paint mTimePaint;
@@ -148,26 +150,15 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     private boolean mLowBitAmbient;
     private boolean mBurnInProtection;
     private boolean mAmbient;
-
-    private boolean mFirstDrawCompleted = false;
-    private long mFirstDraw = 0;
-
     private boolean mIsRound;
     private int mChinSize;
-
     private long mPermissionRequestedTime = 0;
     private long mWeatherRequestedTime = 0;
-    private boolean mWeatherUpdaterInitialized = false;
-
     private Typeface mProductSans;
     private Typeface mProductSansThin;
-
     // TODO get rid of this singleton
     private Settings mSettings = Settings.getInstance(getApplicationContext());
     private Weather mCurrentWeather = new Weather();
-
-    private final int BATTERY_COMPLICATION_ID = 20;
-    private final int STEP_COUNT_COMPLICATION_ID = 21;
 
     @Override
     public void onCreate(SurfaceHolder holder) {
@@ -175,17 +166,20 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
       setDefaultSystemComplicationProvider(BATTERY_COMPLICATION_ID, SystemProviders.WATCH_BATTERY,
           ComplicationData.TYPE_RANGED_VALUE);
+
+//      setDefaultComplicationProvider(WEATHER_COMPLICATION_ID,
+//          new ComponentName("com.google.android.wearable.app", WEATHER_PROVIDER_SERVICE), ComplicationData.TYPE_ICON);
       //setDefaultSystemComplicationProvider(STEP_COUNT_COMPLICATION_ID, SystemProviders.STEP_COUNT, ComplicationData.TYPE_SHORT_TEXT);
       setActiveComplications(BATTERY_COMPLICATION_ID);
 
       setWatchFaceStyle(new WatchFaceStyle.Builder(PixelWatchFace.this)
-          .setShowUnreadCountIndicator(false)
+          .setHideNotificationIndicator(true)
+          .setShowUnreadCountIndicator(true)
           .setStatusBarGravity(Gravity.CENTER_HORIZONTAL)
           .setStatusBarGravity(Gravity.TOP)
           .build());
 
       mCalendar = Calendar.getInstance();
-      //Resources resources = PixelWatchFace.this.getResources();
 
       // Initializes syncing with companion app
       Wearable.getDataClient(getApplicationContext()).addListener(this);
@@ -210,10 +204,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       mInfoPaint.setAntiAlias(true);
       mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
       mInfoPaint.setStrokeWidth(2f);
-
-      // force initial weather update when watch face is created to fill in until periodic request runs
-      initWeatherUpdater(true);
-
     }
 
     @Override
@@ -226,23 +216,39 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
     @Override
     public void onComplicationDataUpdate(int watchFaceComplicationId, ComplicationData data) {
-//      String TAG = "comp test";
+      String TAG = "comp test";
       //Log.d(TAG, watchFaceComplicationId + ", type: " + data.getType());
       if (watchFaceComplicationId == BATTERY_COMPLICATION_ID) {
         mBatteryLevel = (int) data.getValue();
         invalidate();
       }
 
+//      if (watchFaceComplicationId == WEATHER_COMPLICATION_ID) {
+//
+//        mCurrentWeather.setIconBitmap(Bitmap
+//              .createScaledBitmap(drawableToBitmap(data.getIcon().loadDrawable(getApplicationContext())), 34, 34, false));
+//          invalidate();
+//      }
+
 //      switch (data.getType()){
 //        case ComplicationData.TYPE_RANGED_VALUE:
 //          Log.d(TAG, "max " + data.getMaxValue() + " current " + data.getValue());
 //          break;
 //        case ComplicationData.TYPE_SHORT_TEXT:
-//          Log.d(TAG, "date: " + data.getShortText().getText(getApplicationContext(), System.currentTimeMillis()).toString());
+//          Log.d(TAG, "data: " + data.getShortText().getText(getApplicationContext(), System.currentTimeMillis()).toString());
+//          mCurrentWeather.setIconBitmap(Bitmap
+//              .createScaledBitmap(drawableToBitmap(data.getIcon().loadDrawable(getApplicationContext())), 34, 34, false));
+//          invalidate();
 //          break;
 //        case ComplicationData.TYPE_LONG_TEXT:
 //          Log.d(TAG, data.getLongText().getText(getApplicationContext(), System.currentTimeMillis()).toString());
 //          break;
+//          case ComplicationData.TYPE_ICON:
+//            Log.d(TAG, "icon time yeet");
+//            mCurrentWeather.setIconBitmap(Bitmap
+//                .createScaledBitmap(drawableToBitmap(data.getIcon().loadDrawable(getApplicationContext())), 34, 34, false));
+//            invalidate();
+//            break;
 //      }
 
     }
@@ -402,30 +408,31 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       }
 
       String temperatureText = "";
-      float totalLength;
+
       float centerX = bounds.exactCenterX();
       float dateTextLength = mInfoPaint.measureText(dateText);
+      float totalLength = dateTextLength;
 
       float bitmapTotalMargin = mCurrentWeather.getIconBitmap(getApplicationContext()).getWidth()
           / WEATHER_ICON_MARGIN_RATIO;
 
-      if (mSettings.isShowTemperature()) {
-        temperatureText = mCurrentWeather.getFormattedTemperature(mSettings.isUseCelsius(),
-            mSettings.isShowTemperatureFractional(), mSettings.isUseEuropeanDateFormat());
-        if (mSettings.isShowWeatherIcon()) {
-          totalLength =
-              dateTextLength + bitmapTotalMargin + mCurrentWeather
-                  .getIconBitmap(getApplicationContext())
-                  .getWidth() + mInfoPaint.measureText(temperatureText);
-        } else {
-          totalLength =
-              dateTextLength + bitmapTotalMargin + mInfoPaint.measureText(temperatureText);
+      if (!mSettings.isWeatherDisabled()) {
+        if (mSettings.isShowTemperature()) {
+          temperatureText = mCurrentWeather.getFormattedTemperature(mSettings.isUseCelsius(),
+              mSettings.isShowTemperatureFractional(), mSettings.isUseEuropeanDateFormat());
+          if (mSettings.isShowWeatherIcon()) {
+            totalLength =
+                dateTextLength + bitmapTotalMargin + mCurrentWeather
+                    .getIconBitmap(getApplicationContext())
+                    .getWidth() + mInfoPaint.measureText(temperatureText);
+          } else {
+            totalLength =
+                dateTextLength + bitmapTotalMargin + mInfoPaint.measureText(temperatureText);
+          }
+        } else if (mSettings.isShowWeatherIcon()) {
+          totalLength = dateTextLength + bitmapTotalMargin / 2.0f + mCurrentWeather
+              .getIconBitmap(getApplicationContext()).getWidth();
         }
-      } else if (mSettings.isShowWeatherIcon()) {
-        totalLength = dateTextLength + bitmapTotalMargin / 2.0f + mCurrentWeather
-            .getIconBitmap(getApplicationContext()).getWidth();
-      } else {
-        totalLength = dateTextLength;
       }
 
       float infoBarXOffset = centerX - (totalLength / 2.0f);
@@ -434,22 +441,24 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
       // draw infobar
       if (mSettings.isShowInfoBarAmbient() || !mAmbient) {
-
         canvas.drawText(dateText, infoBarXOffset, infoBarYOffset, mInfoPaint);
-        if (mSettings.isShowWeatherIcon() && mCurrentWeather != null) {
-          canvas.drawBitmap(mCurrentWeather.getIconBitmap(getApplicationContext()),
-              infoBarXOffset + (dateTextLength + bitmapTotalMargin / 2.0f),
-              infoBarYOffset
-                  - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight()
-                  / WEATHER_ICON_Y_OFFSET_RATIO,
-              null);
-          canvas.drawText(temperatureText,
-              infoBarXOffset + (dateTextLength + bitmapTotalMargin + mCurrentWeather
-                  .getIconBitmap(getApplicationContext()).getWidth()), infoBarYOffset, mInfoPaint);
-        } else if (!mSettings.isShowWeatherIcon() && mSettings.isShowTemperature()
-            && mCurrentWeather != null) {
-          canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapTotalMargin),
-              infoBarYOffset, mInfoPaint);
+        if (!mSettings.isWeatherDisabled()) {
+          if (mSettings.isShowWeatherIcon() && mCurrentWeather != null) {
+            canvas.drawBitmap(mCurrentWeather.getIconBitmap(getApplicationContext()),
+                infoBarXOffset + (dateTextLength + bitmapTotalMargin / 2.0f),
+                infoBarYOffset
+                    - mCurrentWeather.getIconBitmap(getApplicationContext()).getHeight()
+                    / WEATHER_ICON_Y_OFFSET_RATIO,
+                null);
+            canvas.drawText(temperatureText,
+                infoBarXOffset + (dateTextLength + bitmapTotalMargin + mCurrentWeather
+                    .getIconBitmap(getApplicationContext()).getWidth()), infoBarYOffset,
+                mInfoPaint);
+          } else if (!mSettings.isShowWeatherIcon() && mSettings.isShowTemperature()
+              && mCurrentWeather != null) {
+            canvas.drawText(temperatureText, infoBarXOffset + (dateTextLength + bitmapTotalMargin),
+                infoBarYOffset, mInfoPaint);
+          }
         }
       }
 

@@ -156,53 +156,53 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <Switch
-        android:id="@+id/wearIconSwitch"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:text="Show WearOS icon"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <TextView
-        android:id="@+id/darkSkyExplanation"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:text="Dark Sky is a more accurate and feature rich weather provider. Dark Sky users get more icons, as well as more planned features for the future. To use Dark Sky, sign up for a free Dark Sky developer account and paste your API key below."
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/infoBarAmbientSwitch" />
-
-    <Switch
-        android:id="@+id/useDarkSkySwitch"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:text="Use Dark Sky to provide weather data instead of OpenWeatherMap"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/darkSkyExplanation" />
+      android:id="@+id/wearIconSwitch"
+      android:layout_width="match_parent"
+      android:layout_height="48dp"
+      android:layout_marginStart="8dp"
+      android:layout_marginTop="8dp"
+      android:layout_marginEnd="8dp"
+      android:text="Show WearOS icon"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
-        android:id="@+id/darkSkyEditText"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:ems="10"
-        android:hint="@string/dark_sky_api_key_hint"
-        android:inputType="textPersonName"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/useDarkSkySwitch" />
+      android:id="@+id/darkSkyEditText"
+      android:layout_width="match_parent"
+      android:layout_height="48dp"
+      android:layout_marginTop="8dp"
+      android:layout_marginStart="8dp"
+      android:layout_marginEnd="8dp"
+      android:ems="10"
+      android:hint="@string/dark_sky_api_key_hint"
+      android:inputType="textPersonName"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toBottomOf="@+id/useDarkSkySwitch" />
+
+    <Switch
+      android:id="@+id/useDarkSkySwitch"
+      android:layout_width="match_parent"
+      android:layout_height="48dp"
+      android:layout_marginTop="8dp"
+      android:layout_marginStart="8dp"
+      android:layout_marginEnd="8dp"
+      android:text="Use Dark Sky to provide weather data"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toBottomOf="@+id/darkSkyExplanation" />
+
+    <TextView
+      android:id="@+id/darkSkyExplanation"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="8dp"
+      android:layout_marginStart="8dp"
+      android:layout_marginEnd="8dp"
+      android:text="Dark Sky support has been discontinued. These options are only present if you have previously entered a Dark Sky key."
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toBottomOf="@+id/infoBarAmbientSwitch" />
 
 </LinearLayout>
 

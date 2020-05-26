@@ -90,9 +90,7 @@ public class WeatherUpdateWorker extends Worker {
     if (shouldUpdateWeatherProvider(location)) {
       Log.d(TAG, "shouldUpdateWeatherProvider, using AWC or DS initially");
       if (!mLegacyUseDarkSky) {
-        return isUserInUnitedStates(location) ? getWeather(
-            getWeatherProviderFromType(WeatherProviderType.NWS, location), false)
-            : getWeather(getWeatherProviderFromType(WeatherProviderType.AWC, location), false);
+        return getWeather(getWeatherProviderFromType(WeatherProviderType.AWC, location), false);
       } else {
         return getWeather(getWeatherProviderFromType(WeatherProviderType.DS, location), false);
       }
@@ -141,17 +139,17 @@ public class WeatherUpdateWorker extends Worker {
     switch (lastWeatherProvider.getType()) {
       default:
       case DS:
-        if (isUserInUnitedStates(lastWeatherProvider.getLocation())) {
-          return getWeatherProviderFromType(WeatherProviderType.NWS,
-              lastWeatherProvider.getLocation());
-        }
-      case NWS:
         return getWeatherProviderFromType(WeatherProviderType.AWC,
             lastWeatherProvider.getLocation());
       case AWC:
         return getWeatherProviderFromType(WeatherProviderType.OWM,
             lastWeatherProvider.getLocation());
       case OWM:
+        if (isUserInUnitedStates(lastWeatherProvider.getLocation())) {
+          return getWeatherProviderFromType(WeatherProviderType.NWS,
+              lastWeatherProvider.getLocation());
+        }
+      case NWS:
         return getWeatherProviderFromType(WeatherProviderType.MET,
             lastWeatherProvider.getLocation());
       case MET:

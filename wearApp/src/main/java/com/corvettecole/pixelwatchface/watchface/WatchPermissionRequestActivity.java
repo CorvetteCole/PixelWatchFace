@@ -94,7 +94,7 @@ public class WatchPermissionRequestActivity extends WearableActivity {
     });
 
     mLocationRequestNegative.setOnClickListener(v -> {
-      mSettings.setWeatherDisabled(true);
+      mSettings.setWeatherDisabled();
       finish();
     });
 

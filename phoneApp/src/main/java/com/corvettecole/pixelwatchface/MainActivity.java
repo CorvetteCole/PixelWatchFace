@@ -6,9 +6,11 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 import com.google.android.gms.tasks.Task;
@@ -28,7 +30,7 @@ public class MainActivity extends AppCompatActivity /*implements
   private Switch showTemperatureSwitch;
   private Switch useCelsiusSwitch;
   private Switch showWeatherSwitch;
-  private Switch useDarkSkySwitch;
+
   private Switch useEuropeanDateFormatSwitch;
   private Switch showTemperatureDecimalSwitch;
   private Switch useThinAmbientSwitch;
@@ -36,6 +38,8 @@ public class MainActivity extends AppCompatActivity /*implements
   private Switch showBatterySwitch;
   private Switch showWearIconSwitch;
 
+  private TextView darkSkyTextView;
+  private Switch useDarkSkySwitch;
   private EditText darkSkyKeyEditText;
 
   private boolean use24HourTime;
@@ -64,7 +68,7 @@ public class MainActivity extends AppCompatActivity /*implements
     showTemperatureSwitch = findViewById(R.id.temperatureSwitch);
     useCelsiusSwitch = findViewById(R.id.celsiusSwitch);
     showWeatherSwitch = findViewById(R.id.weatherSwitch);
-    useDarkSkySwitch = findViewById(R.id.useDarkSkySwitch);
+
     useEuropeanDateFormatSwitch = findViewById(R.id.dateFormatSwitch);
     showTemperatureDecimalSwitch = findViewById(R.id.temperaturePrecisionSwitch);
     useThinAmbientSwitch = findViewById(R.id.useThinAmbientSwitch);
@@ -72,7 +76,9 @@ public class MainActivity extends AppCompatActivity /*implements
     showBatterySwitch = findViewById(R.id.batterySwitch);
     showWearIconSwitch = findViewById(R.id.wearIconSwitch);
 
+    useDarkSkySwitch = findViewById(R.id.useDarkSkySwitch);
     darkSkyKeyEditText = findViewById(R.id.darkSkyEditText);
+    darkSkyTextView = findViewById(R.id.darkSkyExplanation);
 
     loadPreferences();
     loadSettingStates();
@@ -160,14 +166,6 @@ public class MainActivity extends AppCompatActivity /*implements
           }
         });
 
-    useDarkSkySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-      @Override
-      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        sharedPreferences.edit().putBoolean("use_dark_sky", isChecked).apply();
-        syncToWear();
-      }
-    });
-
     showBatterySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
       @Override
       public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -184,24 +182,43 @@ public class MainActivity extends AppCompatActivity /*implements
       }
     });
 
-    darkSkyKeyEditText.addTextChangedListener(new TextWatcher() {
-      @Override
-      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+    if (!darkSkyAPIKey.isEmpty()) {
 
-      }
+      useDarkSkySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+          sharedPreferences.edit().putBoolean("use_dark_sky", isChecked).apply();
+          syncToWear();
+        }
+      });
 
-      @Override
-      public void onTextChanged(CharSequence s, int start, int before, int count) {
-        sharedPreferences.edit()
-            .putString("dark_sky_api_key", darkSkyKeyEditText.getText().toString()).apply();
+      darkSkyKeyEditText.addTextChangedListener(new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+          sharedPreferences.edit()
+              .putString("dark_sky_api_key", darkSkyKeyEditText.getText().toString()).apply();
+          syncToWear();
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+
+        }
+      });
+    } else {
+      useDarkSkySwitch.setVisibility(View.GONE);
+      darkSkyKeyEditText.setVisibility(View.GONE);
+      darkSkyTextView.setVisibility(View.GONE);
+      if (useDarkSky) {
+        useDarkSky = false;
         syncToWear();
       }
-
-      @Override
-      public void afterTextChanged(Editable s) {
-
-      }
-    });
+    }
 
   }
 

@@ -17,7 +17,7 @@
       android:layout_marginStart="16dp"
       android:layout_marginEnd="16dp"
       android:fontFamily="@font/product_sans_regular"
-      android:text="Enable weather? This can be changed later in the companion app"
+      android:text="Location permissions are required to enable weather. Request now?"
       android:textAlignment="center"
       android:textColor="@color/digital_text"
       android:textSize="16sp"

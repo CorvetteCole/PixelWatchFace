@@ -14,7 +14,7 @@ public class Settings {
   private static volatile Settings instance;
   private boolean use24HourTime, showTemperature, showWeatherIcon, useCelsius,
       useEuropeanDateFormat, useThinAmbient, showInfoBarAmbient, showTemperatureFractional,
-      showBattery, showWearIcon, useDarkSky, weatherChangeNotified, companionAppNotified;
+      showBattery, showWearIcon, useDarkSky, weatherChangeNotified, companionAppNotified, advanced;
   private String darkSkyAPIKey;
   private SharedPreferences sharedPreferences;
 
@@ -107,15 +107,22 @@ public class Settings {
   }
 
   public boolean isWeatherDisabled() {
-    return !showWeatherIcon && !showTemperature;
+    if (!isAdvanced()) {
+      return true;
+    } else {
+      return (!showWeatherIcon && !showTemperature);
+    }
   }
 
-  public void setWeatherDisabled(boolean weatherDisabled) {
-    if (weatherDisabled) {
-      showWeatherIcon = false;
-      showTemperature = false;
-      savePreferences();
-    }
+  public void setWeatherDisabled() {
+    showWeatherIcon = false;
+    showTemperature = false;
+    savePreferences();
+  }
+
+  public boolean isAdvanced() {
+    //return true;
+    return advanced;
   }
 
   public ArrayList<UpdatesRequired> updateSettings(
@@ -147,6 +154,8 @@ public class Settings {
     showWearIcon = dataMap.getBoolean("show_wear_icon", false);
 
     useDarkSky = dataMap.getBoolean("use_dark_sky", false);
+
+    advanced = dataMap.getBoolean("advanced", false);
 
     savePreferences();
     if (tempUseDarkSky != useDarkSky || showTemperature != tempShowTemperature || showWeatherIcon
@@ -181,6 +190,8 @@ public class Settings {
 
     weatherChangeNotified = sharedPreferences.getBoolean("weather_change_notified", false);
     companionAppNotified = sharedPreferences.getBoolean("companion_app_notified", false);
+
+    advanced = sharedPreferences.getBoolean("advanced", false);
   }
 
   private void savePreferences() {
@@ -201,6 +212,9 @@ public class Settings {
 
     editor.putBoolean("weather_change_notified", weatherChangeNotified);
     editor.putBoolean("companion_app_notified", companionAppNotified);
+
+    editor.putBoolean("advanced", advanced);
+
     editor.apply();
   }
 

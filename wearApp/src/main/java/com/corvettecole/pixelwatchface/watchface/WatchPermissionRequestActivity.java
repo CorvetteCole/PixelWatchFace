@@ -16,7 +16,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 public class WatchPermissionRequestActivity extends WearableActivity {
 
   // TODO simplify permission codes, kind of confusing how you have it laid out
-
   private static int PERMISSIONS_CODE = 7;
   String[] mPermissions;
   int mRequestCode;

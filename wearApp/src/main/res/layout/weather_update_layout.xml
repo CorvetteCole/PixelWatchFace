@@ -11,24 +11,25 @@
     app:boxedEdges="all">
 
     <TextView
-      android:id="@+id/textView"
+      android:id="@+id/weatherUpdateTextView"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
+      android:layout_marginBottom="4dp"
       android:layout_marginStart="16dp"
       android:layout_marginEnd="16dp"
       android:fontFamily="@font/product_sans_regular"
-      android:text="Weather can now be enabled with a small purchase in the phone app. Enable now?"
+      android:text="Due to development costs, weather can now be enabled with a purchase in the companion app"
       android:textAlignment="center"
       android:textColor="@color/digital_text"
       android:textSize="16sp"
-      app:layout_constraintBottom_toTopOf="@+id/circular_progress"
+      app:layout_constraintBottom_toTopOf="@+id/weatherUpdateConfirm"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toTopOf="parent" />
 
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-      android:id="@+id/locationRequestPositive"
+      android:id="@+id/weatherUpdateConfirm"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
 
@@ -38,22 +39,10 @@
       app:fabCustomSize="45dp"
       app:layout_constraintBottom_toBottomOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
-      app:srcCompat="@drawable/ic_cc_checkmark" />
-
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-      android:id="@+id/locationRequestNegative"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_marginStart="4dp"
-      android:clickable="true"
-      app:backgroundTint="@color/circular_button_disabled"
-      app:borderWidth="0dp"
-      app:fabCustomSize="45dp"
-      app:layout_constraintBottom_toBottomOf="@+id/circular_progress"
       app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="@+id/locationRequestPositive"
-      app:srcCompat="@drawable/ic_cc_clear" />
+      app:srcCompat="@drawable/ic_arrow_forward" />
+
+
 
   </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.wear.widget.BoxInsetLayout>

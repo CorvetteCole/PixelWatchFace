@@ -8,50 +8,70 @@
   <androidx.constraintlayout.widget.ConstraintLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
     app:boxedEdges="all">
 
     <TextView
-      android:id="@+id/textView"
+      android:id="@+id/companionAppTextView"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
+      android:layout_marginBottom="8dp"
       android:layout_marginStart="16dp"
       android:layout_marginEnd="16dp"
       android:fontFamily="@font/product_sans_regular"
-      android:text="Looks like the phone app is not installed. Install now?"
+      android:text="Checking for companion app..."
       android:textAlignment="center"
       android:textColor="@color/digital_text"
       android:textSize="16sp"
-      app:layout_constraintBottom_toTopOf="@+id/circular_progress"
+      app:layout_constraintBottom_toTopOf="@+id/companionAppPositive"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toTopOf="parent" />
-
-
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-      android:id="@+id/locationRequestPositive"
+      android:id="@+id/companionAppConfirmation"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
 
+      android:layout_marginBottom="8dp"
       android:clickable="true"
+      android:visibility="invisible"
       app:backgroundTint="@color/circular_button_normal"
       app:borderWidth="0dp"
       app:fabCustomSize="45dp"
       app:layout_constraintBottom_toBottomOf="parent"
       app:layout_constraintEnd_toEndOf="parent"
-      app:srcCompat="@drawable/ic_cc_checkmark" />
+      app:layout_constraintStart_toStartOf="parent"
+      app:srcCompat="@drawable/ic_arrow_forward" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-      android:id="@+id/locationRequestNegative"
+      android:id="@+id/companionAppPositive"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_marginStart="4dp"
+
+      android:layout_marginBottom="8dp"
+      android:layout_marginEnd="8dp"
       android:clickable="true"
+      android:visibility="invisible"
+      app:backgroundTint="@color/circular_button_normal"
+      app:borderWidth="0dp"
+      app:fabCustomSize="45dp"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:srcCompat="@drawable/open_on_phone" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+      android:id="@+id/companionAppNegative"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="8dp"
+      android:clickable="true"
+      android:visibility="invisible"
       app:backgroundTint="@color/circular_button_disabled"
       app:borderWidth="0dp"
       app:fabCustomSize="45dp"
-      app:layout_constraintBottom_toBottomOf="@+id/circular_progress"
+      app:layout_constraintBottom_toBottomOf="@+id/companionAppPositive"
       app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="@+id/locationRequestPositive"
+      app:layout_constraintTop_toTopOf="@+id/companionAppPositive"
       app:srcCompat="@drawable/ic_cc_clear" />
 
   </androidx.constraintlayout.widget.ConstraintLayout>

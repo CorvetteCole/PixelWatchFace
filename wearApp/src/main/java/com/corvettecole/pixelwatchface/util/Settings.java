@@ -139,9 +139,9 @@ public class Settings {
     Log.d(TAG, "timestamp: " + dataMap.getLong("timestamp"));
     use24HourTime = dataMap.getBoolean("use_24_hour_time");
 
-    showTemperature = dataMap.getBoolean("show_temperature");
+    showTemperature = dataMap.getBoolean("show_temperature", false);
     useCelsius = dataMap.getBoolean("use_celsius");
-    showWeatherIcon = dataMap.getBoolean("show_weather");
+    showWeatherIcon = dataMap.getBoolean("show_weather", false);
     darkSkyAPIKey = dataMap.getString("dark_sky_api_key");
 
     useEuropeanDateFormat = dataMap.getBoolean("use_european_date");
@@ -172,9 +172,10 @@ public class Settings {
 
   private void loadPreferences() {
     use24HourTime = sharedPreferences.getBoolean("use_24_hour_time", false);
-    showTemperature = sharedPreferences.getBoolean("show_temperature", true);
+    showTemperature = sharedPreferences.getBoolean("show_temperature", false);
+    showWeatherIcon = sharedPreferences.getBoolean("show_weather", false);
     useCelsius = sharedPreferences.getBoolean("use_celsius", true);
-    showWeatherIcon = sharedPreferences.getBoolean("show_weather", true);
+
 
     useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
     showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", true);

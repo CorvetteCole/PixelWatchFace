@@ -23,7 +23,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/home/coleg/.local/share/JetBrains/Toolbox/apps/AndroidStudio/ch-0/193.6453388/plugins/android/lib/android.jar!/images/material/icons/materialicons/error/baseline_error_24.xml" />
+                                      <entry key="url" value="jar:file:/home/cole/.local/share/JetBrains/Toolbox/apps/AndroidStudio/ch-0/193.6514223/plugins/android/lib/android.jar!/images/material/icons/materialicons/arrow_forward_ios/baseline_arrow_forward_ios_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -34,7 +34,7 @@
                         <option name="values">
                           <map>
                             <entry key="color" value="ffffff" />
-                            <entry key="outputName" value="ic_error" />
+                            <entry key="outputName" value="ic_arrow_forward" />
                           </map>
                         </option>
                       </PersistentState>

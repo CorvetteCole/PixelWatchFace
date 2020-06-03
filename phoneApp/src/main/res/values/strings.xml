@@ -2,4 +2,10 @@
     <string name="app_name">Pixel Watch Face</string>
     <string name="title_activity_debug">DebugActivity</string>
     <string name="dark_sky_api_key_hint">API key from your Dark Sky developer account</string>
+  <string name="purchase_prompt">Help support future development and unlock weather by purchasing advanced mode</string>
+  <string name="purchase_button">Unlock now (%s)</string>
+  <string name="purchase_button_pending">Purchase pending...</string>
+  <string name="purchase_loading">Loading purchase status...</string>
+  <string name="purchase_billing_loading">Loading billing client...</string>
+  <string name="purchase_purchased_thanks">Thanks for making further development of this watch face possible!</string>
 </resources>

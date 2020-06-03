@@ -20,6 +20,8 @@
     android:supportsRtl="true"
     android:theme="@style/PixelWatchFace">
 
+    <activity android:name="android.support.wearable.activity.ConfirmationActivity" />
+
     <activity
       android:launchMode="singleInstance"
       android:name=".watchface.WeatherUpdateActivity" />

@@ -1,6 +1,9 @@
 package com.corvettecole.pixelwatchface;
 
+import static com.google.android.play.core.install.model.AppUpdateType.IMMEDIATE;
+
 import android.content.Intent;
+import android.content.IntentSender.SendIntentException;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
@@ -9,21 +12,45 @@ import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
+import com.android.billingclient.api.AcknowledgePurchaseParams;
+import com.android.billingclient.api.AcknowledgePurchaseResponseListener;
+import com.android.billingclient.api.BillingClient;
+import com.android.billingclient.api.BillingClient.BillingResponseCode;
+import com.android.billingclient.api.BillingClient.SkuType;
+import com.android.billingclient.api.BillingClientStateListener;
+import com.android.billingclient.api.BillingFlowParams;
+import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.Purchase.PurchaseState;
+import com.android.billingclient.api.Purchase.PurchasesResult;
+import com.android.billingclient.api.PurchasesUpdatedListener;
+import com.android.billingclient.api.SkuDetails;
+import com.android.billingclient.api.SkuDetailsParams;
+import com.android.billingclient.api.SkuDetailsResponseListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.Wearable;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.play.core.appupdate.AppUpdateInfo;
+import com.google.android.play.core.appupdate.AppUpdateManager;
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
+import com.google.android.play.core.install.model.UpdateAvailability;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
-public class MainActivity extends AppCompatActivity /*implements
-    DataClient.OnDataChangedListener*/ {
+public class MainActivity extends AppCompatActivity implements
+    /*DataClient.OnDataChangedListener*/ BillingClientStateListener, PurchasesUpdatedListener,
+    AcknowledgePurchaseResponseListener {
 
   private SharedPreferences sharedPreferences;
   private Switch use24HourTimeSwitch;
@@ -42,6 +69,10 @@ public class MainActivity extends AppCompatActivity /*implements
   private Switch useDarkSkySwitch;
   private EditText darkSkyKeyEditText;
 
+  private TextView advancedTextView;
+  private MaterialButton advancedPurchaseButton;
+  private ProgressBar advancedProgressBar;
+
   private boolean use24HourTime;
   private boolean showTemperature;
   private boolean useCelsius;
@@ -54,6 +85,11 @@ public class MainActivity extends AppCompatActivity /*implements
   private boolean showInfoBarAmbient;
   private boolean showBattery;
   private boolean showWearIcon;
+  private boolean advanced;
+
+  private BillingClient billingClient;
+
+  private final int UPDATE_REQUEST_CODE = 1;
 
   String[] supportOptions = new String[]{"$1", "$3", "$5", "$10"};
 
@@ -80,8 +116,14 @@ public class MainActivity extends AppCompatActivity /*implements
     darkSkyKeyEditText = findViewById(R.id.darkSkyEditText);
     darkSkyTextView = findViewById(R.id.darkSkyExplanation);
 
+    advancedTextView = findViewById(R.id.advancedPurchaseText);
+    advancedPurchaseButton = findViewById(R.id.advancedPurchaseButton);
+    advancedProgressBar = findViewById(R.id.advancedPurchaseLoading);
+
     loadPreferences();
     loadSettingStates();
+
+    updatePurchaseUI(advanced);
 
 //        ArrayAdapter<String> adapter = new ArrayAdapter<>(
 //                        getApplicationContext(),
@@ -220,6 +262,50 @@ public class MainActivity extends AppCompatActivity /*implements
       }
     }
 
+    checkForUpdate();
+
+    billingClient = BillingClient.newBuilder(getApplicationContext()).setListener(this).enablePendingPurchases().build();
+    billingClient.startConnection(this);
+
+
+    checkPurchases();
+
+  }
+
+  private void checkForUpdate() {
+    // Creates instance of the manager.
+    AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(getApplicationContext());
+
+// Returns an intent object that you use to check for an update.
+    com.google.android.play.core.tasks.Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager
+        .getAppUpdateInfo();
+
+// Checks that the platform will allow the specified type of update.
+    appUpdateInfoTask.addOnSuccessListener(appUpdateInfo -> {
+      if (appUpdateInfo.updateAvailability()
+          == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+        // If an in-app update is already running, resume the update.
+        try {
+          appUpdateManager.startUpdateFlowForResult(
+              appUpdateInfo,
+              IMMEDIATE,
+              this,
+              UPDATE_REQUEST_CODE);
+        } catch (SendIntentException e) {
+          e.printStackTrace();
+        }
+      } else if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+          // For a flexible update, use AppUpdateType.FLEXIBLE
+          && appUpdateInfo.isUpdateTypeAllowed(IMMEDIATE)) {
+        // Request the update.
+        try {
+          appUpdateManager
+              .startUpdateFlowForResult(appUpdateInfo, IMMEDIATE, this, UPDATE_REQUEST_CODE);
+        } catch (SendIntentException e) {
+          e.printStackTrace();
+        }
+      }
+    });
   }
 
   private void loadPreferences() {
@@ -236,6 +322,8 @@ public class MainActivity extends AppCompatActivity /*implements
 
     darkSkyAPIKey = sharedPreferences.getString("dark_sky_api_key", "");
     useDarkSky = sharedPreferences.getBoolean("use_dark_sky", false);
+
+    advanced = sharedPreferences.getBoolean("advanced", false);
   }
 
   private void syncToWear() {
@@ -267,6 +355,7 @@ public class MainActivity extends AppCompatActivity /*implements
     putDataMapReq.getDataMap().putBoolean("use_dark_sky", useDarkSky);
     putDataMapReq.getDataMap().putBoolean("show_battery", showBattery);
     putDataMapReq.getDataMap().putBoolean("show_wear_icon", showWearIcon);
+    putDataMapReq.getDataMap().putBoolean("advanced", advanced);
 
     putDataMapReq.setUrgent();
     Task<DataItem> putDataTask = mDataClient.putDataItem(putDataMapReq.asPutDataRequest());
@@ -288,6 +377,14 @@ public class MainActivity extends AppCompatActivity /*implements
 
 
   private void loadSettingStates() {
+
+    showTemperatureSwitch.setEnabled(advanced);
+    showWeatherSwitch.setEnabled(advanced);
+    useCelsiusSwitch.setEnabled(advanced);
+    showTemperatureDecimalSwitch.setEnabled(advanced);
+    useDarkSkySwitch.setEnabled(advanced);
+    darkSkyKeyEditText.setEnabled(advanced);
+
     use24HourTimeSwitch.setChecked(use24HourTime);
     showTemperatureSwitch.setChecked(showTemperature);
     useCelsiusSwitch.setChecked(useCelsius);
@@ -353,10 +450,157 @@ public class MainActivity extends AppCompatActivity /*implements
   }
 
 
-
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
     super.onActivityResult(requestCode, resultCode, data);
+  }
+
+  @Override
+  public void onBillingSetupFinished(BillingResult billingResult) {
+    if (billingResult.getResponseCode() == BillingResponseCode.OK) {
+      if (!advanced) {
+        advancedTextView.setText(getApplicationContext().getText(R.string.purchase_loading));
+      }
+      List<String> skuList = new ArrayList<>();
+      skuList.add("unlock_weather");
+      SkuDetailsParams.Builder params = SkuDetailsParams.newBuilder();
+      params.setSkusList(skuList).setType(SkuType.INAPP);
+      billingClient.querySkuDetailsAsync(params.build(),
+          new SkuDetailsResponseListener() {
+            @Override
+            public void onSkuDetailsResponse(BillingResult billingResult,
+                List<SkuDetails> skuDetailsList) {
+              if (billingResult.getResponseCode() == BillingResponseCode.OK
+                  && skuDetailsList != null) {
+                // Process the result.
+                for (SkuDetails skuDetails : skuDetailsList) {
+                  String sku = skuDetails.getSku();
+                  if ("unlock_weather".equals(sku)) {
+                    if (!advanced) {
+                      advancedTextView
+                          .setText(getApplicationContext().getText(R.string.purchase_prompt));
+                      advancedProgressBar.setVisibility(View.GONE);
+                      advancedPurchaseButton.setVisibility(View.VISIBLE);
+                    }
+                    advancedPurchaseButton.setText(String
+                        .format(getApplicationContext().getString(R.string.purchase_button),
+                            skuDetails.getOriginalPrice()));
+
+                    advancedPurchaseButton.setOnClickListener(v -> {
+                      Log.d("test", "button pressed");
+                      BillingFlowParams flowParams = BillingFlowParams.newBuilder()
+                          .setSkuDetails(skuDetails)
+                          .build();
+                      BillingResult billingResult1 = billingClient.launchBillingFlow(MainActivity.this, flowParams);
+                      if (billingResult1.getResponseCode() == BillingResponseCode.ITEM_ALREADY_OWNED){
+                        advancedPurchaseButton.setText(R.string.purchase_button_pending);
+                        checkPurchases();
+                      }
+                    });
+                  }
+                }
+              }
+            }
+          });
+    }
+  }
+
+  private void updatePurchaseUI(boolean isPurchased) {
+    if (isPurchased) {
+      advancedProgressBar.setVisibility(View.GONE);
+      advancedPurchaseButton.setVisibility(View.GONE);
+      advancedTextView.setText(getApplicationContext().getText(R.string.purchase_purchased_thanks));
+    } else {
+      advancedProgressBar.setVisibility(View.VISIBLE);
+      advancedPurchaseButton.setVisibility(View.GONE);
+      //advancedTextView.setText(getApplicationContext().getText(R.string.purchase_prompt));
+    }
+  }
+
+  private void checkPurchases() {
+    PurchasesResult purchasesResult = billingClient.queryPurchases(SkuType.INAPP);
+    if (purchasesResult.getBillingResult().getResponseCode() == BillingResponseCode.OK) {
+      boolean advancedPurchasePresent = false;
+      for (Purchase purchase : purchasesResult.getPurchasesList()) {
+        handlePurchase(purchase);
+        if (purchase.getSku().equals("unlock_weather")){
+          advancedPurchasePresent = true;
+        }
+      }
+      if (!advancedPurchasePresent && advanced){
+        revokeAdvancedPurchase();
+      }
+    }
+  }
+
+  private void revokeAdvancedPurchase(){
+    advanced = false;
+    sharedPreferences.edit()
+        .putBoolean("advanced", advanced).apply();
+    loadSettingStates();
+    syncToWear();
+    updatePurchaseUI(false);
+    advancedTextView.setText(getApplicationContext().getText(R.string.purchase_prompt));
+  }
+
+  private void handlePurchase(Purchase purchase) {
+    if (purchase.getSku().equals("unlock_weather")) {
+      if (purchase.getPurchaseState() == PurchaseState.PURCHASED) {
+
+        // Grant entitlement to the user.
+        advanced = true;
+        sharedPreferences.edit()
+            .putBoolean("advanced", advanced).apply();
+        loadSettingStates();
+        syncToWear();
+        updatePurchaseUI(true);
+
+        // Acknowledge the purchase if it hasn't already been acknowledged.
+        if (!purchase.isAcknowledged()) {
+          AcknowledgePurchaseParams acknowledgePurchaseParams =
+              AcknowledgePurchaseParams.newBuilder()
+                  .setPurchaseToken(purchase.getPurchaseToken())
+                  .build();
+          billingClient.acknowledgePurchase(acknowledgePurchaseParams, this);
+        }
+      } else if (purchase.getPurchaseState() == PurchaseState.PENDING){
+        Snackbar.make(findViewById(android.R.id.content), "Purchase pending... weather will unlock when purchase is complete", Snackbar.LENGTH_LONG)
+            .show();
+      } else if (advanced){
+        // advanced mode should no longer be active
+       revokeAdvancedPurchase();
+
+      }
+
+    }
+  }
+
+
+  @Override
+  public void onPurchasesUpdated(BillingResult billingResult, List<Purchase> purchases) {
+    if (billingResult.getResponseCode() == BillingResponseCode.OK
+        && purchases != null) {
+      for (Purchase purchase : purchases) {
+        handlePurchase(purchase);
+      }
+    } else if (billingResult.getResponseCode() == BillingResponseCode.USER_CANCELED) {
+      Snackbar.make(findViewById(android.R.id.content), "Purchase cancelled", Snackbar.LENGTH_SHORT)
+          .show();
+    } else {
+      // Handle any other error codes.
+    }
+  }
+
+  @Override
+  public void onBillingServiceDisconnected() {
+    billingClient.startConnection(this);
+  }
+
+  @Override
+  public void onAcknowledgePurchaseResponse(BillingResult billingResult) {
+    if (billingResult.getResponseCode() != BillingResponseCode.OK) {
+      Log.e("acknowledgePurchase", "Error acknowledging purchase, this shouldn't happen");
+    }
   }
 }

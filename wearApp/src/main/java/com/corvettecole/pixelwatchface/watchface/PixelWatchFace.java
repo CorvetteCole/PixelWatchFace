@@ -166,11 +166,10 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
       setDefaultSystemComplicationProvider(BATTERY_COMPLICATION_ID, SystemProviders.WATCH_BATTERY,
           ComplicationData.TYPE_RANGED_VALUE);
-
 //      setDefaultComplicationProvider(WEATHER_COMPLICATION_ID,
 //          new ComponentName("com.google.android.wearable.app", WEATHER_PROVIDER_SERVICE), ComplicationData.TYPE_ICON);
       //setDefaultSystemComplicationProvider(STEP_COUNT_COMPLICATION_ID, SystemProviders.STEP_COUNT, ComplicationData.TYPE_SHORT_TEXT);
-      setActiveComplications(BATTERY_COMPLICATION_ID);
+
 
       setWatchFaceStyle(new WatchFaceStyle.Builder(PixelWatchFace.this)
           .setHideNotificationIndicator(true)
@@ -216,7 +215,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
     @Override
     public void onComplicationDataUpdate(int watchFaceComplicationId, ComplicationData data) {
-      String TAG = "comp test";
+      String TAG = "onComplicationDataUpdate";
       //Log.d(TAG, watchFaceComplicationId + ", type: " + data.getType());
       if (watchFaceComplicationId == BATTERY_COMPLICATION_ID) {
         mBatteryLevel = (int) data.getValue();
@@ -259,7 +258,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
       if (visible) {
         registerReceivers();
-
         // Update time zone in case it changed while we weren't visible.
         mCalendar.setTimeZone(TimeZone.getDefault());
         invalidate();
@@ -276,6 +274,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       if (mRegisteredTimeZoneReceiver) {
         return;
       }
+      setActiveComplications(BATTERY_COMPLICATION_ID);
       mRegisteredTimeZoneReceiver = true;
       IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
       PixelWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
@@ -331,6 +330,9 @@ public class PixelWatchFace extends CanvasWatchFaceService {
           .toMillis(WEATHER_UPDATE_INTERVAL)) {
         initWeatherUpdater(false);
       }
+
+
+
 
     }
 
@@ -482,6 +484,23 @@ public class PixelWatchFace extends CanvasWatchFaceService {
           float mIconYOffset = timeYOffset / 4.0f;
           canvas.drawBitmap(mWearOSBitmap, mIconXOffset, mIconYOffset, null);
         }
+      }
+      checkAndLaunchDialogs();
+    }
+
+    private void checkAndLaunchDialogs() {
+      Log.d("checkAndLaunchDialogs", "checking what dialogs should be launched...");
+      if (!mSettings.isWeatherChangeNotified()){
+
+        Intent weatherChangeIntent = new Intent(getBaseContext(),
+            WeatherUpdateActivity.class);
+        weatherChangeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(weatherChangeIntent);
+      } else if (!mSettings.isCompanionAppNotified()){
+        Intent companionNotifyIntent = new Intent(getBaseContext(),
+            CompanionNotifyActivity.class);
+        companionNotifyIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(companionNotifyIntent);
       }
     }
 

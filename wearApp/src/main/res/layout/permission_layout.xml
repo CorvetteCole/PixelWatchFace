@@ -56,7 +56,7 @@
       android:id="@+id/locationRequestNegative"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_marginStart="4dp"
+      android:layout_marginStart="8dp"
       android:clickable="true"
       app:backgroundTint="@color/circular_button_disabled"
       app:borderWidth="0dp"

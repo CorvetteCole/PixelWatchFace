@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -32,6 +33,7 @@ import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
 import com.android.billingclient.api.SkuDetailsResponseListener;
+import com.corvettecole.pixelwatchface.util.UnitLocale;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataItem;
@@ -86,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements
   private boolean showBattery;
   private boolean showWearIcon;
   private boolean advanced;
+  private boolean firstLaunch;
 
   private BillingClient billingClient;
 
@@ -121,6 +124,10 @@ public class MainActivity extends AppCompatActivity implements
     advancedProgressBar = findViewById(R.id.advancedPurchaseLoading);
 
     loadPreferences();
+    if (shouldSuggestSettings()) {
+      setSuggestedSettings();
+    }
+
     loadSettingStates();
 
     updatePurchaseUI(advanced);
@@ -308,22 +315,43 @@ public class MainActivity extends AppCompatActivity implements
     });
   }
 
+  private void setSuggestedSettings() {
+    use24HourTime = DateFormat.is24HourFormat(getApplicationContext());
+    boolean metric = UnitLocale.getDefault() == UnitLocale.Metric;
+    useCelsius = metric;
+    useEuropeanDateFormat = metric;
+    SharedPreferences.Editor editor = sharedPreferences.edit();
+    editor.putBoolean("use_24_hour_time", use24HourTime);
+    editor.putBoolean("use_celsius", useCelsius);
+    editor.putBoolean("use_european_date", useEuropeanDateFormat).apply();
+    syncToWear();
+  }
+
+  private boolean shouldSuggestSettings() {
+    // if any of the settings are not their initial default values, or this isn't the first time the app was launched
+    return showBattery && !use24HourTime && !showTemperature && useCelsius && !showWeather &&
+        !useEuropeanDateFormat && !showTemperatureDecimalPoint && !useThinAmbient &&
+        showInfoBarAmbient && !showWearIcon && !advanced && firstLaunch;
+  }
+
   private void loadPreferences() {
     use24HourTime = sharedPreferences.getBoolean("use_24_hour_time", false);
     showTemperature = sharedPreferences.getBoolean("show_temperature", false);
-    useCelsius = sharedPreferences.getBoolean("use_celsius", false);
+    useCelsius = sharedPreferences.getBoolean("use_celsius", true);
     showWeather = sharedPreferences.getBoolean("show_weather", false);
     useEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
     showTemperatureDecimalPoint = sharedPreferences.getBoolean("show_temperature_decimal", false);
     useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
-    showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", false);
+    showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", true);
     showBattery = sharedPreferences.getBoolean("show_battery", true);
-    showWearIcon = sharedPreferences.getBoolean("show_wear_icon", true);
+    showWearIcon = sharedPreferences.getBoolean("show_wear_icon", false);
 
     darkSkyAPIKey = sharedPreferences.getString("dark_sky_api_key", "");
     useDarkSky = sharedPreferences.getBoolean("use_dark_sky", false);
 
     advanced = sharedPreferences.getBoolean("advanced", false);
+
+    firstLaunch = sharedPreferences.getBoolean("first_launch", true);
   }
 
   private void syncToWear() {

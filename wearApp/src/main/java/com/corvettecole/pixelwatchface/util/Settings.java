@@ -48,6 +48,10 @@ public class Settings {
     return use24HourTime;
   }
 
+  public void setUse24HourTime(boolean value) {
+    use24HourTime = value;
+  }
+
   public boolean isShowTemperature() {
     return showTemperature;
   }
@@ -60,8 +64,16 @@ public class Settings {
     return useCelsius;
   }
 
+  public void setUseCelsius(boolean value) {
+    useCelsius = value;
+  }
+
   public boolean isUseEuropeanDateFormat() {
     return useEuropeanDateFormat;
+  }
+
+  public void setUseEuropeanDateFormat(boolean value) {
+    useEuropeanDateFormat = value;
   }
 
   public boolean isUseThinAmbient() {

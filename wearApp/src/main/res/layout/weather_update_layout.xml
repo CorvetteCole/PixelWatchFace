@@ -27,6 +27,7 @@
         android:textAlignment="center"
         android:textColor="@color/digital_text"
         android:textSize="16sp" />
+
       <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/weatherUpdateConfirm"
         android:layout_width="wrap_content"

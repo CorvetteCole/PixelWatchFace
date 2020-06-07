@@ -34,6 +34,7 @@ import android.support.wearable.complications.ComplicationData;
 import android.support.wearable.complications.SystemProviders;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
@@ -53,6 +54,7 @@ import com.corvettecole.pixelwatchface.R;
 import com.corvettecole.pixelwatchface.models.Weather;
 import com.corvettecole.pixelwatchface.util.Constants.UpdatesRequired;
 import com.corvettecole.pixelwatchface.util.Settings;
+import com.corvettecole.pixelwatchface.util.UnitLocale;
 import com.corvettecole.pixelwatchface.util.WatchFaceUtil;
 import com.corvettecole.pixelwatchface.workers.LocationUpdateWorker;
 import com.corvettecole.pixelwatchface.workers.WeatherUpdateWorker;
@@ -203,6 +205,10 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       mInfoPaint.setAntiAlias(true);
       mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
       mInfoPaint.setStrokeWidth(2f);
+
+      if (shouldSuggestSettings()) {
+        setSuggestedSettings();
+      }
     }
 
     @Override
@@ -330,10 +336,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
           .toMillis(WEATHER_UPDATE_INTERVAL)) {
         initWeatherUpdater(false);
       }
-
-
-
-
     }
 
 
@@ -488,15 +490,31 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       checkAndLaunchDialogs();
     }
 
-    private void checkAndLaunchDialogs() {
-      Log.d("checkAndLaunchDialogs", "checking what dialogs should be launched...");
-      if (!mSettings.isWeatherChangeNotified()){
+    private boolean shouldSuggestSettings() {
+      // return true if the settings are their initial default values, and none of the onboarding dialogs have been shown
+      return mSettings.isShowBattery() && !mSettings.isUse24HourTime() && !mSettings
+          .isShowTemperature() && mSettings.isUseCelsius() && !mSettings.isShowWeatherIcon() &&
+          !mSettings.isUseEuropeanDateFormat() && !mSettings.isShowTemperatureFractional()
+          && !mSettings.isUseThinAmbient() &&
+          mSettings.isShowInfoBarAmbient() && !mSettings.isShowWearIcon() && !mSettings.isAdvanced()
+          && (!mSettings.isCompanionAppNotified() && !mSettings.isWeatherChangeNotified());
+    }
 
+    private void setSuggestedSettings() {
+      mSettings.setUse24HourTime(DateFormat.is24HourFormat(getApplicationContext()));
+      boolean metric = UnitLocale.getDefault() == UnitLocale.Metric;
+      mSettings.setUseCelsius(metric);
+      mSettings.setUseEuropeanDateFormat(metric);
+    }
+
+    private void checkAndLaunchDialogs() {
+      //Log.d("checkAndLaunchDialogs", "checking what dialogs should be launched...");
+      if (!mSettings.isWeatherChangeNotified()) {
         Intent weatherChangeIntent = new Intent(getBaseContext(),
             WeatherUpdateActivity.class);
         weatherChangeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(weatherChangeIntent);
-      } else if (!mSettings.isCompanionAppNotified()){
+      } else if (!mSettings.isCompanionAppNotified()) {
         Intent companionNotifyIntent = new Intent(getBaseContext(),
             CompanionNotifyActivity.class);
         companionNotifyIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -609,12 +627,16 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
 
     private float computeTimeYOffset(Rect textBounds, Rect watchBounds) {
-      if (mSettings.isShowWearIcon()) {
+      if (mSettings.isShowWearIcon() || (!mSettings.isShowInfoBarAmbient() && mAmbient)) {
         return watchBounds.exactCenterY() + (textBounds.height()
             / 4.0f);
-      } else if (!mSettings.isShowInfoBarAmbient() && mAmbient) {
-        return watchBounds.exactCenterY() + (textBounds.height() / 2.0f);
-      } else {
+      }
+      // this positions the time in the exact center but generally looks... off. So we will position
+      // it slightly up to look more right
+//      else if (!mSettings.isShowInfoBarAmbient() && mAmbient) {
+//        return watchBounds.exactCenterY() + (textBounds.height() / 2.0f);
+//      }
+      else {
         return watchBounds.exactCenterY();
       }
     }

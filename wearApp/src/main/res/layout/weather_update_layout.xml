@@ -5,44 +5,45 @@
   android:layout_height="match_parent"
   android:background="@color/background">
 
-  <androidx.constraintlayout.widget.ConstraintLayout
+  <ScrollView
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    app:boxedEdges="all">
+    app:boxedEdges="left|right">
 
-    <TextView
-      android:id="@+id/weatherUpdateTextView"
-      android:layout_width="wrap_content"
+    <LinearLayout
+      android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginBottom="4dp"
-      android:layout_marginStart="16dp"
-      android:layout_marginEnd="16dp"
-      android:fontFamily="@font/product_sans_regular"
-      android:text="Due to development costs, weather can now be enabled with a purchase in the companion app"
-      android:textAlignment="center"
-      android:textColor="@color/digital_text"
-      android:textSize="16sp"
-      app:layout_constraintBottom_toTopOf="@+id/weatherUpdateConfirm"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="parent" />
+      android:layout_gravity="center"
+      android:orientation="vertical">
 
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-      android:id="@+id/weatherUpdateConfirm"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
+      <TextView
+        android:id="@+id/weatherUpdateTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/product_sans_regular"
+        android:text="Due to development costs, weather can now be enabled with a purchase in the companion app"
+        android:textAlignment="center"
+        android:textColor="@color/digital_text"
+        android:textSize="16sp" />
+      <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/weatherUpdateConfirm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
 
-      android:clickable="true"
-      app:backgroundTint="@color/circular_button_normal"
-      app:borderWidth="0dp"
-      app:fabCustomSize="45dp"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintStart_toStartOf="parent"
-      app:srcCompat="@drawable/ic_arrow_forward" />
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="8dp"
+        android:layout_gravity="center_horizontal"
+        android:clickable="true"
+        app:backgroundTint="@color/circular_button_normal"
+        app:borderWidth="0dp"
+        app:fabCustomSize="40dp"
+        app:srcCompat="@drawable/ic_arrow_forward" />
 
 
+    </LinearLayout>
 
-  </androidx.constraintlayout.widget.ConstraintLayout>
+  </ScrollView>
+
 </androidx.wear.widget.BoxInsetLayout>

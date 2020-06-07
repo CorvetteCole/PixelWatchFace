@@ -5,74 +5,77 @@
   android:layout_height="match_parent"
   android:background="@color/background">
 
-  <androidx.constraintlayout.widget.ConstraintLayout
+  <ScrollView
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:animateLayoutChanges="true"
-    app:boxedEdges="all">
+    app:boxedEdges="left|right">
 
-    <TextView
-      android:id="@+id/companionAppTextView"
-      android:layout_width="wrap_content"
+    <LinearLayout
+      android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginBottom="8dp"
-      android:layout_marginStart="16dp"
-      android:layout_marginEnd="16dp"
-      android:fontFamily="@font/product_sans_regular"
-      android:text="Checking for companion app..."
-      android:textAlignment="center"
-      android:textColor="@color/digital_text"
-      android:textSize="16sp"
-      app:layout_constraintBottom_toTopOf="@+id/companionAppPositive"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="parent" />
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-      android:id="@+id/companionAppConfirmation"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
+      android:layout_gravity="center"
+      android:orientation="vertical">
 
-      android:layout_marginBottom="8dp"
-      android:clickable="true"
-      android:visibility="invisible"
-      app:backgroundTint="@color/circular_button_normal"
-      app:borderWidth="0dp"
-      app:fabCustomSize="45dp"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:layout_constraintStart_toStartOf="parent"
-      app:srcCompat="@drawable/ic_arrow_forward" />
+      <TextView
+        android:id="@+id/companionAppTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/product_sans_regular"
+        android:text="Checking for companion app..."
+        android:textAlignment="center"
+        android:textColor="@color/digital_text"
+        android:textSize="16sp" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-      android:id="@+id/companionAppPositive"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
+      <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="8dp"
+        android:animateLayoutChanges="true">
 
-      android:layout_marginBottom="8dp"
-      android:layout_marginEnd="8dp"
-      android:clickable="true"
-      android:visibility="invisible"
-      app:backgroundTint="@color/circular_button_normal"
-      app:borderWidth="0dp"
-      app:fabCustomSize="45dp"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
-      app:srcCompat="@drawable/open_on_phone" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+          android:id="@+id/companionAppConfirmation"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:clickable="true"
+          android:visibility="invisible"
+          app:backgroundTint="@color/circular_button_normal"
+          app:borderWidth="0dp"
+          app:fabCustomSize="40dp"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:layout_constraintStart_toStartOf="parent"
+          app:srcCompat="@drawable/ic_arrow_forward" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-      android:id="@+id/companionAppNegative"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_marginStart="8dp"
-      android:clickable="true"
-      android:visibility="invisible"
-      app:backgroundTint="@color/circular_button_disabled"
-      app:borderWidth="0dp"
-      app:fabCustomSize="45dp"
-      app:layout_constraintBottom_toBottomOf="@+id/companionAppPositive"
-      app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="@+id/companionAppPositive"
-      app:srcCompat="@drawable/ic_cc_clear" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+          android:id="@+id/companionAppPositive"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:clickable="true"
+          android:visibility="invisible"
+          app:backgroundTint="@color/circular_button_normal"
+          app:borderWidth="0dp"
+          app:fabCustomSize="40dp"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:srcCompat="@drawable/open_on_phone" />
 
-  </androidx.constraintlayout.widget.ConstraintLayout>
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+          android:id="@+id/companionAppNegative"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:clickable="true"
+          android:visibility="invisible"
+          app:backgroundTint="@color/circular_button_disabled"
+          app:borderWidth="0dp"
+          app:fabCustomSize="40dp"
+          app:layout_constraintBottom_toBottomOf="@+id/companionAppPositive"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toTopOf="@+id/companionAppPositive"
+          app:srcCompat="@drawable/ic_cc_clear" />
+
+      </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+
+  </ScrollView>
 </androidx.wear.widget.BoxInsetLayout>

@@ -9,7 +9,7 @@ android {
         applicationId "com.corvettecole.pixelwatchface"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 30
+        versionCode 31
         versionName "1.5.5-RC3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

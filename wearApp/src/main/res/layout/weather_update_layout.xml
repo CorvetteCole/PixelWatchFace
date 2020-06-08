@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:fontFamily="@font/product_sans_regular"
-        android:text="Due to development costs, weather can now be enabled with a purchase in the companion app"
+        android:text="Due to development costs, weather can now be enabled in the companion app"
         android:textAlignment="center"
         android:textColor="@color/digital_text"
         android:textSize="16sp" />

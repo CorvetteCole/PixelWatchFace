@@ -5,6 +5,7 @@ import static com.google.android.play.core.install.model.AppUpdateType.IMMEDIATE
 import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -73,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements
 
   private TextView advancedTextView;
   private MaterialButton advancedPurchaseButton;
+  private MaterialButton advancedFreebieButton;
   private ProgressBar advancedProgressBar;
 
   private boolean use24HourTime;
@@ -121,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements
 
     advancedTextView = findViewById(R.id.advancedPurchaseText);
     advancedPurchaseButton = findViewById(R.id.advancedPurchaseButton);
+    advancedFreebieButton = findViewById(R.id.advancedFreebieButton);
     advancedProgressBar = findViewById(R.id.advancedPurchaseLoading);
 
     loadPreferences();
@@ -510,6 +513,7 @@ public class MainActivity extends AppCompatActivity implements
                           .setText(getApplicationContext().getText(R.string.purchase_prompt));
                       advancedProgressBar.setVisibility(View.GONE);
                       advancedPurchaseButton.setVisibility(View.VISIBLE);
+                      advancedFreebieButton.setVisibility(View.VISIBLE);
                     }
                     advancedPurchaseButton.setText(String
                         .format(getApplicationContext().getString(R.string.purchase_button),
@@ -520,12 +524,29 @@ public class MainActivity extends AppCompatActivity implements
                       BillingFlowParams flowParams = BillingFlowParams.newBuilder()
                           .setSkuDetails(skuDetails)
                           .build();
-                      BillingResult billingResult1 = billingClient.launchBillingFlow(MainActivity.this, flowParams);
-                      if (billingResult1.getResponseCode() == BillingResponseCode.ITEM_ALREADY_OWNED){
+                      BillingResult billingResult1 = billingClient
+                          .launchBillingFlow(MainActivity.this, flowParams);
+                      if (billingResult1.getResponseCode()
+                          == BillingResponseCode.ITEM_ALREADY_OWNED) {
                         advancedPurchaseButton.setText(R.string.purchase_button_pending);
                         checkPurchases();
                       }
                     });
+
+                    advancedFreebieButton.setOnClickListener(v -> {
+                      Intent intent = new Intent(Intent.ACTION_SENDTO); // it's not ACTION_SEND
+                      intent
+                          .putExtra(Intent.EXTRA_SUBJECT, "Unlock Code Request - Pixel Watch Face");
+                      intent
+                          .putExtra(Intent.EXTRA_TEXT, "I am requesting an unlock code. Reason: ");
+                      intent.setData(Uri.parse(
+                          "mailto:support@corvettecole.com")); // or just "mailto:" for blank
+                      intent.addFlags(
+                          Intent.FLAG_ACTIVITY_NEW_TASK); // this will make such that when user returns to your app, your app is displayed, instead of the email app.
+                      startActivity(intent);
+                    });
+
+
                   }
                 }
               }
@@ -538,10 +559,12 @@ public class MainActivity extends AppCompatActivity implements
     if (isPurchased) {
       advancedProgressBar.setVisibility(View.GONE);
       advancedPurchaseButton.setVisibility(View.GONE);
+      advancedFreebieButton.setVisibility(View.GONE);
       advancedTextView.setText(getApplicationContext().getText(R.string.purchase_purchased_thanks));
     } else {
       advancedProgressBar.setVisibility(View.VISIBLE);
       advancedPurchaseButton.setVisibility(View.GONE);
+      advancedFreebieButton.setVisibility(View.GONE);
       //advancedTextView.setText(getApplicationContext().getText(R.string.purchase_prompt));
     }
   }

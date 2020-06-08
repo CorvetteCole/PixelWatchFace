@@ -1,4 +1,4 @@
-package com.corvettecole.pixelwatchface.watchface;
+package com.corvettecole.pixelwatchface.ui;
 
 import static com.corvettecole.pixelwatchface.util.Constants.INFO_BAR_Y_SPACING_RATIO;
 import static com.corvettecole.pixelwatchface.util.Constants.KEY_WEATHER_JSON;

@@ -2,7 +2,7 @@
   <string name="app_name">Pixel Watch Face</string>
   <string name="title_activity_debug">DebugActivity</string>
   <string name="dark_sky_api_key_hint">API key from your Dark Sky developer account</string>
-  <string name="purchase_prompt">After the free weather APIs previously used hit their limit, I spent several months writing my own weather service so that I could keep this app subscription free.
+  <string name="purchase_prompt">After the free weather APIs I used hit their limit, I spent several months writing my own weather service so that I could keep this app subscription free.
     Weather can now be activated with a small one-time purchase below. This money will support current and future development of the app, with many exciting updates planned.
     If you cannot afford to support development or don\'t want to, you can request an unlock code for free. Thanks for using my app :)</string>
   <string name="purchase_button">Support now (%s)</string>
@@ -24,5 +24,5 @@
   <string name="weather_icon">Show the current weather as an icon</string>
   <string name="temperature_fractional">Show temperature to 1 decimal place</string>
   <string name="dark_sky_blurb">Dark Sky support has been discontinued. These options are only present if you have previously entered a Dark Sky key.</string>
-  <string name="dark_sky_toggle">Use Dark Sky to provide weather data</string>
+  <string name="dark_sky_toggle">Use Dark Sky as a weather provider. The default providers will still be used as fallbacks</string>
 </resources>

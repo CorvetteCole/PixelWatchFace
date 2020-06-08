@@ -24,15 +24,15 @@
 
     <activity
       android:launchMode="singleInstance"
-      android:name=".watchface.WeatherUpdateActivity" />
+      android:name=".ui.WeatherUpdateActivity" />
 
     <activity
       android:launchMode="singleInstance"
-      android:name=".watchface.CompanionNotifyActivity" />
+      android:name=".ui.CompanionNotifyActivity" />
 
     <activity
       android:launchMode="singleInstance"
-      android:name=".watchface.WatchPermissionRequestActivity" />
+      android:name=".ui.WatchPermissionRequestActivity" />
 
     <meta-data
       android:name="com.google.android.gms.version"
@@ -44,7 +44,7 @@
 
     <service
       android:label="@string/my_digital_name"
-      android:name=".watchface.PixelWatchFace"
+      android:name=".ui.PixelWatchFace"
       android:permission="android.permission.BIND_WALLPAPER">
       <intent-filter>
         <action android:name="android.service.wallpaper.WallpaperService" />

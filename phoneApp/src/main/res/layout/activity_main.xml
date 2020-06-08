@@ -17,8 +17,7 @@
     <LinearLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:orientation="vertical"
-      android:animateLayoutChanges="true">
+      android:orientation="vertical">
 
       <TextView
         android:id="@+id/advancedPurchaseText"
@@ -212,18 +211,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/dateFormatSwitch" />
 
-      <Switch
-        android:id="@+id/useDarkSkySwitch"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:text="@string/dark_sky_toggle"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/darkSkyExplanation" />
-
       <TextView
         android:id="@+id/darkSkyExplanation"
         android:layout_width="wrap_content"
@@ -235,6 +222,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/infoBarAmbientSwitch" />
+
+      <Switch
+        android:id="@+id/useDarkSkySwitch"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="@string/dark_sky_toggle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/darkSkyExplanation" />
 
       <EditText
         android:id="@+id/darkSkyEditText"

@@ -1,4 +1,4 @@
-package com.corvettecole.pixelwatchface.watchface;
+package com.corvettecole.pixelwatchface.ui;
 
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;

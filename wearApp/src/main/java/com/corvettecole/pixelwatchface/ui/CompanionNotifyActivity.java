@@ -1,4 +1,4 @@
-package com.corvettecole.pixelwatchface.watchface;
+package com.corvettecole.pixelwatchface.ui;
 
 import android.content.Intent;
 import android.content.res.ColorStateList;

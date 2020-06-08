@@ -4,7 +4,7 @@
   <string name="dark_sky_api_key_hint">API key from your Dark Sky developer account</string>
   <string name="purchase_prompt">After the free weather APIs previously used hit their limit, I spent several months writing my own weather service so that I could keep this app subscription free.
     Weather can now be activated with a small one-time purchase below. This money will support current and future development of the app, with many exciting updates planned.
-    If you cannot afford to support development or don't want to, you can request an unlock code for free. Thanks for using my app :)</string>
+    If you cannot afford to support development or don\'t want to, you can request an unlock code for free. Thanks for using my app :)</string>
   <string name="purchase_button">Support now (%s)</string>
   <string name="purchase_button_pending">Purchase pending...</string>
   <string name="purchase_loading">Loading purchase status...</string>

@@ -69,6 +69,15 @@
       android:layout_height="wrap_content"
       android:orientation="vertical">
 
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="@string/category_general"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
       <Switch
         android:id="@+id/dateFormatSwitch"
         android:layout_width="match_parent"
@@ -136,14 +145,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-      <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:text="@string/category_general"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
 
 
     </LinearLayout>
@@ -151,6 +153,15 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:orientation="vertical">
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="@string/category_weather"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
       <Switch
         android:id="@+id/temperatureSwitch"
@@ -224,15 +235,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/infoBarAmbientSwitch" />
-
-      <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:text="@string/category_weather"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
       <EditText
         android:id="@+id/darkSkyEditText"

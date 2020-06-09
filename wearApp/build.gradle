@@ -7,8 +7,8 @@ android {
         applicationId "com.corvettecole.pixelwatchface"
         minSdkVersion 23
         targetSdkVersion 29
-        versionCode 1068
-        versionName "1.5.5"
+        versionCode 1069
+        versionName "1.5.5.1"
         multiDexEnabled true
     }
     compileOptions {
@@ -48,6 +48,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.1.0'
 
     implementation 'com.google.code.gson:gson:2.8.6'
+
     implementation 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
     // library for METAR parsing
     implementation 'ca.braunit.weatherparser:WeatherParser:0.2.0'

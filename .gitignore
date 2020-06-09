@@ -18,3 +18,4 @@ wearApp/src/main/res/values/secrets.xml
 phoneApp/src/main/res/values/secrets.xml
 
 !/.idea
+/build/intermediates/lint-cache/

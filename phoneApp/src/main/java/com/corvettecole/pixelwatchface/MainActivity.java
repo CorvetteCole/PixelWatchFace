@@ -517,7 +517,7 @@ public class MainActivity extends AppCompatActivity implements
                     }
                     advancedPurchaseButton.setText(String
                         .format(getApplicationContext().getString(R.string.purchase_button),
-                            skuDetails.getOriginalPrice()));
+                            skuDetails.getPrice()));
 
                     advancedPurchaseButton.setOnClickListener(v -> {
                       Log.d("test", "button pressed");
@@ -537,8 +537,6 @@ public class MainActivity extends AppCompatActivity implements
                       Intent intent = new Intent(Intent.ACTION_SENDTO); // it's not ACTION_SEND
                       intent
                           .putExtra(Intent.EXTRA_SUBJECT, "Unlock Code Request - Pixel Watch Face");
-                      intent
-                          .putExtra(Intent.EXTRA_TEXT, "I am requesting an unlock code. Reason: ");
                       intent.setData(Uri.parse(
                           "mailto:support@corvettecole.com")); // or just "mailto:" for blank
                       intent.addFlags(

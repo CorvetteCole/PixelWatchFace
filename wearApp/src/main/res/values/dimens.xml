@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="digital_time_text_size">70dp</dimen>
-    <dimen name="digital_time_text_size_round">74dp</dimen>
+    <dimen name="digital_time_text_size">67dp</dimen>
+    <dimen name="digital_time_text_size_round">70dp</dimen>
 
     <dimen name="digital_date_text_size">15dp</dimen>
     <dimen name="digital_date_text_size_round">16dp</dimen>

@@ -12,8 +12,8 @@ public class Settings {
 
 
   private static volatile Settings instance;
-  private boolean use24HourTime, showTemperature, showWeatherIcon, useCelsius,
-      useEuropeanDateFormat, useThinAmbient, showInfoBarAmbient, showTemperatureFractional,
+  private boolean showTemperature, showWeatherIcon, useCelsius,
+      useThinAmbient, showInfoBarAmbient, showTemperatureFractional,
       showBattery, showWearIcon, useDarkSky, weatherChangeNotified, companionAppNotified, advanced;
   private String darkSkyAPIKey;
   private SharedPreferences sharedPreferences;
@@ -44,14 +44,6 @@ public class Settings {
     return instance;
   }
 
-  public boolean isUse24HourTime() {
-    return use24HourTime;
-  }
-
-  public void setUse24HourTime(boolean value) {
-    use24HourTime = value;
-  }
-
   public boolean isShowTemperature() {
     return showTemperature;
   }
@@ -66,14 +58,6 @@ public class Settings {
 
   public void setUseCelsius(boolean value) {
     useCelsius = value;
-  }
-
-  public boolean isUseEuropeanDateFormat() {
-    return useEuropeanDateFormat;
-  }
-
-  public void setUseEuropeanDateFormat(boolean value) {
-    useEuropeanDateFormat = value;
   }
 
   public boolean isUseThinAmbient() {
@@ -149,14 +133,12 @@ public class Settings {
     ArrayList<UpdatesRequired> updatesRequired = new ArrayList<>();
 
     Log.d(TAG, "timestamp: " + dataMap.getLong("timestamp"));
-    use24HourTime = dataMap.getBoolean("use_24_hour_time");
 
     showTemperature = dataMap.getBoolean("show_temperature", false);
     useCelsius = dataMap.getBoolean("use_celsius");
     showWeatherIcon = dataMap.getBoolean("show_weather", false);
     darkSkyAPIKey = dataMap.getString("dark_sky_api_key");
 
-    useEuropeanDateFormat = dataMap.getBoolean("use_european_date");
     showTemperatureFractional = dataMap.getBoolean("show_temperature_decimal");
 
     useThinAmbient = dataMap.getBoolean("use_thin_ambient");
@@ -183,7 +165,6 @@ public class Settings {
   }
 
   private void loadPreferences() {
-    use24HourTime = sharedPreferences.getBoolean("use_24_hour_time", false);
     showTemperature = sharedPreferences.getBoolean("show_temperature", false);
     showWeatherIcon = sharedPreferences.getBoolean("show_weather", false);
     useCelsius = sharedPreferences.getBoolean("use_celsius", true);
@@ -192,7 +173,6 @@ public class Settings {
     useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
     showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", true);
 
-    useEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
     showTemperatureFractional = sharedPreferences.getBoolean("show_temperature_decimal", false);
 
     darkSkyAPIKey = sharedPreferences.getString("dark_sky_api_key", "");
@@ -209,11 +189,9 @@ public class Settings {
 
   private void savePreferences() {
     SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.putBoolean("use_24_hour_time", use24HourTime);
     editor.putBoolean("show_temperature", showTemperature);
     editor.putBoolean("use_celsius", useCelsius);
     editor.putBoolean("show_weather", showWeatherIcon);
-    editor.putBoolean("use_european_date", useEuropeanDateFormat);
     editor.putBoolean("show_temperature_decimal", showTemperatureFractional);
     editor.putBoolean("use_thin_ambient", useThinAmbient);
     editor.putBoolean("show_infobar_ambient", showInfoBarAmbient);

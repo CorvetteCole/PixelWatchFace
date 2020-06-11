@@ -9,13 +9,10 @@ import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_ICON_Y_OFFS
 import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_UPDATE_INTERVAL;
 import static com.corvettecole.pixelwatchface.util.Constants.WEATHER_UPDATE_WORKER;
 import static com.corvettecole.pixelwatchface.util.WatchFaceUtil.drawableToBitmap;
-import static com.corvettecole.pixelwatchface.util.WatchFaceUtil.getHour;
 
 import android.Manifest;
 import android.Manifest.permission;
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -70,8 +67,7 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.google.gson.Gson;
 import java.lang.ref.WeakReference;
-import java.util.Calendar;
-import java.util.TimeZone;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 
@@ -131,14 +127,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       super(true); // hardware acceleration
     }
 
-    private Calendar mCalendar;
-    private final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, Intent intent) {
-        mCalendar.setTimeZone(TimeZone.getDefault());
-        invalidate();
-      }
-    };
     private FusedLocationProviderClient mFusedLocationClient;
     private boolean mRegisteredTimeZoneReceiver = false;
     private Paint mBackgroundPaint;
@@ -179,8 +167,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
           .setStatusBarGravity(Gravity.CENTER_HORIZONTAL)
           .setStatusBarGravity(Gravity.TOP)
           .build());
-
-      mCalendar = Calendar.getInstance();
 
       // Initializes syncing with companion app
       Wearable.getDataClient(getApplicationContext()).addListener(this);
@@ -264,8 +250,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
       if (visible) {
         registerReceivers();
-        // Update time zone in case it changed while we weren't visible.
-        mCalendar.setTimeZone(TimeZone.getDefault());
         invalidate();
       } else {
         unregisterReceivers();
@@ -283,7 +267,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       setActiveComplications(BATTERY_COMPLICATION_ID);
       mRegisteredTimeZoneReceiver = true;
       IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
-      PixelWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
     }
 
     private void unregisterReceivers() {
@@ -291,8 +274,6 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         return;
       }
       mRegisteredTimeZoneReceiver = false;
-      PixelWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
-
     }
 
     @Override
@@ -377,19 +358,11 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       //canvas.drawColor(Color.BLACK);  // test not drawing background every render pass
       canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
 
-      // Draw H:MM
       long now = System.currentTimeMillis();
-      mCalendar.setTimeInMillis(now);
 
-      // pad hour with 0 or not depending on if 24 hour time is being used
-      String timeText = "";
-      if (mSettings.isUse24HourTime()) {
-        timeText = String
-            .format("%02d:%02d", getHour(mCalendar, true), mCalendar.get(Calendar.MINUTE));
-      } else {
-        timeText = String
-            .format("%d:%02d", getHour(mCalendar, false), mCalendar.get(Calendar.MINUTE));
-      }
+      // Create locale specific time string.
+      java.text.DateFormat timeFormat = DateFormat.getTimeFormat(getApplicationContext());
+      String timeText = timeFormat.format(now).replaceAll("[A-Z|\\s]", ""); // this also removes AM/PM if present
 
       float mTimeXOffset = computeXOffset(timeText, mTimePaint, bounds);
 
@@ -398,18 +371,10 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       float timeYOffset = computeTimeYOffset(timeTextBounds, bounds);
 
       canvas.drawText(timeText, mTimeXOffset, timeYOffset, mTimePaint);
-      String dateText;
-      if (mSettings.isUseEuropeanDateFormat()) {
-        dateText = String
-            .format("%.3s, %d %.3s", android.text.format.DateFormat.format("EEEE", mCalendar),
-                mCalendar.get(Calendar.DAY_OF_MONTH),
-                android.text.format.DateFormat.format("MMMM", mCalendar));
-      } else {
-        dateText = String
-            .format("%.3s, %.3s %d", android.text.format.DateFormat.format("EEEE", mCalendar),
-                android.text.format.DateFormat.format("MMMM", mCalendar),
-                mCalendar.get(Calendar.DAY_OF_MONTH));
-      }
+
+      // Create locale specific date string.
+      String dateFormat = DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEEMMMd");
+      String dateText = DateFormat.format(dateFormat, now).toString();
 
       String temperatureText = "";
 
@@ -423,7 +388,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       if (!mSettings.isWeatherDisabled()) {
         if (mSettings.isShowTemperature()) {
           temperatureText = mCurrentWeather.getFormattedTemperature(mSettings.isUseCelsius(),
-              mSettings.isShowTemperatureFractional(), mSettings.isUseEuropeanDateFormat());
+              mSettings.isShowTemperatureFractional());
           if (mSettings.isShowWeatherIcon()) {
             totalLength =
                 dateTextLength + bitmapTotalMargin + mCurrentWeather
@@ -492,19 +457,17 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
     private boolean shouldSuggestSettings() {
       // return true if the settings are their initial default values, and none of the onboarding dialogs have been shown
-      return mSettings.isShowBattery() && !mSettings.isUse24HourTime() && !mSettings
+      return mSettings.isShowBattery() && !mSettings
           .isShowTemperature() && mSettings.isUseCelsius() && !mSettings.isShowWeatherIcon() &&
-          !mSettings.isUseEuropeanDateFormat() && !mSettings.isShowTemperatureFractional()
+          !mSettings.isShowTemperatureFractional()
           && !mSettings.isUseThinAmbient() &&
           mSettings.isShowInfoBarAmbient() && !mSettings.isShowWearIcon() && !mSettings.isAdvanced()
           && (!mSettings.isCompanionAppNotified() && !mSettings.isWeatherChangeNotified());
     }
 
     private void setSuggestedSettings() {
-      mSettings.setUse24HourTime(DateFormat.is24HourFormat(getApplicationContext()));
       boolean metric = UnitLocale.getDefault() == UnitLocale.Metric;
       mSettings.setUseCelsius(metric);
-      mSettings.setUseEuropeanDateFormat(metric);
     }
 
     private void checkAndLaunchDialogs() {

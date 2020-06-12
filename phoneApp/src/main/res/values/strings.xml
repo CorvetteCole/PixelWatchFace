@@ -13,7 +13,8 @@
   <string name="purchase_freebie">Request an unlock code</string>
   <string name="category_general">General</string>
   <string name="european_date_format">Use European date format (Thu 14 Feb)</string>
-  <string name="thin_text">Use thin text in ambient mode</string>
+  <string name="thin_text">Use thin text for clock</string>
+  <string name="thin_ambient_text">Use thin text for clock in ambient mode</string>
   <string name="infobar_ambient">Show date/weather in ambient mode</string>
   <string name="battery_level">Show battery level</string>
   <string name="wearos_icon">Show WearOS icon</string>

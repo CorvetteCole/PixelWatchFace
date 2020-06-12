@@ -495,7 +495,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
       return mSettings.isShowBattery() && !mSettings.isUse24HourTime() && !mSettings
           .isShowTemperature() && mSettings.isUseCelsius() && !mSettings.isShowWeatherIcon() &&
           !mSettings.isUseEuropeanDateFormat() && !mSettings.isShowTemperatureFractional()
-          && !mSettings.isUseThinAmbient() &&
+          && !mSettings.isUseThin() && !mSettings.isUseThinAmbient() &&
           mSettings.isShowInfoBarAmbient() && !mSettings.isShowWearIcon() && !mSettings.isAdvanced()
           && (!mSettings.isCompanionAppNotified() && !mSettings.isWeatherChangeNotified());
     }
@@ -534,8 +534,13 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         mInfoPaint.setColor(
             ContextCompat.getColor(getApplicationContext(), R.color.digital_text_ambient));
       } else {
-        mTimePaint.setTypeface(mProductSans);
-        mTimePaint.setStyle(Paint.Style.FILL);
+        if (mSettings.isUseThin()) {
+          mTimePaint.setStyle(Paint.Style.FILL);
+          mTimePaint.setTypeface(mProductSansThin);
+        } else {
+          mTimePaint.setTypeface(mProductSans);
+          mTimePaint.setStyle(Paint.Style.FILL);
+        }
         mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
       }
     }

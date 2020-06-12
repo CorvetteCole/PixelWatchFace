@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements
 
   private Switch useEuropeanDateFormatSwitch;
   private Switch showTemperatureDecimalSwitch;
+  private Switch useThinSwitch;
   private Switch useThinAmbientSwitch;
   private Switch showInfoBarAmbientSwitch;
   private Switch showBatterySwitch;
@@ -85,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements
   private boolean showTemperatureDecimalPoint;
   private String darkSkyAPIKey;
   private boolean useDarkSky;
+  private boolean useThin;
   private boolean useThinAmbient;
   private boolean showInfoBarAmbient;
   private boolean showBattery;
@@ -112,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements
 
     useEuropeanDateFormatSwitch = findViewById(R.id.dateFormatSwitch);
     showTemperatureDecimalSwitch = findViewById(R.id.temperaturePrecisionSwitch);
+    useThinSwitch = findViewById(R.id.useThinSwitch);
     useThinAmbientSwitch = findViewById(R.id.useThinAmbientSwitch);
     showInfoBarAmbientSwitch = findViewById(R.id.infoBarAmbientSwitch);
     showBatterySwitch = findViewById(R.id.batterySwitch);
@@ -200,6 +203,14 @@ public class MainActivity extends AppCompatActivity implements
             syncToWear();
           }
         });
+
+    useThinSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+      @Override
+      public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+        sharedPreferences.edit().putBoolean("use_thin", isChecked).apply();
+        syncToWear();
+      }
+    });
 
     useThinAmbientSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
       @Override
@@ -333,7 +344,7 @@ public class MainActivity extends AppCompatActivity implements
   private boolean shouldSuggestSettings() {
     // if any of the settings are not their initial default values, or this isn't the first time the app was launched
     return showBattery && !use24HourTime && !showTemperature && useCelsius && !showWeather &&
-        !useEuropeanDateFormat && !showTemperatureDecimalPoint && !useThinAmbient &&
+        !useEuropeanDateFormat && !showTemperatureDecimalPoint && !useThin && !useThinAmbient &&
         showInfoBarAmbient && !showWearIcon && !advanced && firstLaunch;
   }
 
@@ -344,6 +355,7 @@ public class MainActivity extends AppCompatActivity implements
     showWeather = sharedPreferences.getBoolean("show_weather", false);
     useEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
     showTemperatureDecimalPoint = sharedPreferences.getBoolean("show_temperature_decimal", false);
+    useThin = sharedPreferences.getBoolean("use_thin", false);
     useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
     showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", true);
     showBattery = sharedPreferences.getBoolean("show_battery", true);
@@ -380,6 +392,7 @@ public class MainActivity extends AppCompatActivity implements
     putDataMapReq.getDataMap().putBoolean("show_weather", showWeather);
     putDataMapReq.getDataMap().putBoolean("use_european_date", useEuropeanDateFormat);
     putDataMapReq.getDataMap().putBoolean("show_temperature_decimal", showTemperatureDecimalPoint);
+    putDataMapReq.getDataMap().putBoolean("use_thin", useThin);
     putDataMapReq.getDataMap().putBoolean("use_thin_ambient", useThinAmbient);
     putDataMapReq.getDataMap().putBoolean("show_infobar_ambient", showInfoBarAmbient);
     putDataMapReq.getDataMap().putString("dark_sky_api_key", darkSkyAPIKey);
@@ -422,6 +435,7 @@ public class MainActivity extends AppCompatActivity implements
     showWeatherSwitch.setChecked(showWeather);
     useEuropeanDateFormatSwitch.setChecked(useEuropeanDateFormat);
     showTemperatureDecimalSwitch.setChecked(showTemperatureDecimalPoint);
+    useThinSwitch.setChecked(useThin);
     useThinAmbientSwitch.setChecked(useThinAmbient);
     showInfoBarAmbientSwitch.setChecked(showInfoBarAmbient);
     showBatterySwitch.setChecked(showBattery);

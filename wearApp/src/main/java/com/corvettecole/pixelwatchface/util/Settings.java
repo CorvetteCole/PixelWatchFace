@@ -13,7 +13,7 @@ public class Settings {
 
   private static volatile Settings instance;
   private boolean use24HourTime, showTemperature, showWeatherIcon, useCelsius,
-      useEuropeanDateFormat, useThinAmbient, showInfoBarAmbient, showTemperatureFractional,
+      useEuropeanDateFormat, useThin, useThinAmbient, showInfoBarAmbient, showTemperatureFractional,
       showBattery, showWearIcon, useDarkSky, weatherChangeNotified, companionAppNotified, advanced;
   private String darkSkyAPIKey;
   private SharedPreferences sharedPreferences;
@@ -76,9 +76,11 @@ public class Settings {
     useEuropeanDateFormat = value;
   }
 
-  public boolean isUseThinAmbient() {
-    return useThinAmbient;
+  public boolean isUseThin() {
+    return useThin;
   }
+
+  public boolean isUseThinAmbient() { return useThinAmbient; }
 
   public boolean isShowInfoBarAmbient() {
     return showInfoBarAmbient;
@@ -144,6 +146,7 @@ public class Settings {
     boolean tempShowWeatherIcon = showWeatherIcon;
     boolean tempUseDarkSky = useDarkSky;
 
+    boolean tempUseThin = useThin;
     boolean tempUseThinAmbient = useThinAmbient;
 
     ArrayList<UpdatesRequired> updatesRequired = new ArrayList<>();
@@ -159,6 +162,7 @@ public class Settings {
     useEuropeanDateFormat = dataMap.getBoolean("use_european_date");
     showTemperatureFractional = dataMap.getBoolean("show_temperature_decimal");
 
+    useThin = dataMap.getBoolean("use_thin");
     useThinAmbient = dataMap.getBoolean("use_thin_ambient");
     showInfoBarAmbient = dataMap.getBoolean("show_infobar_ambient");
 
@@ -174,7 +178,7 @@ public class Settings {
         != tempShowWeatherIcon) {  //detect if weather related settings has changed
       updatesRequired.add(UpdatesRequired.WEATHER);
     }
-    if (tempUseThinAmbient != useThinAmbient) { // check if font needs update
+    if (tempUseThin != useThin || tempUseThinAmbient != useThinAmbient) { // check if font needs update
       updatesRequired.add(UpdatesRequired.FONT);
     }
 
@@ -188,7 +192,7 @@ public class Settings {
     showWeatherIcon = sharedPreferences.getBoolean("show_weather", false);
     useCelsius = sharedPreferences.getBoolean("use_celsius", true);
 
-
+    useThin = sharedPreferences.getBoolean("use_thin", false);
     useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
     showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", true);
 
@@ -215,6 +219,7 @@ public class Settings {
     editor.putBoolean("show_weather", showWeatherIcon);
     editor.putBoolean("use_european_date", useEuropeanDateFormat);
     editor.putBoolean("show_temperature_decimal", showTemperatureFractional);
+    editor.putBoolean("use_thin", useThin);
     editor.putBoolean("use_thin_ambient", useThinAmbient);
     editor.putBoolean("show_infobar_ambient", showInfoBarAmbient);
     editor.putBoolean("show_battery", showBattery);

@@ -9,6 +9,8 @@ import android.graphics.Bitmap;
 import com.corvettecole.pixelwatchface.R;
 import com.corvettecole.pixelwatchface.util.Constants;
 
+import java.text.DecimalFormatSymbols;
+
 public class Weather {
 
   private long mTime;
@@ -80,16 +82,12 @@ public class Weather {
   }
 
   @SuppressLint("DefaultLocale")
-  public String getFormattedTemperature(boolean useCelsius, boolean showTemperatureFractional,
-      boolean useEuropeanDateFormat) {
+  public String getFormattedTemperature(boolean useCelsius, boolean showTemperatureFractional) {
     String unit = useCelsius ? "°C" : "°F";
+    char decimalSep = DecimalFormatSymbols.getInstance().getDecimalSeparator();
     if (mTemperature == Double.MIN_VALUE) {
       if (showTemperatureFractional) {
-        if (useEuropeanDateFormat) {
-          return "--,-" + unit;
-        } else {
-          return "--.-" + unit;
-        }
+        return "--" + decimalSep + "-" + unit;
       } else {
         return "--" + unit;
       }

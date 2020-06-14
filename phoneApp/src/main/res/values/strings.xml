@@ -19,7 +19,6 @@
   <string name="infobar_ambient">Show date/weather in ambient mode</string>
   <string name="battery_level">Show battery level</string>
   <string name="wearos_icon">Show WearOS icon</string>
-  <string name="universal_time">Use 24 hour time</string>
   <string name="category_weather">Weather</string>
   <string name="temperature">Show the temperature</string>
   <string name="celsius">Use Celsius instead of Fahrenheit</string>

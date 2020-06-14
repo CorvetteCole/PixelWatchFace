@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -56,12 +55,10 @@ public class MainActivity extends AppCompatActivity implements
     AcknowledgePurchaseResponseListener {
 
   private SharedPreferences sharedPreferences;
-  private Switch use24HourTimeSwitch;
   private Switch showTemperatureSwitch;
   private Switch useCelsiusSwitch;
   private Switch showWeatherSwitch;
 
-  private Switch useEuropeanDateFormatSwitch;
   private Switch showTemperatureDecimalSwitch;
   private Switch useThinSwitch;
   private Switch useThinAmbientSwitch;
@@ -79,11 +76,9 @@ public class MainActivity extends AppCompatActivity implements
   private MaterialButton advancedFreebieButton;
   private ProgressBar advancedProgressBar;
 
-  private boolean use24HourTime;
   private boolean showTemperature;
   private boolean useCelsius;
   private boolean showWeather;
-  private boolean useEuropeanDateFormat;
   private boolean showTemperatureDecimalPoint;
   private String darkSkyAPIKey;
   private boolean useDarkSky;
@@ -109,12 +104,10 @@ public class MainActivity extends AppCompatActivity implements
     sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
     //Wearable.getDataClient(getApplicationContext()).addListener(this);
 
-    use24HourTimeSwitch = findViewById(R.id.timeFormatSwitch);
     showTemperatureSwitch = findViewById(R.id.temperatureSwitch);
     useCelsiusSwitch = findViewById(R.id.celsiusSwitch);
     showWeatherSwitch = findViewById(R.id.weatherSwitch);
 
-    useEuropeanDateFormatSwitch = findViewById(R.id.dateFormatSwitch);
     showTemperatureDecimalSwitch = findViewById(R.id.temperaturePrecisionSwitch);
     useThinSwitch = findViewById(R.id.useThinSwitch);
     useThinAmbientSwitch = findViewById(R.id.useThinAmbientSwitch);
@@ -149,14 +142,6 @@ public class MainActivity extends AppCompatActivity implements
 //                findViewById(R.id.filled_exposed_dropdown);
 //        editTextFilledExposedDropdown.setAdapter(adapter);
 
-    use24HourTimeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-      @Override
-      public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        sharedPreferences.edit().putBoolean("use_24_hour_time", isChecked).apply();
-        syncToWear();
-      }
-    });
-
     showTemperatureSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
       @Override
       public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -188,15 +173,6 @@ public class MainActivity extends AppCompatActivity implements
         }
       }
     });
-
-    useEuropeanDateFormatSwitch
-        .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-          @Override
-          public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            sharedPreferences.edit().putBoolean("use_european_date", isChecked).apply();
-            syncToWear();
-          }
-        });
 
     showTemperatureDecimalSwitch
         .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -342,30 +318,26 @@ public class MainActivity extends AppCompatActivity implements
   }
 
   private void setSuggestedSettings() {
-    use24HourTime = DateFormat.is24HourFormat(getApplicationContext());
     boolean metric = UnitLocale.getDefault() == UnitLocale.Metric;
     useCelsius = metric;
-    useEuropeanDateFormat = metric;
     SharedPreferences.Editor editor = sharedPreferences.edit();
-    editor.putBoolean("use_24_hour_time", use24HourTime);
-    editor.putBoolean("use_celsius", useCelsius);
-    editor.putBoolean("use_european_date", useEuropeanDateFormat).apply();
+    editor.putBoolean("use_celsius", useCelsius).apply();
     syncToWear();
   }
 
   private boolean shouldSuggestSettings() {
     // if any of the settings are not their initial default values, or this isn't the first time the app was launched
-    return showBattery && !use24HourTime && !showTemperature && useCelsius && !showWeather &&
-        !useEuropeanDateFormat && !showTemperatureDecimalPoint && !useThin && !useThinAmbient &&
+
+    return showBattery && !showTemperature && useCelsius && !showWeather &&
+        !showTemperatureDecimalPoint && !useThin && !useThinAmbient &&
           useGrayInfoAmbient && showInfoBarAmbient && !showWearIcon && !advanced && firstLaunch;
+
   }
 
   private void loadPreferences() {
-    use24HourTime = sharedPreferences.getBoolean("use_24_hour_time", false);
     showTemperature = sharedPreferences.getBoolean("show_temperature", false);
     useCelsius = sharedPreferences.getBoolean("use_celsius", true);
     showWeather = sharedPreferences.getBoolean("show_weather", false);
-    useEuropeanDateFormat = sharedPreferences.getBoolean("use_european_date", false);
     showTemperatureDecimalPoint = sharedPreferences.getBoolean("show_temperature_decimal", false);
     useThin = sharedPreferences.getBoolean("use_thin", false);
     useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
@@ -392,18 +364,15 @@ public class MainActivity extends AppCompatActivity implements
     PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/settings");
 
         /* Reference DataMap retrieval code on the WearOS app
-                mUse24HourTime = dataMap.getBoolean("use_24_hour_time");
                 mShowTemperature = dataMap.getBoolean("show_temperature");
                 mUseCelsius = dataMap.getBoolean("use_celsius");
                 mShowWeather = dataMap.getBoolean("show_weather");
                 */
 
     putDataMapReq.getDataMap().putLong("timestamp", System.currentTimeMillis());
-    putDataMapReq.getDataMap().putBoolean("use_24_hour_time", use24HourTime);
     putDataMapReq.getDataMap().putBoolean("show_temperature", showTemperature);
     putDataMapReq.getDataMap().putBoolean("use_celsius", useCelsius);
     putDataMapReq.getDataMap().putBoolean("show_weather", showWeather);
-    putDataMapReq.getDataMap().putBoolean("use_european_date", useEuropeanDateFormat);
     putDataMapReq.getDataMap().putBoolean("show_temperature_decimal", showTemperatureDecimalPoint);
     putDataMapReq.getDataMap().putBoolean("use_thin", useThin);
     putDataMapReq.getDataMap().putBoolean("use_thin_ambient", useThinAmbient);
@@ -427,7 +396,6 @@ public class MainActivity extends AppCompatActivity implements
 
             DataMap dataMap = new DataMap();
             dataMap.putLong("wear_timestamp", System.currentTimeMillis());
-            dataMap.putBoolean("use_24_hour_time", mUse24HourTime);
             dataMap.putBoolean("show_temperature", mShowTemperature);
             dataMap.putBoolean("use_celsius", mUseCelsius);
             dataMap.putBoolean("show_weather", mShowWeather);
@@ -443,11 +411,9 @@ public class MainActivity extends AppCompatActivity implements
     useDarkSkySwitch.setEnabled(advanced);
     darkSkyKeyEditText.setEnabled(advanced);
 
-    use24HourTimeSwitch.setChecked(use24HourTime);
     showTemperatureSwitch.setChecked(showTemperature);
     useCelsiusSwitch.setChecked(useCelsius);
     showWeatherSwitch.setChecked(showWeather);
-    useEuropeanDateFormatSwitch.setChecked(useEuropeanDateFormat);
     showTemperatureDecimalSwitch.setChecked(showTemperatureDecimalPoint);
     useThinSwitch.setChecked(useThin);
     useThinAmbientSwitch.setChecked(useThinAmbient);
@@ -463,7 +429,6 @@ public class MainActivity extends AppCompatActivity implements
     String TAG = "updateStatus";
     try {
       long timestamp = dataMap.getLong("wear_timestamp");
-      boolean mUse24HourTime = dataMap.getBoolean("use_24_hour_time");
       boolean mShowTemperature = dataMap.getBoolean("show_temperature");
       boolean mUseCelsius = dataMap.getBoolean("use_celsius");
       boolean mShowWeather = dataMap.getBoolean("show_weather");

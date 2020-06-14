@@ -60,7 +60,9 @@ public class MainActivity extends AppCompatActivity implements
   private Switch showWeatherSwitch;
 
   private Switch showTemperatureDecimalSwitch;
+  private Switch useThinSwitch;
   private Switch useThinAmbientSwitch;
+  private Switch useGrayInfoAmbientSwitch;
   private Switch showInfoBarAmbientSwitch;
   private Switch showBatterySwitch;
   private Switch showWearIconSwitch;
@@ -80,7 +82,9 @@ public class MainActivity extends AppCompatActivity implements
   private boolean showTemperatureDecimalPoint;
   private String darkSkyAPIKey;
   private boolean useDarkSky;
+  private boolean useThin;
   private boolean useThinAmbient;
+  private boolean useGrayInfoAmbient;
   private boolean showInfoBarAmbient;
   private boolean showBattery;
   private boolean showWearIcon;
@@ -105,7 +109,9 @@ public class MainActivity extends AppCompatActivity implements
     showWeatherSwitch = findViewById(R.id.weatherSwitch);
 
     showTemperatureDecimalSwitch = findViewById(R.id.temperaturePrecisionSwitch);
+    useThinSwitch = findViewById(R.id.useThinSwitch);
     useThinAmbientSwitch = findViewById(R.id.useThinAmbientSwitch);
+    useGrayInfoAmbientSwitch = findViewById(R.id.useGrayInfoAmbientSwitch);
     showInfoBarAmbientSwitch = findViewById(R.id.infoBarAmbientSwitch);
     showBatterySwitch = findViewById(R.id.batterySwitch);
     showWearIconSwitch = findViewById(R.id.wearIconSwitch);
@@ -177,6 +183,14 @@ public class MainActivity extends AppCompatActivity implements
           }
         });
 
+    useThinSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+      @Override
+      public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+        sharedPreferences.edit().putBoolean("use_thin", isChecked).apply();
+        syncToWear();
+      }
+    });
+
     useThinAmbientSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
       @Override
       public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
@@ -190,6 +204,15 @@ public class MainActivity extends AppCompatActivity implements
           @Override
           public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
             sharedPreferences.edit().putBoolean("show_infobar_ambient", isChecked).apply();
+            syncToWear();
+          }
+        });
+
+    useGrayInfoAmbientSwitch
+        .setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+          @Override
+          public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+            sharedPreferences.edit().putBoolean("use_gray_info_ambient", isChecked).apply();
             syncToWear();
           }
         });
@@ -304,9 +327,11 @@ public class MainActivity extends AppCompatActivity implements
 
   private boolean shouldSuggestSettings() {
     // if any of the settings are not their initial default values, or this isn't the first time the app was launched
+
     return showBattery && !showTemperature && useCelsius && !showWeather &&
-        !showTemperatureDecimalPoint && !useThinAmbient &&
-        showInfoBarAmbient && !showWearIcon && !advanced && firstLaunch;
+        !showTemperatureDecimalPoint && !useThin && !useThinAmbient &&
+          useGrayInfoAmbient && showInfoBarAmbient && !showWearIcon && !advanced && firstLaunch;
+
   }
 
   private void loadPreferences() {
@@ -314,7 +339,9 @@ public class MainActivity extends AppCompatActivity implements
     useCelsius = sharedPreferences.getBoolean("use_celsius", true);
     showWeather = sharedPreferences.getBoolean("show_weather", false);
     showTemperatureDecimalPoint = sharedPreferences.getBoolean("show_temperature_decimal", false);
+    useThin = sharedPreferences.getBoolean("use_thin", false);
     useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
+    useGrayInfoAmbient = sharedPreferences.getBoolean("use_gray_info_ambient", true);
     showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", true);
     showBattery = sharedPreferences.getBoolean("show_battery", true);
     showWearIcon = sharedPreferences.getBoolean("show_wear_icon", false);
@@ -347,7 +374,9 @@ public class MainActivity extends AppCompatActivity implements
     putDataMapReq.getDataMap().putBoolean("use_celsius", useCelsius);
     putDataMapReq.getDataMap().putBoolean("show_weather", showWeather);
     putDataMapReq.getDataMap().putBoolean("show_temperature_decimal", showTemperatureDecimalPoint);
+    putDataMapReq.getDataMap().putBoolean("use_thin", useThin);
     putDataMapReq.getDataMap().putBoolean("use_thin_ambient", useThinAmbient);
+    putDataMapReq.getDataMap().putBoolean("use_gray_info_ambient", useGrayInfoAmbient);
     putDataMapReq.getDataMap().putBoolean("show_infobar_ambient", showInfoBarAmbient);
     putDataMapReq.getDataMap().putString("dark_sky_api_key", darkSkyAPIKey);
     putDataMapReq.getDataMap().putBoolean("use_dark_sky", useDarkSky);
@@ -386,7 +415,9 @@ public class MainActivity extends AppCompatActivity implements
     useCelsiusSwitch.setChecked(useCelsius);
     showWeatherSwitch.setChecked(showWeather);
     showTemperatureDecimalSwitch.setChecked(showTemperatureDecimalPoint);
+    useThinSwitch.setChecked(useThin);
     useThinAmbientSwitch.setChecked(useThinAmbient);
+    useGrayInfoAmbientSwitch.setChecked(useGrayInfoAmbient);
     showInfoBarAmbientSwitch.setChecked(showInfoBarAmbient);
     showBatterySwitch.setChecked(showBattery);
     showWearIconSwitch.setChecked(showWearIcon);

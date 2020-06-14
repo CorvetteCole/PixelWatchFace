@@ -12,9 +12,11 @@ public class Settings {
 
 
   private static volatile Settings instance;
-  private boolean showTemperature, showWeatherIcon, useCelsius,
-      useThinAmbient, showInfoBarAmbient, showTemperatureFractional,
-      showBattery, showWearIcon, useDarkSky, weatherChangeNotified, companionAppNotified, advanced;
+
+  private boolean showTemperature, showWeatherIcon, useCelsius,  
+  useThin, useThinAmbient, useGrayInfoAmbient, showInfoBarAmbient, showTemperatureFractional,
+  showBattery, showWearIcon, useDarkSky, weatherChangeNotified, companionAppNotified, advanced;
+
   private String darkSkyAPIKey;
   private SharedPreferences sharedPreferences;
 
@@ -60,9 +62,16 @@ public class Settings {
     useCelsius = value;
   }
 
-  public boolean isUseThinAmbient() {
-    return useThinAmbient;
+  public boolean isUseThin() {
+    return useThin;
+
   }
+
+
+  public boolean isUseThinAmbient() { return useThinAmbient; }
+
+  public boolean isUseGrayInfoAmbient() { return useGrayInfoAmbient; }
+
 
   public boolean isShowInfoBarAmbient() {
     return showInfoBarAmbient;
@@ -128,7 +137,9 @@ public class Settings {
     boolean tempShowWeatherIcon = showWeatherIcon;
     boolean tempUseDarkSky = useDarkSky;
 
+    boolean tempUseThin = useThin;
     boolean tempUseThinAmbient = useThinAmbient;
+    boolean tempUseGrayInfoAmbient = useGrayInfoAmbient;
 
     ArrayList<UpdatesRequired> updatesRequired = new ArrayList<>();
 
@@ -141,7 +152,9 @@ public class Settings {
 
     showTemperatureFractional = dataMap.getBoolean("show_temperature_decimal");
 
+    useThin = dataMap.getBoolean("use_thin");
     useThinAmbient = dataMap.getBoolean("use_thin_ambient");
+    useGrayInfoAmbient = dataMap.getBoolean("use_gray_info_ambient");
     showInfoBarAmbient = dataMap.getBoolean("show_infobar_ambient");
 
     showBattery = dataMap.getBoolean("show_battery", true);
@@ -156,7 +169,9 @@ public class Settings {
         != tempShowWeatherIcon) {  //detect if weather related settings has changed
       updatesRequired.add(UpdatesRequired.WEATHER);
     }
-    if (tempUseThinAmbient != useThinAmbient) { // check if font needs update
+
+    if (tempUseThin != useThin || tempUseThinAmbient != useThinAmbient || tempUseGrayInfoAmbient != useGrayInfoAmbient) { // check if font needs update
+
       updatesRequired.add(UpdatesRequired.FONT);
     }
 
@@ -169,8 +184,9 @@ public class Settings {
     showWeatherIcon = sharedPreferences.getBoolean("show_weather", false);
     useCelsius = sharedPreferences.getBoolean("use_celsius", true);
 
-
+    useThin = sharedPreferences.getBoolean("use_thin", false);
     useThinAmbient = sharedPreferences.getBoolean("use_thin_ambient", false);
+    useGrayInfoAmbient = sharedPreferences.getBoolean("use_gray_info_ambient", true);
     showInfoBarAmbient = sharedPreferences.getBoolean("show_infobar_ambient", true);
 
     showTemperatureFractional = sharedPreferences.getBoolean("show_temperature_decimal", false);
@@ -193,7 +209,9 @@ public class Settings {
     editor.putBoolean("use_celsius", useCelsius);
     editor.putBoolean("show_weather", showWeatherIcon);
     editor.putBoolean("show_temperature_decimal", showTemperatureFractional);
+    editor.putBoolean("use_thin", useThin);
     editor.putBoolean("use_thin_ambient", useThinAmbient);
+    editor.putBoolean("use_gray_info_ambient", useGrayInfoAmbient);
     editor.putBoolean("show_infobar_ambient", showInfoBarAmbient);
     editor.putBoolean("show_battery", showBattery);
     editor.putBoolean("show_wear_icon", showWearIcon);

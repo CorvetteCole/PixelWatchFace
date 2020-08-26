@@ -9,8 +9,8 @@ android {
         applicationId "com.corvettecole.pixelwatchface"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 35
-        versionName "1.5.5.1"
+        versionCode 37
+        versionName "1.5.5.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -33,13 +33,13 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
     implementation 'com.google.android.gms:play-services-wearable:17.0.0'
     implementation "androidx.preference:preference:1.1.1"
-    implementation 'com.google.android.material:material:1.3.0-alpha01'
-    implementation 'com.android.billingclient:billing:2.2.1'
-    implementation 'com.google.android.play:core:1.7.3'
+    implementation 'com.google.android.material:material:1.3.0-alpha02'
+    implementation 'com.android.billingclient:billing:3.0.0'
+    implementation 'com.google.android.play:core:1.8.0'
 
     testImplementation 'junit:junit:4.12'
 }

@@ -118,7 +118,12 @@ public class AviationWeatherCenter extends WeatherProvider {
   }
 
   private boolean isWeatherStationValid(String rawMETAR) {
-    return !(rawMETAR.toUpperCase().contains("AO1") || rawMETAR.toUpperCase().contains("PWINO"));
+    if (rawMETAR != null) {
+      return !(rawMETAR.toUpperCase().contains("AO1") || rawMETAR.toUpperCase().contains("PWINO"));
+    } else {
+      Log.d("isWeatherStationValid", "Somehow the rawMETAR is null, returning validity as false");
+      return false;
+    }
   }
 
 

@@ -124,7 +124,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
     private final String WEATHER_PROVIDER_SERVICE = "com.google.android.clockwork.home.weather.WeatherProviderService";
 
     Engine() {
-      super(true); // hardware acceleration
+      super(false); // hardware acceleration
     }
 
     private FusedLocationProviderClient mFusedLocationClient;
@@ -362,7 +362,8 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
       // Create locale specific time string.
       java.text.DateFormat timeFormat = DateFormat.getTimeFormat(getApplicationContext());
-      String timeText = timeFormat.format(now).replaceAll("[A-Z|\\s]", ""); // this also removes AM/PM if present
+      String timeText = timeFormat.format(now)
+          .replaceAll("[A-Za-z|\\s]", ""); // this also removes AM/PM if present
 
       float mTimeXOffset = computeXOffset(timeText, mTimePaint, bounds);
 
@@ -482,6 +483,7 @@ public class PixelWatchFace extends CanvasWatchFaceService {
         Intent companionNotifyIntent = new Intent(getBaseContext(),
             CompanionNotifyActivity.class);
         companionNotifyIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
         startActivity(companionNotifyIntent);
       }
     }

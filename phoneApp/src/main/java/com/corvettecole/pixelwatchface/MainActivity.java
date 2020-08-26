@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements
 
   private TextView advancedTextView;
   private MaterialButton advancedPurchaseButton;
-  private MaterialButton advancedFreebieButton;
+  private MaterialButton contactSupportButton;
   private ProgressBar advancedProgressBar;
 
   private boolean showTemperature;
@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements
 
     advancedTextView = findViewById(R.id.advancedPurchaseText);
     advancedPurchaseButton = findViewById(R.id.advancedPurchaseButton);
-    advancedFreebieButton = findViewById(R.id.advancedFreebieButton);
+    contactSupportButton = findViewById(R.id.contactSupportButton);
     advancedProgressBar = findViewById(R.id.advancedPurchaseLoading);
 
     loadPreferences();
@@ -507,7 +507,7 @@ public class MainActivity extends AppCompatActivity implements
                           .setText(getApplicationContext().getText(R.string.purchase_prompt));
                       advancedProgressBar.setVisibility(View.GONE);
                       advancedPurchaseButton.setVisibility(View.VISIBLE);
-                      advancedFreebieButton.setVisibility(View.VISIBLE);
+                      contactSupportButton.setVisibility(View.VISIBLE);
                     }
                     advancedPurchaseButton.setText(String
                         .format(getApplicationContext().getString(R.string.purchase_button),
@@ -527,10 +527,10 @@ public class MainActivity extends AppCompatActivity implements
                       }
                     });
 
-                    advancedFreebieButton.setOnClickListener(v -> {
+                    contactSupportButton.setOnClickListener(v -> {
                       Intent intent = new Intent(Intent.ACTION_SENDTO); // it's not ACTION_SEND
                       intent
-                          .putExtra(Intent.EXTRA_SUBJECT, "Unlock Code Request - Pixel Watch Face");
+                          .putExtra(Intent.EXTRA_SUBJECT, "Support - Pixel Watch Face");
                       intent.setData(Uri.parse(
                           "mailto:support@corvettecole.com")); // or just "mailto:" for blank
                       intent.addFlags(
@@ -551,12 +551,10 @@ public class MainActivity extends AppCompatActivity implements
     if (isPurchased) {
       advancedProgressBar.setVisibility(View.GONE);
       advancedPurchaseButton.setVisibility(View.GONE);
-      advancedFreebieButton.setVisibility(View.GONE);
       advancedTextView.setText(getApplicationContext().getText(R.string.purchase_purchased_thanks));
     } else {
       advancedProgressBar.setVisibility(View.VISIBLE);
       advancedPurchaseButton.setVisibility(View.GONE);
-      advancedFreebieButton.setVisibility(View.GONE);
       //advancedTextView.setText(getApplicationContext().getText(R.string.purchase_prompt));
     }
   }

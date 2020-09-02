@@ -1,4 +1,4 @@
-package com.corvettecole.pixelwatchface.ui;
+package com.corvettecole.pixelwatchface;
 
 import static com.corvettecole.pixelwatchface.util.Constants.INFO_BAR_Y_SPACING_RATIO;
 import static com.corvettecole.pixelwatchface.util.Constants.KEY_WEATHER_JSON;
@@ -47,8 +47,10 @@ import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
-import com.corvettecole.pixelwatchface.R;
 import com.corvettecole.pixelwatchface.models.Weather;
+import com.corvettecole.pixelwatchface.ui.CompanionNotifyActivity;
+import com.corvettecole.pixelwatchface.ui.WatchPermissionRequestActivity;
+import com.corvettecole.pixelwatchface.ui.WeatherUpdateActivity;
 import com.corvettecole.pixelwatchface.util.Constants.UpdatesRequired;
 import com.corvettecole.pixelwatchface.util.Settings;
 import com.corvettecole.pixelwatchface.util.UnitLocale;
@@ -180,17 +182,18 @@ public class PixelWatchFace extends CanvasWatchFaceService {
 
       // Initializes Watch Face.
       mTimePaint = new Paint();
-      mTimePaint.setTypeface(mProductSans);
       mTimePaint.setAntiAlias(true);
       mTimePaint.setColor(
           ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
       mTimePaint.setStrokeWidth(3f);
 
       mInfoPaint = new Paint();
-      mInfoPaint.setTypeface(mProductSans);
       mInfoPaint.setAntiAlias(true);
       mInfoPaint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.digital_text));
       mInfoPaint.setStrokeWidth(2f);
+
+      // set up fonts according to settings
+      updateFontConfig();
 
       if (shouldSuggestSettings()) {
         setSuggestedSettings();

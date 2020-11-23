@@ -50,6 +50,16 @@
         android:visibility="gone"
         android:text="@string/purchase_button" />
 
+      <com.google.android.material.button.MaterialButton
+        android:id="@+id/checkPurchaseButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="2dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="@string/refresh_purchase"
+        android:visibility="gone" />
+
 
       <ProgressBar
         android:id="@+id/advancedPurchaseLoading"

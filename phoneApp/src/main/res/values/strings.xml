@@ -26,4 +26,5 @@
   <string name="temperature_fractional">Show temperature to 1 decimal place</string>
   <string name="dark_sky_blurb">Dark Sky support has been discontinued. These options are only present if you have previously entered a Dark Sky key.</string>
   <string name="dark_sky_toggle">Use Dark Sky as a weather provider. The default providers will still be used as fallbacks</string>
+  <string name="refresh_purchase">Refresh purchase</string>
 </resources>

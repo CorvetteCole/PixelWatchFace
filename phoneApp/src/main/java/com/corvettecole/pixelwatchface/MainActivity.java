@@ -73,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements
 
   private TextView advancedTextView;
   private MaterialButton advancedPurchaseButton;
+  private MaterialButton refreshPurchaseButton;
   private MaterialButton contactSupportButton;
   private ProgressBar advancedProgressBar;
 
@@ -122,6 +123,7 @@ public class MainActivity extends AppCompatActivity implements
 
     advancedTextView = findViewById(R.id.advancedPurchaseText);
     advancedPurchaseButton = findViewById(R.id.advancedPurchaseButton);
+    refreshPurchaseButton = findViewById(R.id.checkPurchaseButton);
     contactSupportButton = findViewById(R.id.contactSupportButton);
     advancedProgressBar = findViewById(R.id.advancedPurchaseLoading);
 
@@ -507,11 +509,18 @@ public class MainActivity extends AppCompatActivity implements
                           .setText(getApplicationContext().getText(R.string.purchase_prompt));
                       advancedProgressBar.setVisibility(View.GONE);
                       advancedPurchaseButton.setVisibility(View.VISIBLE);
+                      refreshPurchaseButton.setVisibility(View.VISIBLE);
                       contactSupportButton.setVisibility(View.VISIBLE);
                     }
                     advancedPurchaseButton.setText(String
                         .format(getApplicationContext().getString(R.string.purchase_button),
                             skuDetails.getPrice()));
+
+                    refreshPurchaseButton.setOnClickListener(v -> {
+                      checkPurchases();
+
+
+                    });
 
                     advancedPurchaseButton.setOnClickListener(v -> {
                       Log.d("test", "button pressed");
@@ -551,10 +560,12 @@ public class MainActivity extends AppCompatActivity implements
     if (isPurchased) {
       advancedProgressBar.setVisibility(View.GONE);
       advancedPurchaseButton.setVisibility(View.GONE);
+      refreshPurchaseButton.setVisibility(View.GONE);
       advancedTextView.setText(getApplicationContext().getText(R.string.purchase_purchased_thanks));
     } else {
       advancedProgressBar.setVisibility(View.VISIBLE);
       advancedPurchaseButton.setVisibility(View.GONE);
+      refreshPurchaseButton.setVisibility(View.GONE);
       //advancedTextView.setText(getApplicationContext().getText(R.string.purchase_prompt));
     }
   }
@@ -567,10 +578,18 @@ public class MainActivity extends AppCompatActivity implements
         handlePurchase(purchase);
         if (purchase.getSku().equals("unlock_weather")){
           advancedPurchasePresent = true;
+
         }
       }
-      if (!advancedPurchasePresent && advanced){
+      if (!advancedPurchasePresent && advanced) {
         revokeAdvancedPurchase();
+      } else if (!advanced && advancedPurchasePresent) {
+        advanced = true;
+        sharedPreferences.edit()
+            .putBoolean("advanced", advanced).apply();
+        loadSettingStates();
+        syncToWear();
+        updatePurchaseUI(true);
       }
     }
   }

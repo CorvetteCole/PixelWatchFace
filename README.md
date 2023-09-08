@@ -1,3 +1,6 @@
+# ARCHIVED
+This project is no longer under development and will remain up as a historical record. Thanks!
+
 # PixelWatchFace
 A minimalistic and open-source watchface for WearOS.
 
